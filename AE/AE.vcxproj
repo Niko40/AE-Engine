@@ -1,0 +1,160 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Engine\Engine.cpp" />
+    <ClCompile Include="Engine\FileResource\FileResource.cpp" />
+    <ClCompile Include="Engine\FileResource\FileResourceManager.cpp" />
+    <ClCompile Include="Engine\FileResource\Image\FileResource_Image.cpp" />
+    <ClCompile Include="Engine\FileResource\Lua\FileResource_Lua.cpp" />
+    <ClCompile Include="Engine\FileResource\Mesh\FileResource_Mesh.cpp" />
+    <ClCompile Include="Engine\FileResource\Mesh\ME3DFile.cpp" />
+    <ClCompile Include="Engine\FileResource\RawData\FileResource_RawData.cpp" />
+    <ClCompile Include="Engine\FileResource\XML\FileResource_XML.cpp" />
+    <ClCompile Include="Engine\FileSystem\FileStream.cpp" />
+    <ClCompile Include="Engine\FileSystem\FileSystem.cpp" />
+    <ClCompile Include="Engine\Logger\Logger.cpp" />
+    <ClCompile Include="Engine\Math\Math.cpp" />
+    <ClCompile Include="Engine\Memory\MemoryPool\MemoryPool.cpp" />
+    <ClCompile Include="Engine\Renderer\DeviceMemory\DeviceMemoryManager.cpp" />
+    <ClCompile Include="Engine\Renderer\DeviceResource\DeviceResource.cpp" />
+    <ClCompile Include="Engine\Renderer\DeviceResource\DeviceResourceManager.cpp" />
+    <ClCompile Include="Engine\Renderer\DeviceResource\Image\DeviceResource_Image.cpp" />
+    <ClCompile Include="Engine\Renderer\DeviceResource\Mesh\DeviceResource_Mesh.cpp" />
+    <ClCompile Include="Engine\Renderer\Renderer.cpp" />
+    <ClCompile Include="Engine\SubSystem.cpp" />
+    <ClCompile Include="Engine\Vulkan\Vulkan.cpp" />
+    <ClCompile Include="Engine\Window\WindowManager.cpp" />
+    <ClCompile Include="Engine\World\Scene\Ground\Ground.cpp" />
+    <ClCompile Include="Engine\World\Scene\Object\Object.cpp" />
+    <ClCompile Include="Engine\World\Scene\Object\Shape\Shape.cpp" />
+    <ClCompile Include="Engine\World\Scene\Object\Unit\Unit.cpp" />
+    <ClCompile Include="Engine\World\Scene\Scene.cpp" />
+    <ClCompile Include="Engine\World\Scene\SceneManager.cpp" />
+    <ClCompile Include="Engine\World\Scene\SceneNode.cpp" />
+    <ClCompile Include="Engine\World\Scene\SceneNodeBase.cpp" />
+    <ClCompile Include="Engine\World\World.cpp" />
+    <ClCompile Include="Engine\World\WorldRenderer\WorldRenderer.cpp" />
+    <ClCompile Include="Engine\World\WorldResource\WorldResourceManager.cpp" />
+    <ClCompile Include="Main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Engine\BUILD_OPTIONS.h" />
+    <ClInclude Include="Engine\Engine.h" />
+    <ClInclude Include="Engine\FileResource\FileResource.h" />
+    <ClInclude Include="Engine\FileResource\FileResourceManager.h" />
+    <ClInclude Include="Engine\FileResource\Image\FileResource_Image.h" />
+    <ClInclude Include="Engine\FileResource\Image\ImageData.h" />
+    <ClInclude Include="Engine\FileResource\Lua\FileResource_Lua.h" />
+    <ClInclude Include="Engine\FileResource\Mesh\FileResource_Mesh.h" />
+    <ClInclude Include="Engine\FileResource\Mesh\ME3DFile.h" />
+    <ClInclude Include="Engine\FileResource\RawData\FileResource_RawData.h" />
+    <ClInclude Include="Engine\FileResource\XML\FileResource_XML.h" />
+    <ClInclude Include="Engine\FileSystem\FileStream.h" />
+    <ClInclude Include="Engine\FileSystem\FileSystem.h" />
+    <ClInclude Include="Engine\IncludeAll.h" />
+    <ClInclude Include="Engine\Logger\Logger.h" />
+    <ClInclude Include="Engine\Math\Math.h" />
+    <ClInclude Include="Engine\Memory\Memory.h" />
+    <ClInclude Include="Engine\Memory\MemoryPool\MemoryPool.h" />
+    <ClInclude Include="Engine\Memory\MemoryTypes.h" />
+    <ClInclude Include="Engine\Platform.h" />
+    <ClInclude Include="Engine\Renderer\DeviceMemory\DeviceMemoryInfo.h" />
+    <ClInclude Include="Engine\Renderer\DeviceMemory\DeviceMemoryManager.h" />
+    <ClInclude Include="Engine\Renderer\DeviceResource\DeviceResource.h" />
+    <ClInclude Include="Engine\Renderer\DeviceResource\DeviceResourceManager.h" />
+    <ClInclude Include="Engine\Renderer\DeviceResource\Image\DeviceResource_Image.h" />
+    <ClInclude Include="Engine\Renderer\DeviceResource\Mesh\DeviceResource_Mesh.h" />
+    <ClInclude Include="Engine\Renderer\Renderer.h" />
+    <ClInclude Include="Engine\SubSystem.h" />
+    <ClInclude Include="Engine\Threading\Threading.h" />
+    <ClInclude Include="Engine\Vulkan\Vulkan.h" />
+    <ClInclude Include="Engine\Window\WindowManager.h" />
+    <ClInclude Include="Engine\World\Scene\Ground\Ground.h" />
+    <ClInclude Include="Engine\World\Scene\Object\Object.h" />
+    <ClInclude Include="Engine\World\Scene\Object\Shape\Shape.h" />
+    <ClInclude Include="Engine\World\Scene\Object\Unit\Unit.h" />
+    <ClInclude Include="Engine\World\Scene\Scene.h" />
+    <ClInclude Include="Engine\World\Scene\SceneManager.h" />
+    <ClInclude Include="Engine\World\Scene\SceneNode.h" />
+    <ClInclude Include="Engine\World\Scene\SceneNodeBase.h" />
+    <ClInclude Include="Engine\World\World.h" />
+    <ClInclude Include="Engine\World\WorldRenderer\WorldRenderer.h" />
+    <ClInclude Include="Engine\World\WorldResource\WorldResourceManager.h" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{9A694D7D-931E-4E14-8110-9F129A9832EF}</ProjectGuid>
+    <RootNamespace>AE</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(VK_SDK_PATH)\Include;$(VK_SDK_PATH)\..\glfw-3.2.1.bin.WIN64\include;$(SolutionDir)glm;$(SolutionDir)stb;$(SolutionDir)lua-5.3.4\src;$(SolutionDir)tinyxml2;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VK_SDK_PATH)\Lib;$(VK_SDK_PATH)\..\glfw-3.2.1.bin.WIN$(PlatformArchitecture)\lib-vc2015;$(SolutionDir)x64\$(Configuration)-Lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(VK_SDK_PATH)\Include;$(VK_SDK_PATH)\..\glfw-3.2.1.bin.WIN64\include;$(SolutionDir)glm;$(SolutionDir)stb;$(SolutionDir)lua-5.3.4\src;$(SolutionDir)tinyxml2;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VK_SDK_PATH)\Lib;$(VK_SDK_PATH)\..\glfw-3.2.1.bin.WIN$(PlatformArchitecture)\lib-vc2015;$(SolutionDir)x64\$(Configuration)-Lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;Lua.lib;tinyxml2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;Lua.lib;tinyxml2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

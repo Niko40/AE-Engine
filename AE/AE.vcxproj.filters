@@ -1,0 +1,329 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Engine">
+      <UniqueIdentifier>{ffbc4987-e60f-484f-a588-6f83450341e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Logger">
+      <UniqueIdentifier>{8c900fa5-263b-4998-857a-c0351d94988f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\FileSystem">
+      <UniqueIdentifier>{8e3d2c58-23d3-41d6-b7c1-09d3fc4766af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Window">
+      <UniqueIdentifier>{3dd83e02-5db2-42ce-9def-acb21360a6af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer">
+      <UniqueIdentifier>{fd0d80f8-db0b-4820-a826-99435e4627e8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Memory">
+      <UniqueIdentifier>{09d28898-c508-487d-859a-e72ae4bb9b63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Memory\MemoryPool">
+      <UniqueIdentifier>{21d2d206-8ed6-4c15-a511-41d594d13be4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Math">
+      <UniqueIdentifier>{32a5f952-5899-494c-a764-528c51465ff6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\World">
+      <UniqueIdentifier>{b0986418-ed1e-488d-96e0-fbece1e7059d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\World\Scene">
+      <UniqueIdentifier>{2a43c8a5-5c08-4045-9fcd-e985226e0136}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\World\Scene\Wall">
+      <UniqueIdentifier>{deb9da41-7af5-4acf-b7dd-a9272b3b5bc4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\World\Scene\Ground">
+      <UniqueIdentifier>{96e0cb49-cda4-449c-978c-c2ac4c3cd026}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\World\WorldRenderer">
+      <UniqueIdentifier>{5c38c757-8230-4d37-af92-d73ea4862b14}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\World\Scene\Object">
+      <UniqueIdentifier>{2fa957c0-e125-4cc4-a81a-fa661f02749c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\World\Scene\Object\Shape">
+      <UniqueIdentifier>{2d4035b5-050e-4405-9bcb-441f9d9c7e87}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\World\Scene\Object\Unit">
+      <UniqueIdentifier>{319c556e-5001-413f-b430-ed450159e6e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\FileResource">
+      <UniqueIdentifier>{28b6fc46-fb68-46bf-a3ec-ee545646be24}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\FileResource\Image">
+      <UniqueIdentifier>{038c7d2c-7438-485c-b874-ec2068fc62aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\FileResource\Mesh">
+      <UniqueIdentifier>{7f5ae49c-644e-41e3-8bfd-5ef21e7b31e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\FileResource\RawData">
+      <UniqueIdentifier>{41640495-910e-4699-a75e-ef9b51676c0d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer\DeviceMemory">
+      <UniqueIdentifier>{4227a963-060c-4c5b-974f-ccc5c892b654}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer\DeviceResource">
+      <UniqueIdentifier>{552ac453-78de-4568-aa61-ada679e4c5ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\World\WorldResource">
+      <UniqueIdentifier>{fe19ca04-be73-468a-b28b-49b5663b1ae9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer\DeviceResource\Image">
+      <UniqueIdentifier>{0cf13cea-da45-423b-ba48-d58b252b9160}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer\DeviceResource\Mesh">
+      <UniqueIdentifier>{07ecae12-9ee6-499e-b016-a023c500aa55}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Threading">
+      <UniqueIdentifier>{d13b6d06-7ded-4a40-a0f8-a865bcd9ce07}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan">
+      <UniqueIdentifier>{8b5caf27-6d4e-45f1-b16f-e5d25d438fc1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\FileResource\XML">
+      <UniqueIdentifier>{9d3fcbd7-7786-49fa-b230-d9c24774a18c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\FileResource\Lua">
+      <UniqueIdentifier>{05d46359-fc0d-47b5-8fb7-a1f0f690956e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Engine\Engine.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Engine\Logger\Logger.cpp">
+      <Filter>Engine\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\FileSystem\FileSystem.cpp">
+      <Filter>Engine\FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Renderer\Renderer.cpp">
+      <Filter>Engine\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Memory\MemoryPool\MemoryPool.cpp">
+      <Filter>Engine\Memory\MemoryPool</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\SubSystem.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Window\WindowManager.cpp">
+      <Filter>Engine\Window</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\FileSystem\FileStream.cpp">
+      <Filter>Engine\FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\World\WorldRenderer\WorldRenderer.cpp">
+      <Filter>Engine\World\WorldRenderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\World\World.cpp">
+      <Filter>Engine\World</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\World\Scene\SceneManager.cpp">
+      <Filter>Engine\World\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\World\Scene\SceneNode.cpp">
+      <Filter>Engine\World\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\World\Scene\Ground\Ground.cpp">
+      <Filter>Engine\World\Scene\Ground</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\World\Scene\Object\Object.cpp">
+      <Filter>Engine\World\Scene\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\World\Scene\Object\Shape\Shape.cpp">
+      <Filter>Engine\World\Scene\Object\Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\World\Scene\Object\Unit\Unit.cpp">
+      <Filter>Engine\World\Scene\Object\Unit</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\FileResource\FileResource.cpp">
+      <Filter>Engine\FileResource</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\FileResource\FileResourceManager.cpp">
+      <Filter>Engine\FileResource</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\FileResource\RawData\FileResource_RawData.cpp">
+      <Filter>Engine\FileResource\RawData</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\FileResource\Image\FileResource_Image.cpp">
+      <Filter>Engine\FileResource\Image</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\FileResource\Mesh\FileResource_Mesh.cpp">
+      <Filter>Engine\FileResource\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\FileResource\Mesh\ME3DFile.cpp">
+      <Filter>Engine\FileResource\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Renderer\DeviceResource\DeviceResourceManager.cpp">
+      <Filter>Engine\Renderer\DeviceResource</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Renderer\DeviceMemory\DeviceMemoryManager.cpp">
+      <Filter>Engine\Renderer\DeviceMemory</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\World\WorldResource\WorldResourceManager.cpp">
+      <Filter>Engine\World\WorldResource</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Renderer\DeviceResource\DeviceResource.cpp">
+      <Filter>Engine\Renderer\DeviceResource</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Renderer\DeviceResource\Image\DeviceResource_Image.cpp">
+      <Filter>Engine\Renderer\DeviceResource\Image</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Renderer\DeviceResource\Mesh\DeviceResource_Mesh.cpp">
+      <Filter>Engine\Renderer\DeviceResource\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Math\Math.cpp">
+      <Filter>Engine\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Vulkan\Vulkan.cpp">
+      <Filter>Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\FileResource\Lua\FileResource_Lua.cpp">
+      <Filter>Engine\FileResource\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\FileResource\XML\FileResource_XML.cpp">
+      <Filter>Engine\FileResource\XML</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\World\Scene\Scene.cpp">
+      <Filter>Engine\World\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\World\Scene\SceneNodeBase.cpp">
+      <Filter>Engine\World\Scene</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Engine\Engine.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Logger\Logger.h">
+      <Filter>Engine\Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\FileSystem\FileSystem.h">
+      <Filter>Engine\FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\IncludeAll.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\BUILD_OPTIONS.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Platform.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Renderer\Renderer.h">
+      <Filter>Engine\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Memory\Memory.h">
+      <Filter>Engine\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Memory\MemoryPool\MemoryPool.h">
+      <Filter>Engine\Memory\MemoryPool</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Memory\MemoryTypes.h">
+      <Filter>Engine\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\SubSystem.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Window\WindowManager.h">
+      <Filter>Engine\Window</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Math.h">
+      <Filter>Engine\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\FileSystem\FileStream.h">
+      <Filter>Engine\FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\World\WorldRenderer\WorldRenderer.h">
+      <Filter>Engine\World\WorldRenderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\World\World.h">
+      <Filter>Engine\World</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\World\Scene\SceneManager.h">
+      <Filter>Engine\World\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\World\Scene\SceneNode.h">
+      <Filter>Engine\World\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\World\Scene\Ground\Ground.h">
+      <Filter>Engine\World\Scene\Ground</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\World\Scene\Object\Object.h">
+      <Filter>Engine\World\Scene\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\World\Scene\Object\Shape\Shape.h">
+      <Filter>Engine\World\Scene\Object\Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\World\Scene\Object\Unit\Unit.h">
+      <Filter>Engine\World\Scene\Object\Unit</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\FileResource\FileResource.h">
+      <Filter>Engine\FileResource</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\FileResource\FileResourceManager.h">
+      <Filter>Engine\FileResource</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\FileResource\RawData\FileResource_RawData.h">
+      <Filter>Engine\FileResource\RawData</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\FileResource\Image\FileResource_Image.h">
+      <Filter>Engine\FileResource\Image</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\FileResource\Mesh\FileResource_Mesh.h">
+      <Filter>Engine\FileResource\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\FileResource\Mesh\ME3DFile.h">
+      <Filter>Engine\FileResource\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Renderer\DeviceResource\DeviceResourceManager.h">
+      <Filter>Engine\Renderer\DeviceResource</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Renderer\DeviceMemory\DeviceMemoryManager.h">
+      <Filter>Engine\Renderer\DeviceMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\World\WorldResource\WorldResourceManager.h">
+      <Filter>Engine\World\WorldResource</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Renderer\DeviceMemory\DeviceMemoryInfo.h">
+      <Filter>Engine\Renderer\DeviceMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Renderer\DeviceResource\DeviceResource.h">
+      <Filter>Engine\Renderer\DeviceResource</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Renderer\DeviceResource\Image\DeviceResource_Image.h">
+      <Filter>Engine\Renderer\DeviceResource\Image</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\FileResource\Image\ImageData.h">
+      <Filter>Engine\FileResource\Image</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Renderer\DeviceResource\Mesh\DeviceResource_Mesh.h">
+      <Filter>Engine\Renderer\DeviceResource\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Threading\Threading.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Vulkan\Vulkan.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\FileResource\Lua\FileResource_Lua.h">
+      <Filter>Engine\FileResource\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\FileResource\XML\FileResource_XML.h">
+      <Filter>Engine\FileResource\XML</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\World\Scene\Scene.h">
+      <Filter>Engine\World\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\World\Scene\SceneNodeBase.h">
+      <Filter>Engine\World\Scene</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
