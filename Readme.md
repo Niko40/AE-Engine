@@ -15,6 +15,29 @@ Full licence can be found in Licence.txt file in the solution directory
 Libraries
 ---
 
+<table>
+	<tr>
+		<th>Library name</th>
+		<th>URL</th>
+	</tr>
+	<tr>
+		<th>Lua</th>
+		<th>https://www.lua.org/ </th>
+	</tr>
+	<tr>
+		<th>TinyXML</th>
+		<th>http://www.grinninglizard.com/tinyxml2/ </th>
+	</tr>
+	<tr>
+		<th>stb_libs</th>
+		<th>https://github.com/nothings/stb#stb_libs </th>
+	</tr>
+	<tr>
+		<th>glm</th>
+		<th>http://glm.g-truc.net/0.9.8/index.html </th>
+	</tr>
+</table>
+
 Embedded in solution:
 Library name  | URL
 ------------- | --------------
