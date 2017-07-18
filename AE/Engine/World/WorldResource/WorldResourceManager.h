@@ -22,7 +22,7 @@ public:
 private:
 	Engine							*	p_engine					= nullptr;
 	Logger							*	p_logger					= nullptr;
-	FileResourceManager					*	p_resource_manager			= nullptr;
+	FileResourceManager				*	p_resource_manager			= nullptr;
 	World							*	p_world						= nullptr;
 };
 
