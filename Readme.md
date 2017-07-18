@@ -1,7 +1,7 @@
 
 # AE Engine
 
-This is a sbub of a game engine that is designed from ground up to use Vulkan API to render everything. ( Name might change later )
+This is a sbub of a 3D game engine that is designed from ground up to use Vulkan API to render everything. ( Name might change later )
 Currently this is Windows only but no Windows specific code is used so porting this to other platforms should be easy.
 
 !!!Currently this engine is in it's early stages and will not actually render anything so it is useless except as an example!!!
@@ -11,8 +11,8 @@ This engine is licenced under MIT licence, this basically means you can freely u
 engine in your own projects for as long as you contribute me.
 Full licence can be found in Licence.txt file in the solution directory
 
-#### Libraries
 ---
+#### Libraries
 ##### Embedded in solution:
 
 <table>
