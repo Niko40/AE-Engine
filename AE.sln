@@ -15,6 +15,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tinyxml2", "tinyxml2\tinyxm
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{83DB2BAF-478E-480D-92F3-16D6764DC920}"
 	ProjectSection(SolutionItems) = preProject
+		git.gitattributes = git.gitattributes
 		Licence.txt = Licence.txt
 		Readme.md = Readme.md
 	EndProjectSection
