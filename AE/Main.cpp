@@ -35,6 +35,7 @@ int main( int argc, char ** argv )
 				auto device_mesh_2		= device_resman->RequestResource_Mesh( { "data/models/BlackDragonHead.me3d" } );
 				auto device_mesh_3		= device_resman->RequestResource_Mesh( { "data/models/Monkey.me3d" } );
 				auto device_mesh_4		= device_resman->RequestResource_Mesh( { "data/models/Monkey.me3d" } );
+
 				std::this_thread::sleep_for( std::chrono::milliseconds( 8 ) );	// simulate one frame time.
 			}
 			std::this_thread::sleep_for( std::chrono::milliseconds( 8 ) );
