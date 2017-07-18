@@ -11,8 +11,7 @@ class Logger;
 class FileResourceManager;
 class World;
 
-// World resource manager is responsible for "on the fly" data allocations,
-// uploads to the physical devices and basic memory management
+// World resource manager is responsible for "on the fly" memory management
 class WorldResourceManager
 {
 public:
