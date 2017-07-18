@@ -16,15 +16,15 @@ Libraries
 ---
 
 Embedded in solution:
-Library name | URL
--------------|--------------
-Lua | https://www.lua.org/
-TinyXML-2 | http://www.grinninglizard.com/tinyxml2/
-stb_libs | https://github.com/nothings/stb#stb_libs
-glm | http://glm.g-truc.net/0.9.8/index.html
+Library name  | URL
+------------- | --------------
+Lua           | https://www.lua.org/
+TinyXML-2     | http://www.grinninglizard.com/tinyxml2/
+stb_libs      | https://github.com/nothings/stb#stb_libs
+glm           | http://glm.g-truc.net/0.9.8/index.html
 
 External required libraries:
-Library name | URL | Default install path
--------------|-----|--------------
-Vulkan SDK | https://vulkan.lunarg.com/	| C:\VulkanSDK
-GLFW 3.2 | http://www.glfw.org/index.html | C:\VulkanSDK
+Library name | URL                            | Default install path
+------------ | ------------------------------ | -------------
+Vulkan SDK   | https://vulkan.lunarg.com/	  | C:\VulkanSDK
+GLFW 3.2     | http://www.glfw.org/index.html | C:\VulkanSDK
