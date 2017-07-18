@@ -11,8 +11,8 @@ This engine is licenced under MIT licence, this basically means you can freely u
 engine in your own projects for as long as you contribute me.
 Full licence can be found in Licence.txt file in the solution directory
 
-#### Libraries
 ---
+#### Libraries
 ##### Embedded in solution:
 
 <table>
