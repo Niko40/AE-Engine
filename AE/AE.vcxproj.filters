@@ -71,9 +71,6 @@
     <Filter Include="Engine\Renderer\DeviceResource">
       <UniqueIdentifier>{552ac453-78de-4568-aa61-ada679e4c5ef}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\World\WorldResource">
-      <UniqueIdentifier>{fe19ca04-be73-468a-b28b-49b5663b1ae9}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Renderer\DeviceResource\Image">
       <UniqueIdentifier>{0cf13cea-da45-423b-ba48-d58b252b9160}</UniqueIdentifier>
     </Filter>
@@ -166,9 +163,6 @@
     </ClCompile>
     <ClCompile Include="Engine\Renderer\DeviceMemory\DeviceMemoryManager.cpp">
       <Filter>Engine\Renderer\DeviceMemory</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\World\WorldResource\WorldResourceManager.cpp">
-      <Filter>Engine\World\WorldResource</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Renderer\DeviceResource\DeviceResource.cpp">
       <Filter>Engine\Renderer\DeviceResource</Filter>
@@ -288,9 +282,6 @@
     </ClInclude>
     <ClInclude Include="Engine\Renderer\DeviceMemory\DeviceMemoryManager.h">
       <Filter>Engine\Renderer\DeviceMemory</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\World\WorldResource\WorldResourceManager.h">
-      <Filter>Engine\World\WorldResource</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Renderer\DeviceMemory\DeviceMemoryInfo.h">
       <Filter>Engine\Renderer\DeviceMemory</Filter>
