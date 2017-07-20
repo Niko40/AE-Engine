@@ -7,13 +7,14 @@
 
 #include "Engine/IncludeAll.h"
 
+struct data
+{
+	int i = 50;
+	int a = 10;
+};
 
 int main( int argc, char ** argv )
 {
-	AE::DynamicGrid2D<int> grid;
-	grid[ {0, 0} ] = 5;
-	std::cout << grid[ {0, 0} ];
-
 	// parse arguments into a vector
 	AE::Vector<AE::String> arguments;
 	for( int i=0; i < argc; i++ ) {
