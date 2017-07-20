@@ -6,6 +6,7 @@
 #include "../../Engine.h"
 #include "../../Logger/Logger.h"
 #include "../../Memory/Memory.h"
+#include "../Scene/Scene.h"
 
 namespace AE
 {

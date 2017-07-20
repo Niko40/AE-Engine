@@ -9,6 +9,7 @@
 #include <string>
 #include <map>
 #include <filesystem>
+#include <glm/glm.hpp>
 
 #include <iostream>
 
@@ -230,5 +231,76 @@ template<typename T1, typename T2>
 using Map				= std::map<T1, T2, std::less<T1>, engine_internal::MemoryAllocator<std::pair<T1, T2>>>;
 
 using Path				= std::tr2::sys::path;
+
+using GridCoords2D		= glm::tvec2<int32_t, glm::highp>;
+
+template<typename T>
+class DynamicGrid2D
+{
+public:
+	DynamicGrid2D() {};
+	~DynamicGrid2D() {};
+
+	void								Resize( GridCoords2D lower, GridCoords2D upper )
+	{
+		auto cur_size_x			= limit_upper_x - limit_lower_x;
+		auto cur_size_y			= limit_upper_y - limit_lower_y;
+		auto new_size_x			= upper.x - lower.x;
+		auto new_size_y			= upper.y - lower.y;
+
+		auto lowest_common_x	= std::min( lower.x, limit_lower_x );
+		auto lowest_common_y	= std::min( lower.y, limit_lower_y );
+		auto highest_common_x	= std::max( upper.x, limit_upper_x );
+		auto highest_common_y	= std::max( upper.y, limit_upper_y );
+
+		Vector<T>				new_data;
+		new_data.resize( ( new_size_x + 1 ) * ( new_size_y + 1 ) );
+
+		for( size_t y = lowest_common_y; y <= highest_common_y; ++y ) {
+			for( size_t x = lowest_common_x; x <= highest_common_x; ++x ) {
+				auto cur_index			= IndexFromRawCoords( cur_size_x, { x - limit_lower_x, y - limit_lower_y } );
+				auto new_index			= IndexFromRawCoords( new_size_x, { x - lower.x, y - lower.y } );
+				new_data[ new_index ]	=  std::move( data[ cur_index ] );
+			}
+		}
+		data			= std::move( new_data );
+		limit_lower_x	= lower.x;
+		limit_lower_y	= lower.y;
+		limit_upper_x	= upper.x;
+		limit_upper_y	= upper.y;
+	}
+
+	T								&	operator[]( GridCoords2D coords )
+	{
+		if( coords.x < limit_lower_x || coords.x >= limit_upper_x ||
+			coords.y < limit_lower_y || coords.y >= limit_upper_y ) {
+			Resize (
+				{ std::min( coords.x, limit_lower_x ), std::min( coords.y, limit_lower_y ) },
+				{ std::max( coords.x, limit_upper_x ), std::max( coords.y, limit_upper_y ) } );
+		}
+		auto cur_size_x		= limit_upper_x - limit_lower_x;
+		return data[ IndexFromRawCoords( cur_size_x, coords - GridCoords2D( limit_lower_x, limit_lower_y ) ) ];
+	}
+
+private:
+	GridCoords2D						RawCoordsFromIndex( int32_t raw_size_x, uint32_t index ) const
+	{
+		assert( raw_size_x > 0 );
+		GridCoords2D ret;
+		ret.y				= index / raw_size_x;
+		ret.x				= index % raw_size_x;
+	}
+	int32_t								IndexFromRawCoords( int32_t raw_size_x, const GridCoords2D & raw_coords ) const
+	{
+		assert( raw_size_x > 0 );
+		return raw_coords.y * raw_size_x + raw_coords.x;
+	}
+
+	int32_t				limit_lower_x;
+	int32_t				limit_upper_x;
+	int32_t				limit_lower_y;
+	int32_t				limit_upper_y;
+	Vector<T>			data;
+};
 
 }
