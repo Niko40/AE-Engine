@@ -44,7 +44,6 @@
     <ClCompile Include="Engine\World\Scene\SceneNodeBase.cpp" />
     <ClCompile Include="Engine\World\World.cpp" />
     <ClCompile Include="Engine\World\WorldRenderer\WorldRenderer.cpp" />
-    <ClCompile Include="Engine\World\WorldResource\WorldResourceManager.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -89,7 +88,6 @@
     <ClInclude Include="Engine\World\Scene\SceneNodeBase.h" />
     <ClInclude Include="Engine\World\World.h" />
     <ClInclude Include="Engine\World\WorldRenderer\WorldRenderer.h" />
-    <ClInclude Include="Engine\World\WorldResource\WorldResourceManager.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{9A694D7D-931E-4E14-8110-9F129A9832EF}</ProjectGuid>

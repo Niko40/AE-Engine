@@ -17,8 +17,8 @@ class SceneNodeBase
 public:
 	enum class Type
 	{
-		UNDEFINED				= 0,
-		SCENE,					// Special, only used by scene
+		UNDEFINED						= 0,
+		SCENE,							// Special, only used by scene
 
 		// Simple types
 		SHAPE,

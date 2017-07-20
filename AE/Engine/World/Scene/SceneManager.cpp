@@ -6,25 +6,23 @@
 #include "../../Engine.h"
 #include "../../Logger/Logger.h"
 #include "../../Memory/Memory.h"
-#include "../WorldResource/WorldResourceManager.h"
+#include "../Scene/Scene.h"
 
 namespace AE
 {
 
-SceneManager::SceneManager( Engine * engine, World * world, WorldResourceManager * world_resource_manager )
+SceneManager::SceneManager( Engine * engine, World * world )
 {
-	assert( nullptr != engine );
-	assert( nullptr != world );
-	assert( nullptr != world_resource_manager );
-	p_engine					= engine;
-	p_world						= world;
-	p_world_resource_manager	= world_resource_manager;
-	p_logger					= engine->GetLogger();
+	p_engine		= engine;
+	p_world			= world;
+	p_logger		= engine->GetLogger();
+	assert( nullptr != p_engine );
+	assert( nullptr != p_world );
 	assert( nullptr != p_logger );
 
 	TODO( "Add multithreading support for the scene update" );
 
-	active_scene				= MakeUniquePointer<Scene>( p_engine, this );
+	active_scene	= MakeUniquePointer<Scene>( p_engine, this );
 }
 
 SceneManager::~SceneManager()

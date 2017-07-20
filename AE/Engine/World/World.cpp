@@ -4,7 +4,6 @@
 #include "../FileSystem/FileSystem.h"
 
 #include "../Engine.h"
-#include "WorldResource/WorldResourceManager.h"
 #include "Scene/SceneManager.h"
 #include "WorldRenderer/WorldRenderer.h"
 
@@ -20,8 +19,7 @@ World::World( Engine * engine, Path & path )
 	assert( nullptr != p_filesystem );
 	assert( nullptr != p_logger );
 
-	world_resource_manager	= MakeUniquePointer<WorldResourceManager>( p_engine, this );
-	scene_manager			= MakeUniquePointer<SceneManager>( p_engine, this, world_resource_manager.Get() );
+	scene_manager			= MakeUniquePointer<SceneManager>( p_engine, this );
 	world_renderer			= MakeUniquePointer<WorldRenderer>( p_engine, this );
 }
 
@@ -40,11 +38,6 @@ void World::Update()
 void World::Render()
 {
 	world_renderer->Render();
-}
-
-WorldResourceManager * World::GetWorldResourceManager() const
-{
-	return world_resource_manager.Get();
 }
 
 SceneManager * World::GetSceneManager() const

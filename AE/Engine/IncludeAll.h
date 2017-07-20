@@ -15,9 +15,11 @@
 // file resources
 #include "FileResource/FileResourceManager.h"
 #include "FileResource/FileResource.h"
+#include "FileResource/RawData/FileResource_RawData.h"
+#include "FileResource/Lua/FileResource_Lua.h"
+#include "FileResource/XML/FileResource_XML.h"
 #include "FileResource/Image/FileResource_Image.h"
 #include "FileResource/Mesh/FileResource_Mesh.h"
-#include "FileResource/RawData/FileResource_RawData.h"
 
 // renderer
 #include "Renderer/Renderer.h"

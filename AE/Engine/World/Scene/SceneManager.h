@@ -12,7 +12,6 @@ namespace AE
 class Engine;
 class Logger;
 class World;
-class WorldResourceManager;
 class Scene;
 class SceneNode;
 
@@ -21,7 +20,7 @@ class SceneNode;
 class SceneManager
 {
 public:
-	SceneManager( Engine * engine, World * world, WorldResourceManager * world_resource_manager );
+	SceneManager( Engine * engine, World * world );
 	~SceneManager();
 
 	void								UpdateLogic();
@@ -34,7 +33,6 @@ private:
 	Engine							*	p_engine					= nullptr;
 	Logger							*	p_logger					= nullptr;
 	World							*	p_world						= nullptr;
-	WorldResourceManager			*	p_world_resource_manager	= nullptr;
 
 	UniquePointer<Scene>				active_scene;
 //	Grid2D<Scene>						grid_nodes;
