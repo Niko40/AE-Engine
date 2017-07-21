@@ -16,7 +16,7 @@ class Engine;
 class SceneNode : public SceneNodeBase
 {
 public:
-								SceneNode( Engine * engine, SceneManager * scene_manager, SceneNodeBase::Type scene_node_type );
+								SceneNode( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type );
 	virtual						~SceneNode();
 
 	// Calculates a new transformation matrix from position, scale and rotation

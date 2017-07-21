@@ -22,11 +22,21 @@ SceneManager::SceneManager( Engine * engine, World * world )
 
 	TODO( "Add multithreading support for the scene update" );
 
-	active_scene	= MakeUniquePointer<Scene>( p_engine, this );
+	active_scene	= MakeUniquePointer<Scene>( p_engine, this, "no file for now, todo" );
 }
 
 SceneManager::~SceneManager()
 {
+}
+
+void SceneManager::Update()
+{
+	active_scene->UpdateFromManager();
+	for( auto & s : grid_nodes ) {
+		if( nullptr != s.Get() ) {
+			s->UpdateFromManager();
+		}
+	}
 }
 
 void SceneManager::UpdateLogic()

@@ -29,10 +29,12 @@ World::~World()
 
 void World::Update()
 {
-	scene_manager->UpdateLogic();
-	scene_manager->UpdateAnimations();
+	scene_manager->Update();
 
-	world_renderer->UpdateSecondaryCommandBuffers();
+//	scene_manager->UpdateLogic();
+//	scene_manager->UpdateAnimations();
+
+//	world_renderer->UpdateSecondaryCommandBuffers();
 }
 
 void World::Render()

@@ -89,6 +89,10 @@
     <ClInclude Include="Engine\World\World.h" />
     <ClInclude Include="Engine\World\WorldRenderer\WorldRenderer.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\install\data\scene_nodes\objects\shapes\torus_knot.xml" />
+    <Xml Include="..\install\data\shaders\default\default.xml" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{9A694D7D-931E-4E14-8110-9F129A9832EF}</ProjectGuid>
     <RootNamespace>AE</RootNamespace>

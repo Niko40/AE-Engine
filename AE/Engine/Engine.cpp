@@ -72,6 +72,9 @@ bool Engine::Run()
 {
 	bool keep_running = true;
 	file_resource_manager->Update();
+	if( active_world ) {
+		active_world->Update();
+	}
 	renderer->Update();
 	if( !window_manager->Update() ) {
 		keep_running = false;

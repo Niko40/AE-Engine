@@ -24,26 +24,19 @@ int main( int argc, char ** argv )
 	AE::Engine engine;
 
 	auto world			= engine.CreateWorld( "data/worlds/test.world" );
+	auto scene_manager	= world->GetSceneManager();
 
 	auto file_resman	= engine.GetFileResourceManager();
 	auto renderer		= engine.GetRenderer();
 	auto device_resman	= renderer->GetDeviceResourceManager();
 
 	{
+		auto scene_node		= scene_manager->GetActiveScene()->CreateChild( AE::SceneNodeBase::Type::SHAPE, "data/scene_nodes/objects/shapes/torus_knot.xml" );
+
 		while( engine.Run() ) {
 
-			// stress test the resource managers
-			{
-				auto device_image_1		= device_resman->RequestResource_Image( { "data/images/test3.png" } );
-				auto device_image_2		= device_resman->RequestResource_Image( { "data/images/test4.png" } );
-				auto device_image_3		= device_resman->RequestResource_Image( { "data/images/test3.png" } );
-				auto device_mesh_2		= device_resman->RequestResource_Mesh( { "data/models/BlackDragonHead.me3d" } );
-				auto device_mesh_3		= device_resman->RequestResource_Mesh( { "data/models/Monkey.me3d" } );
-				auto device_mesh_4		= device_resman->RequestResource_Mesh( { "data/models/Monkey.me3d" } );
-
-				std::this_thread::sleep_for( std::chrono::milliseconds( 8 ) );	// simulate one frame time.
-			}
-			std::this_thread::sleep_for( std::chrono::milliseconds( 8 ) );
+			// simulate one frame in about 60 fps
+			std::this_thread::sleep_for( std::chrono::milliseconds( 17 ) );
 		}
 	}
 

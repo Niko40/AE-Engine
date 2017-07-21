@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<SCENE_NODE>
+  <type>SHAPE</type>
+  <name>Torus Knot</name>
+  <visible>true</visible>
+  <mesh>
+    <path>data/models/shapes/torus_knot.me3d</path>
+    <visible>true</visible>
+    <renderer>
+      <shader_path>data/shaders/default/default.xml</shader_path>
+      <images>
+        <diffuse_1>data/images/shapes/torus_knot.diff.png</diffuse_1>
+      </images>
+    </renderer>
+  </mesh>
+</SCENE_NODE>

@@ -23,19 +23,22 @@ public:
 	SceneManager( Engine * engine, World * world );
 	~SceneManager();
 
-	void								UpdateLogic();
-	void								UpdateAnimations();
+	// general update called once a frame
+	void									Update();
 
-	Scene							*	GetActiveScene() const;
-	Scene							*	GetGridScene( Vec3 world_coords ) const;
+	void									UpdateLogic();
+	void									UpdateAnimations();
+
+	Scene								*	GetActiveScene() const;
+	Scene								*	GetGridScene( Vec3 world_coords ) const;
 
 private:
-	Engine							*	p_engine					= nullptr;
-	Logger							*	p_logger					= nullptr;
-	World							*	p_world						= nullptr;
+	Engine								*	p_engine					= nullptr;
+	Logger								*	p_logger					= nullptr;
+	World								*	p_world						= nullptr;
 
-	UniquePointer<Scene>				active_scene;
-//	Grid2D<Scene>						grid_nodes;
+	UniquePointer<Scene>					active_scene;
+	DynamicGrid2D<SharedPointer<Scene>>		grid_nodes;
 };
 
 }

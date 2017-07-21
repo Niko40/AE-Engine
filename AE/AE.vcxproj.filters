@@ -317,4 +317,8 @@
       <Filter>Engine\World\Scene</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\install\data\shaders\default\default.xml" />
+    <Xml Include="..\install\data\scene_nodes\objects\shapes\torus_knot.xml" />
+  </ItemGroup>
 </Project>
