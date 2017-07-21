@@ -56,6 +56,8 @@ Engine::Engine()
 
 Engine::~Engine()
 {
+	active_world	= nullptr;
+
 	renderer->GetDeviceResourceManager()->AllowResourceRequests( false );
 	renderer->GetDeviceResourceManager()->WaitJobless();
 	renderer->GetDeviceResourceManager()->ScrapDeviceResources();

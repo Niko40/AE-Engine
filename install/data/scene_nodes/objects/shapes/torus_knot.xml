@@ -1,17 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 
+<!--SCENE_NODE is the root element and indicates that this structure defines a scene node-->
 <SCENE_NODE>
-  <type>SHAPE</type>
-  <name>Torus Knot</name>
-  <visible>true</visible>
-  <mesh>
-    <path>data/models/shapes/torus_knot.me3d</path>
-    <visible>true</visible>
-    <renderer>
-      <shader_path>data/shaders/default/default.xml</shader_path>
-      <images>
-        <diffuse_1>data/images/shapes/torus_knot.diff.png</diffuse_1>
-      </images>
-    </renderer>
-  </mesh>
+  <!--Regular fields are written in small letters, we take the attribute approach where the field is always "value" for singles-->
+  <name value="Torus Knot" />
+  <visible value ="true" />
+  
+  <!--Scene nodes contain mesh data, so we handle it here-->
+  <MESH>
+    <name value ="TorusKnot" />
+    <path value ="data/models/shapes/torus_knot.me3d" />
+    <visible value ="true" />
+    <!--Fields that have multiple parameters, the parameters are written like this-->
+    <position x="0" y="0" z="0" />
+    <rotation x="0" y="0" z="0" w="1" />
+    <scale x="1" y="1" z="1" />
+    <RENDER_INFO>
+      <pipeline_path value ="data/pipelines/default/default.xml" />
+      <IMAGES>
+        <image index="0" path="data/images/shapes/torus_knot.diff.png" />
+      </IMAGES>
+    </RENDER_INFO>
+  </MESH>
+  
+  <!--This file is parsed automatically by each stage, scene node handles all the meshes and associated textures for it-->
+  <!--This stage handles all object level data, currently there aren't any-->
+  <OBJECT>
+    <!--This stage handles all shape level data-->
+    <SHAPE>
+      
+    </SHAPE>
+  </OBJECT>
+
 </SCENE_NODE>

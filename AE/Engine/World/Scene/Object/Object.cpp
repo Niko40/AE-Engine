@@ -13,4 +13,17 @@ SceneNode_Object::~SceneNode_Object()
 {
 }
 
+tinyxml2::XMLElement * SceneNode_Object::ParseConfigFile_ObjectSection()
+{
+	auto parent_element			= ParseConfigFile_SceneNodeSection();
+	if( nullptr != parent_element ) {
+		auto object_element		= parent_element->FirstChildElement( "OBJECT" );
+		if( nullptr != object_element ) {
+			// do object level stuff
+		}
+		return object_element;
+	}
+	return nullptr;
+}
+
 }

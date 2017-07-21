@@ -22,7 +22,6 @@ int main( int argc, char ** argv )
 	}
 
 	AE::Engine engine;
-
 	auto world			= engine.CreateWorld( "data/worlds/test.world" );
 	auto scene_manager	= world->GetSceneManager();
 

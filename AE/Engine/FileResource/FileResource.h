@@ -97,7 +97,7 @@ private:
 template<typename T>
 class FileResourceHandle
 {
-	static_assert( std::is_base_of<FileResource, T>::value, "Not base of FileResource" );
+//	static_assert( std::is_base_of<FileResource, T>::value, "Not base of FileResource" );
 	friend class FileResourceManager;
 	template<typename R>
 	friend class FileResourceHandle;
@@ -123,7 +123,7 @@ private:
 	template<typename R>
 	FileResourceHandle( R * resource )
 	{
-		static_assert( std::is_base_of<FileResource, R>::value, "Not base of FileResource" );
+//		static_assert( std::is_base_of<FileResource, R>::value, "Not base of FileResource" );
 		assert( nullptr != resource );
 		resource->IncrementUsers();
 		Destroy();
@@ -136,7 +136,7 @@ public:
 	template<typename R>
 	FileResourceHandle( FileResourceHandle<R> & other )
 	{
-		static_assert( std::is_base_of<FileResource, R>::value, "Not base of FileResource" );
+//		static_assert( std::is_base_of<FileResource, R>::value, "Not base of FileResource" );
 		if( res_handle != other.res_handle ) {
 			other.res_handle->IncrementUsers();
 			Destroy();
@@ -146,7 +146,7 @@ public:
 	template<typename R>
 	FileResourceHandle( FileResourceHandle<R> && other )
 	{
-		static_assert( std::is_base_of<FileResource, R>::value, "Not base of FileResource" );
+//		static_assert( std::is_base_of<FileResource, R>::value, "Not base of FileResource" );
 		Swap( res_handle, other.res_handle );
 	}
 
@@ -162,7 +162,7 @@ public:
 	template<typename R>
 	void operator=( FileResourceHandle<R> & other )
 	{
-		static_assert( std::is_base_of<FileResource, R>::value, "Not base of FileResource" );
+//		static_assert( std::is_base_of<FileResource, R>::value, "Not base of FileResource" );
 		if( res_handle != other.res_handle ) {
 			other.res_handle->IncrementUsers();
 			Destroy();
@@ -172,7 +172,7 @@ public:
 	template<typename R>
 	void operator=( FileResourceHandle<R> && other )
 	{
-		static_assert( std::is_base_of<FileResource, R>::value, "Not base of FileResource" );
+//		static_assert( std::is_base_of<FileResource, R>::value, "Not base of FileResource" );
 		Swap( res_handle, other.res_handle );
 	}
 	void operator=( nullptr_t )
@@ -185,7 +185,7 @@ public:
 	template<typename R>
 	bool operator==( const FileResourceHandle<R> & other ) const
 	{
-		static_assert( std::is_base_of<FileResource, R>::value, "Not base of FileResource" );
+//		static_assert( std::is_base_of<FileResource, R>::value, "Not base of FileResource" );
 		return ( res_handle == other.res_handle );
 	}
 	bool operator==( const FileResource * resource ) const
@@ -195,7 +195,7 @@ public:
 	template<typename R>
 	bool operator!=( const FileResourceHandle<R> & other ) const
 	{
-		static_assert( std::is_base_of<FileResource, R>::value, "Not base of FileResource" );
+//		static_assert( std::is_base_of<FileResource, R>::value, "Not base of FileResource" );
 		return ( res_handle != other.res_handle );
 	}
 	bool operator!=( const FileResource * resource ) const

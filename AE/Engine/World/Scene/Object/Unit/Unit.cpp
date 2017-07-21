@@ -13,4 +13,17 @@ SceneNode_Unit::~SceneNode_Unit()
 {
 }
 
+tinyxml2::XMLElement * SceneNode_Unit::ParseConfigFile_UnitSection()
+{
+	auto parent_element			= ParseConfigFile_ObjectSection();
+	if( nullptr != parent_element ) {
+		auto unit_element		= parent_element->FirstChildElement( "UNIT" );
+		if( nullptr != unit_element ) {
+			// do unit level stuff
+		}
+		return unit_element;
+	}
+	return nullptr;
+}
+
 }

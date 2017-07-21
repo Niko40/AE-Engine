@@ -65,7 +65,6 @@ protected:
 	FileResourceHandle<FileResource_XML>	config_file						= nullptr;
 
 	String									name;
-
 	bool									is_visible						= true;
 
 private:

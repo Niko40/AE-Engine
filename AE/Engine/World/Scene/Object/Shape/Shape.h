@@ -14,17 +14,6 @@ namespace AE
 class SceneNode_Shape : public SceneNode_Object
 {
 public:
-	struct MeshInfo
-	{
-		bool											is_ok			= true;
-		bool											visible			= true;
-		Path											xml_mesh_path;
-		Path											xml_shader_path;
-		Path											xml_diffuse_1_path;
-		DeviceResourceHandle<DeviceResource_Mesh>		mesh;
-		DeviceResourceHandle<DeviceResource_Image>		diffuse_1;
-	};
-
 	SceneNode_Shape( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path );
 	~SceneNode_Shape();
 
@@ -33,7 +22,6 @@ public:
 	bool									ParseConfigFile();
 
 private:
-	Vector<MeshInfo>						mesh_info_list;
 };
 
 }
