@@ -14,11 +14,13 @@ class SceneManager;
 class Scene : public SceneNodeBase
 {
 public:
-	Scene( Engine * engine, SceneManager * scene_manager );
+	Scene( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path );
 	~Scene();
 
 private:
+	void							Update();
 
+	bool							ParseConfigFile();
 };
 
 }

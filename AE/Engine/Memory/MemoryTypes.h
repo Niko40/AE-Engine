@@ -525,6 +525,15 @@ public:
 	DynamicGrid2D() {};
 	~DynamicGrid2D() {};
 
+	typename Vector<T>::iterator		begin()
+	{
+		return data.begin();
+	}
+	typename Vector<T>::iterator		end()
+	{
+		return data.end();
+	}
+
 	void								Resize( GridCoords2D lower, GridCoords2D upper )
 	{
 		upper.x					+= 1;

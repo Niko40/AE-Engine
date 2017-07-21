@@ -10,8 +10,11 @@ namespace AE
 class SceneNode_Unit : public SceneNode_Object
 {
 public:
-						SceneNode_Unit( Engine * engine, SceneManager * scene_manager, SceneNodeBase::Type scene_node_type );
-	virtual				~SceneNode_Unit();
+								SceneNode_Unit( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type );
+	virtual						~SceneNode_Unit();
+
+protected:
+	tinyxml2::XMLElement	*	ParseConfigFile_UnitSection();
 
 private:
 

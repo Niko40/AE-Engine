@@ -45,3 +45,8 @@
 // 1 = ON
 // 0 = OFF
 #define BUILD_INCLUDE_RESOURCE_STATISTICS								1
+
+// this tells the maximum per shader texture count, this does not mean that space is automatically
+// allocated for the amount given, but rather the absolute maximum that is possible to allocate
+// VALUES: maximum nuber of sampled images per shader
+#define BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT						16

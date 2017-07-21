@@ -37,3 +37,8 @@
 
 // map and scene management
 #include "World/World.h"
+#include "World/Scene/SceneManager.h"
+#include "World/Scene/Scene.h"
+#include "World/Scene/SceneNode.h"
+
+#include "World/Scene/Object/Shape/Shape.h"

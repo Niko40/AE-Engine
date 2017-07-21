@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<SHADER>
+  <name>Default Shader</name>
+  <paths>
+    <vertex>data/shaders/default/default.vert.spv</vertex>
+    <tessellation_control></tessellation_control>
+    <tessellation_evaluation></tessellation_evaluation>
+    <geometry></geometry>
+    <fragment>data/shaders/default/default.frag.spv</fragment>
+  </paths>
+  
+  <!--other shader options here whenever I figure them out TODO-->
+  
+</SHADER>
