@@ -214,7 +214,7 @@ private:
 	template<typename R>
 	DeviceResourceHandle( R * resource )
 	{
-//		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
+		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
 		assert( nullptr != resource );
 		resource->IncrementUsers();
 		Destroy();
@@ -227,7 +227,7 @@ public:
 	template<typename R>
 	DeviceResourceHandle( DeviceResourceHandle<R> & other )
 	{
-//		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
+		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
 		if( res_handle != other.res_handle ) {
 			other.res_handle->IncrementUsers();
 			Destroy();
@@ -237,7 +237,7 @@ public:
 	template<typename R>
 	DeviceResourceHandle( DeviceResourceHandle<R> && other )
 	{
-//		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
+		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
 		Swap( res_handle, other.res_handle );
 	}
 
@@ -253,7 +253,7 @@ public:
 	template<typename R>
 	void operator=( DeviceResourceHandle<R> & other )
 	{
-//		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
+		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
 		if( res_handle != other.res_handle ) {
 			other.res_handle->IncrementUsers();
 			Destroy();
@@ -263,7 +263,7 @@ public:
 	template<typename R>
 	void operator=( DeviceResourceHandle<R> && other )
 	{
-//		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
+		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
 		Swap( res_handle, other.res_handle );
 	}
 	void operator=( nullptr_t )
@@ -276,7 +276,7 @@ public:
 	template<typename R>
 	bool operator==( const FileResourceHandle<R> & other ) const
 	{
-//		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
+		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
 		return ( res_handle == other.res_handle );
 	}
 	bool operator==( const FileResource * resource ) const
@@ -286,7 +286,7 @@ public:
 	template<typename R>
 	bool operator!=( const FileResourceHandle<R> & other ) const
 	{
-//		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
+		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
 		return ( res_handle != other.res_handle );
 	}
 	bool operator!=( const FileResource * resource ) const

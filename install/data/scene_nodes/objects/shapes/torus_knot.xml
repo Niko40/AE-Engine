@@ -24,10 +24,10 @@
   </MESH>
   
   <!--This file is parsed automatically by each stage, scene node handles all the meshes and associated textures for it-->
-  <!--This stage handles all object level data, currently there aren't any-->
   <OBJECT>
-    <!--This stage handles all shape level data-->
+    <!--This stage handles all object level data, currently there aren't any-->
     <SHAPE>
+      <!--This stage handles all shape level data-->
       
     </SHAPE>
   </OBJECT>
