@@ -31,44 +31,49 @@ tinyxml2::XMLDocument * FileResource_XML::GetRawXML()
 	return &xml;
 }
 
-String FileResource_XML::GetFieldValue_Text( tinyxml2::XMLElement * parent, const String & field_name )
+String FileResource_XML::GetFieldValue_Text( tinyxml2::XMLElement * parent, const String & field_name, const String & default_value )
 {
+	if( !parent ) return default_value;
 	auto type_element	= parent->FirstChildElement( field_name.c_str() );
-	if( nullptr == type_element ) return {};
+	if( nullptr == type_element ) return default_value;
 	auto attribute		= type_element->FirstAttribute();
-	if( nullptr == attribute ) return {};
+	if( nullptr == attribute ) return default_value;
 	return attribute->Value();
 }
 
-int64_t FileResource_XML::GetFieldValue_Int64( tinyxml2::XMLElement * parent, const String & field_name )
+int64_t FileResource_XML::GetFieldValue_Int64( tinyxml2::XMLElement * parent, const String & field_name, int64_t default_value )
 {
+	if( !parent ) return default_value;
 	auto type_element	= parent->FirstChildElement( field_name.c_str() );
-	if( nullptr == type_element ) return {};
+	if( nullptr == type_element ) return default_value;
 	auto attribute		= type_element->FirstAttribute();
-	if( nullptr == attribute ) return {};
+	if( nullptr == attribute ) return default_value;
 	return attribute->Int64Value();
 }
 
-double FileResource_XML::GetFieldValue_Double( tinyxml2::XMLElement * parent, const String & field_name )
+double FileResource_XML::GetFieldValue_Double( tinyxml2::XMLElement * parent, const String & field_name, double default_value )
 {
+	if( !parent ) return default_value;
 	auto type_element	= parent->FirstChildElement( field_name.c_str() );
-	if( nullptr == type_element ) return {};
+	if( nullptr == type_element ) return default_value;
 	auto attribute		= type_element->FirstAttribute();
-	if( nullptr == attribute ) return {};
+	if( nullptr == attribute ) return default_value;
 	return attribute->DoubleValue();
 }
 
-bool FileResource_XML::GetFieldValue_Bool( tinyxml2::XMLElement * parent, const String & field_name )
+bool FileResource_XML::GetFieldValue_Bool( tinyxml2::XMLElement * parent, const String & field_name, bool default_value )
 {
+	if( !parent ) return default_value;
 	auto type_element	= parent->FirstChildElement( field_name.c_str() );
-	if( nullptr == type_element ) return {};
+	if( nullptr == type_element ) return default_value;
 	auto attribute		= type_element->FirstAttribute();
-	if( nullptr == attribute ) return {};
+	if( nullptr == attribute ) return default_value;
 	return attribute->BoolValue();
 }
 
 Map<String, String> FileResource_XML::GetMultiFieldValues_Text( tinyxml2::XMLElement * parent, const String & field_name )
 {
+	if( !parent ) return {};
 	auto type_element = parent->FirstChildElement( field_name.c_str() );
 	if( nullptr == type_element ) return {};
 	Map<String, String> ret {};
@@ -80,6 +85,7 @@ Map<String, String> FileResource_XML::GetMultiFieldValues_Text( tinyxml2::XMLEle
 
 Map<String, int64_t> FileResource_XML::GetMultiFieldValues_Int64( tinyxml2::XMLElement * parent, const String & field_name )
 {
+	if( !parent ) return {};
 	auto type_element = parent->FirstChildElement( field_name.c_str() );
 	if( nullptr == type_element ) return {};
 	Map<String, int64_t> ret {};
@@ -91,6 +97,7 @@ Map<String, int64_t> FileResource_XML::GetMultiFieldValues_Int64( tinyxml2::XMLE
 
 Map<String, double> FileResource_XML::GetMultiFieldValues_Double( tinyxml2::XMLElement * parent, const String & field_name )
 {
+	if( !parent ) return {};
 	auto type_element = parent->FirstChildElement( field_name.c_str() );
 	if( nullptr == type_element ) return {};
 	Map<String, double> ret {};
@@ -102,6 +109,7 @@ Map<String, double> FileResource_XML::GetMultiFieldValues_Double( tinyxml2::XMLE
 
 Map<String, bool> FileResource_XML::GetMultiFieldValues_Bool( tinyxml2::XMLElement * parent, const String & field_name )
 {
+	if( !parent ) return {};
 	auto type_element = parent->FirstChildElement( field_name.c_str() );
 	if( nullptr == type_element ) return {};
 	Map<String, bool> ret {};

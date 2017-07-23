@@ -35,10 +35,11 @@ FileStream * FileSystem::OpenFileStream( Path path )
 
 			std::lock_guard<std::mutex> opened_streams_guard( mutex_opened_streams );
 			opened_streams.push_back( std::move( filestream ) );
-			ret		= &opened_streams.back();
+			return &opened_streams.back();
 		}
 	}
-	return ret;
+	p_logger->LogError( String( "File not found: " ) + path.string().c_str() );
+	return nullptr;
 }
 
 void FileSystem::CloseFileStream( FileStream * stream )

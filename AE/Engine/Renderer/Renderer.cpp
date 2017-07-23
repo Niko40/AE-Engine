@@ -134,6 +134,8 @@ Renderer::Renderer( Engine * engine, std::string application_name, uint32_t appl
 	FindQueueFamilies();
 	CreateDevice();
 	GetQueueHandles();
+	CreateDescriptorSetLayouts();
+	CreateGraphicsPipelineLayouts();
 
 	device_memory_manager		= MakeUniquePointer<DeviceMemoryManager>( p_engine, this );
 	device_resource_manager		= MakeUniquePointer<DeviceResourceManager>( p_engine, this, device_memory_manager.Get() );
@@ -155,6 +157,8 @@ Renderer::~Renderer()
 	device_resource_manager		= nullptr;
 	device_memory_manager		= nullptr;
 
+	DestroyGraphicsPipelineLayouts();
+	DestroyDescriptorSetLayouts();
 	DestroyDevice();
 	DestroyDebugReporting();
 	DestroyInstance();
@@ -210,6 +214,11 @@ vk::PhysicalDevice Renderer::GetVulkanPhysicalDevice() const
 VulkanDevice Renderer::GetVulkanDevice() const
 {
 	return vk_device;
+}
+
+vk::RenderPass Renderer::GetVulkanRenderPass() const
+{
+	return vk_render_pass;
 }
 
 DeviceMemoryManager * Renderer::GetDeviceMemoryManager() const
@@ -287,6 +296,32 @@ const vk::PhysicalDeviceFeatures & Renderer::GetPhysicalDeviceFeatures() const
 const vk::PhysicalDeviceLimits & Renderer::GetPhysicalDeviceLimits() const
 {
 	return physical_device_limits;
+}
+
+vk::PipelineLayout Renderer::GetVulkanGraphicsPipelineLayout( uint32_t supported_image_count ) const
+{
+	assert( supported_image_count <= BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT );
+	return vk_graphics_pipeline_layouts[ supported_image_count ];
+}
+
+vk::DescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForCamera() const
+{
+	return vk_descriptor_set_layout_for_camera;
+}
+
+vk::DescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForObject() const
+{
+	return vk_descriptor_set_layout_for_object;
+}
+
+vk::DescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForPipeline() const
+{
+	return vk_descriptor_set_layout_for_pipeline;
+}
+
+vk::DescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForImageBindingCount( uint32_t image_binding_count ) const
+{
+	return vk_descriptor_set_layouts_for_images[ image_binding_count ];
 }
 
 bool Renderer::IsFormatSupported( vk::ImageTiling tiling, vk::Format format, vk::FormatFeatureFlags feature_flags )
@@ -808,6 +843,7 @@ void Renderer::CreateSwapchain()
 	swapchain_CI.oldSwapchain			= nullptr;
 
 	{
+		// We don't have device resource threads at this points but better to be sure
 		LOCK_GUARD( *vk_device.mutex );
 		vk_swapchain	= vk_device.object.createSwapchainKHR( swapchain_CI );
 	}
@@ -818,14 +854,14 @@ void Renderer::CreateSwapchain()
 
 void Renderer::DestroySwapchain()
 {
-	{
-		LOCK_GUARD( *vk_device.mutex );
-		vk_device.object.destroySwapchainKHR( vk_swapchain );
-	}
+	// We don't have device resource threads at this points but better to be sure
+	LOCK_GUARD( *vk_device.mutex );
+	vk_device.object.destroySwapchainKHR( vk_swapchain );
 }
 
 void Renderer::CreateSwapchainImageViews()
 {
+	// We don't have device resource threads at this points but better to be sure
 	LOCK_GUARD( *vk_device.mutex );
 
 	// getting the images is easy one-liner so we'll just do it in here
@@ -856,6 +892,7 @@ void Renderer::CreateSwapchainImageViews()
 
 void Renderer::DestroySwapchainImageViews()
 {
+	// We don't have device resource threads at this points but better to be sure
 	LOCK_GUARD( *vk_device.mutex );
 
 	for( auto iv : swapchain_image_views ) {
@@ -912,6 +949,7 @@ void Renderer::CreateDepthStencilImageAndView()
 	image_CI.initialLayout			= vk::ImageLayout::eUndefined;
 
 	{
+		// We don't have device resource threads at this points but better to be sure
 		LOCK_GUARD( *vk_device.mutex );
 		depth_stencil_image				= vk_device.object.createImage( image_CI );
 	}
@@ -935,6 +973,7 @@ void Renderer::CreateDepthStencilImageAndView()
 	image_view_CI.subresourceRange.layerCount		= 1;
 
 	{
+		// We don't have device resource threads at this points but better to be sure
 		LOCK_GUARD( *vk_device.mutex );
 		depth_stencil_image_view	= vk_device.object.createImageView( image_view_CI );
 	}
@@ -946,6 +985,7 @@ void Renderer::CreateDepthStencilImageAndView()
 void Renderer::DestroyDepthStencilImageAndView()
 {
 	{
+		// We don't have device resource threads at this points but better to be sure
 		LOCK_GUARD( *vk_device.mutex );
 		vk_device.object.destroyImageView( depth_stencil_image_view );
 		vk_device.object.destroyImage( depth_stencil_image );
@@ -1002,6 +1042,7 @@ void Renderer::CreateRenderPass()
 	render_pass_CI.pDependencies		= nullptr;
 
 	{
+		// We don't have device resource threads at this points but better to be sure
 		LOCK_GUARD( *vk_device.mutex );
 		vk_render_pass					= vk_device.object.createRenderPass( render_pass_CI );
 	}
@@ -1012,12 +1053,14 @@ void Renderer::CreateRenderPass()
 
 void Renderer::DestroyRenderPass()
 {
+	// We don't have device resource threads at this points but better to be sure
 	LOCK_GUARD( *vk_device.mutex );
 	vk_device.object.destroyRenderPass( vk_render_pass );
 }
 
 void Renderer::CreateWindowFramebuffers()
 {
+	// We don't have device resource threads at this points but better to be sure
 	LOCK_GUARD( *vk_device.mutex );
 
 	vk_framebuffers.resize( swapchain_image_count );
@@ -1043,12 +1086,159 @@ void Renderer::CreateWindowFramebuffers()
 
 void Renderer::DestroyWindowFramebuffers()
 {
+	// We don't have device resource threads at this points but better to be sure
 	LOCK_GUARD( *vk_device.mutex );
 
 	for( auto fb : vk_framebuffers ) {
 		vk_device.object.destroyFramebuffer( fb );
 	}
 	vk_framebuffers.clear();
+}
+
+void Renderer::CreateDescriptorSetLayouts()
+{
+	// We don't have device resource threads at this points but better to be sure
+	LOCK_GUARD( *vk_device.mutex );
+
+	// Create camera descriptor set
+	{
+		// camera descriptor set only has one uniform buffer to send data to the vertex shader
+		vk::DescriptorSetLayoutBinding descriptor_set_bindings {};
+		descriptor_set_bindings.binding				= 0;
+		descriptor_set_bindings.descriptorType		= vk::DescriptorType::eUniformBuffer;
+		descriptor_set_bindings.descriptorCount		= 1;
+		descriptor_set_bindings.stageFlags			= vk::ShaderStageFlagBits::eVertex;
+		descriptor_set_bindings.pImmutableSamplers	= nullptr;
+
+		vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_CI {};
+		descriptor_set_layout_CI.flags				= vk::DescriptorSetLayoutCreateFlagBits( 0 );
+		descriptor_set_layout_CI.bindingCount		= 1;
+		descriptor_set_layout_CI.pBindings			= &descriptor_set_bindings;
+		vk_descriptor_set_layout_for_camera			= vk_device.object.createDescriptorSetLayout( descriptor_set_layout_CI );
+
+		if( !vk_descriptor_set_layout_for_camera ) {
+			p_logger->LogCritical( "Unable to create descriptor set layout for camera" );
+		}
+	}
+
+	// Create object descriptor set
+	{
+		// object descriptor set only has one uniform buffer to send data to the vertex shader
+		vk::DescriptorSetLayoutBinding descriptor_set_bindings {};
+		descriptor_set_bindings.binding				= 0;
+		descriptor_set_bindings.descriptorType		= vk::DescriptorType::eUniformBuffer;
+		descriptor_set_bindings.descriptorCount		= 1;
+		descriptor_set_bindings.stageFlags			= vk::ShaderStageFlagBits::eVertex;
+		descriptor_set_bindings.pImmutableSamplers	= nullptr;
+
+		vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_CI {};
+		descriptor_set_layout_CI.flags				= vk::DescriptorSetLayoutCreateFlagBits( 0 );
+		descriptor_set_layout_CI.bindingCount		= 1;
+		descriptor_set_layout_CI.pBindings			= &descriptor_set_bindings;
+		vk_descriptor_set_layout_for_object			= vk_device.object.createDescriptorSetLayout( descriptor_set_layout_CI );
+
+		if( !vk_descriptor_set_layout_for_object ) {
+			p_logger->LogCritical( "Unable to create descriptor set layout for object" );
+		}
+	}
+
+	// Create pipeline descriptor set
+	{
+		// pipeline descriptor set only has one uniform buffer to send data to the fragment shader
+		vk::DescriptorSetLayoutBinding descriptor_set_bindings {};
+		descriptor_set_bindings.binding				= 0;
+		descriptor_set_bindings.descriptorType		= vk::DescriptorType::eUniformBuffer;
+		descriptor_set_bindings.descriptorCount		= 1;
+		descriptor_set_bindings.stageFlags			= vk::ShaderStageFlagBits::eFragment;
+		descriptor_set_bindings.pImmutableSamplers	= nullptr;
+
+		vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_CI {};
+		descriptor_set_layout_CI.flags				= vk::DescriptorSetLayoutCreateFlagBits( 0 );
+		descriptor_set_layout_CI.bindingCount		= 1;
+		descriptor_set_layout_CI.pBindings			= &descriptor_set_bindings;
+		vk_descriptor_set_layout_for_pipeline		= vk_device.object.createDescriptorSetLayout( descriptor_set_layout_CI );
+
+		if( !vk_descriptor_set_layout_for_pipeline ) {
+			p_logger->LogCritical( "Unable to create descriptor set layout for pipeline" );
+		}
+	}
+
+	// Create image descriptor sets
+	vk_descriptor_set_layouts_for_images.resize( BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT + 1 );
+	for( uint32_t set=0; set <= BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT; ++set ) {
+		// image descriptor sets can have multiple bindings
+		// could also do this with as image arrays...
+		Vector<vk::DescriptorSetLayoutBinding> descriptor_set_bindings( set );
+		for( uint32_t binding=0; binding < set; ++binding ) {
+			descriptor_set_bindings[ binding ].binding				= binding;
+			descriptor_set_bindings[ binding ].descriptorType		= vk::DescriptorType::eCombinedImageSampler;
+			descriptor_set_bindings[ binding ].descriptorCount		= 1;
+			descriptor_set_bindings[ binding ].stageFlags			= vk::ShaderStageFlagBits::eFragment;
+			descriptor_set_bindings[ binding ].pImmutableSamplers	= nullptr;
+		}
+
+		vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_CI {};
+		descriptor_set_layout_CI.flags				= vk::DescriptorSetLayoutCreateFlagBits( 0 );
+		descriptor_set_layout_CI.bindingCount		= uint32_t( descriptor_set_bindings.size() );
+		descriptor_set_layout_CI.pBindings			= descriptor_set_bindings.data();
+		vk_descriptor_set_layouts_for_images[ set ]	= vk_device.object.createDescriptorSetLayout( descriptor_set_layout_CI );
+
+		if( !vk_descriptor_set_layouts_for_images[ set ] ) {
+			p_logger->LogCritical( "Unable to create descriptor set layout for image" );
+		}
+	}
+}
+
+void Renderer::DestroyDescriptorSetLayouts()
+{
+	// We don't have device resource threads at this points but better to be sure
+	LOCK_GUARD( *vk_device.mutex );
+
+	vk_device.object.destroyDescriptorSetLayout( vk_descriptor_set_layout_for_camera );
+	vk_device.object.destroyDescriptorSetLayout( vk_descriptor_set_layout_for_object );
+	vk_device.object.destroyDescriptorSetLayout( vk_descriptor_set_layout_for_pipeline );
+	for( auto & d : vk_descriptor_set_layouts_for_images ) {
+		vk_device.object.destroyDescriptorSetLayout( d );
+	}
+	vk_descriptor_set_layouts_for_images.clear();
+}
+
+void Renderer::CreateGraphicsPipelineLayouts()
+{
+	// We don't have device resource threads at this points but better to be sure
+	LOCK_GUARD( *vk_device.mutex );
+
+	vk_graphics_pipeline_layouts.resize( BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT + 1 );
+	for( uint32_t pl=0; pl <= BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT; ++pl ) {
+		Vector<vk::DescriptorSetLayout>		layouts;
+		layouts.reserve( 4 );
+		layouts.push_back( vk_descriptor_set_layout_for_camera );
+		layouts.push_back( vk_descriptor_set_layout_for_object );
+		layouts.push_back( vk_descriptor_set_layout_for_pipeline );
+		layouts.push_back( vk_descriptor_set_layouts_for_images[ pl ] );
+
+		vk::PipelineLayoutCreateInfo layout_CI {};
+		layout_CI.setLayoutCount			= uint32_t( layouts.size() );
+		layout_CI.pSetLayouts				= layouts.data();
+		layout_CI.pushConstantRangeCount	= 0;			// push constants not used by this engine at this time
+		layout_CI.pPushConstantRanges		= nullptr;
+
+		vk_graphics_pipeline_layouts[ pl ]	= vk_device.object.createPipelineLayout( layout_CI );
+		if( !vk_graphics_pipeline_layouts[ pl ] ) {
+			p_logger->LogCritical( "Unable to create graphics pipeline layout" );
+		}
+	}
+}
+
+void Renderer::DestroyGraphicsPipelineLayouts()
+{
+	// We don't have device resource threads at this points but better to be sure
+	LOCK_GUARD( *vk_device.mutex );
+
+	for( auto & l : vk_graphics_pipeline_layouts ) {
+		vk_device.object.destroyPipelineLayout( l );
+		l	= nullptr;
+	}
 }
 
 Renderer::UsedQueuesFlags operator|( Renderer::UsedQueuesFlags f1, Renderer::UsedQueuesFlags f2 )

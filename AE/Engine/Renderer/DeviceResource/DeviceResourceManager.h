@@ -24,6 +24,7 @@ class DeviceMemoryManager;
 class DeviceResource;
 
 // 1: Add device resource declarations here
+class DeviceResource_GraphicsPipeline;
 class DeviceResource_Mesh;
 class DeviceResource_Image;
 
@@ -40,8 +41,9 @@ public:
 	DeviceResourceHandle<DeviceResource>		RequestResource( DeviceResource::Type resource_type, const Vector<Path> & file_resource_paths, DeviceResource::Flags resource_flags = DeviceResource::Flags( 0 ) );
 
 	// 2: Add device resource specialized request functions here
-	DeviceResourceHandle<DeviceResource_Mesh>	RequestResource_Mesh( const Vector<Path> & file_resource_paths, DeviceResource::Flags resource_flags = DeviceResource::Flags( 0 ) );
-	DeviceResourceHandle<DeviceResource_Image>	RequestResource_Image( const Vector<Path> & file_resource_paths, DeviceResource::Flags resource_flags = DeviceResource::Flags( 0 ) );
+	DeviceResourceHandle<DeviceResource_Mesh>					RequestResource_Mesh( const Vector<Path> & file_resource_paths, DeviceResource::Flags resource_flags = DeviceResource::Flags( 0 ) );
+	DeviceResourceHandle<DeviceResource_Image>					RequestResource_Image( const Vector<Path> & file_resource_paths, DeviceResource::Flags resource_flags = DeviceResource::Flags( 0 ) );
+	DeviceResourceHandle<DeviceResource_GraphicsPipeline>		RequestResource_GraphicsPipeline( const Vector<Path> & file_resource_paths, DeviceResource::Flags resource_flags = DeviceResource::Flags( 0 ) );
 
 	void										SignalWorkers_One();
 	void										SignalWorkers_All();

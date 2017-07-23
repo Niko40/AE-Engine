@@ -16,6 +16,7 @@ namespace AE
 {
 
 class Engine;
+class DeviceResource_GraphicsPipeline;
 class DeviceResource_Mesh;
 class DeviceResource_Image;
 
@@ -25,11 +26,12 @@ public:
 	struct ImageInfo
 	{
 		Array<DeviceResourceHandle<DeviceResource_Image>, BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT>		image_resources;
+		int32_t																							image_count			= -1;
 	};
 
 	struct RenderInfo
 	{
-//		DeviceResourceHandle<DeviceResource_Pipeline>				pipeline_resource;
+		DeviceResourceHandle<DeviceResource_GraphicsPipeline>		graphics_pipeline_resource;
 		ImageInfo							image_info				= {};
 	};
 

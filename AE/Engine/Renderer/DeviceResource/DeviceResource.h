@@ -20,7 +20,9 @@ namespace AE
 {
 
 class Engine;
+class Logger;
 class Renderer;
+class FileResourceManager;
 class DeviceMemoryManager;
 class DeviceResourceManager;
 template<typename T>
@@ -45,6 +47,9 @@ public:
 		UNDEFINED				= 0,
 
 		// 2: Add device resource types here
+		GRAPHICS_PIPELINE,
+//		COMPUTE_PIPELINE,
+
 		MESH,
 		IMAGE,
 	};
@@ -136,16 +141,18 @@ protected:
 	State						GetState();
 	void						SetState( DeviceResource::State new_state );
 
-	// MUST BE SET IF BEFORE EXITING Load() function or previous call to next unload operation if these functions return CONTINUE_LOADING
+	// MUST BE SET BEFORE EXITING Load() function or previous call to next unload operation if these functions return CONTINUE_LOADING
 	// test function must return true before the operation function is called by the device resource manager
 	void						SetNextLoadOperation( std::function<bool( DeviceResource* )> test, std::function<LoadingState( DeviceResource* )> operation );
 
-	// MUST BE SET IF BEFORE EXITING Unload() function or previous call to next unload operation if these functions return CONTINUE_UNLOADING
+	// MUST BE SET BEFORE EXITING Unload() function or previous call to next unload operation if these functions return CONTINUE_UNLOADING
 	// test function must return true before the operation function is called by the device resource manager
 	void						SetNextUnloadOperation( std::function<bool( DeviceResource* )> test, std::function<UnloadingState( DeviceResource* )> operation );
 
 	Engine					*	p_engine						= nullptr;
+	Logger					*	p_logger						= nullptr;
 	Renderer				*	p_renderer						= nullptr;
+	FileResourceManager		*	p_file_resource_manager			= nullptr;
 	DeviceResourceManager	*	p_device_resource_manager		= nullptr;
 	DeviceMemoryManager		*	p_device_memory_manager			= nullptr;
 
@@ -214,7 +221,7 @@ private:
 	template<typename R>
 	DeviceResourceHandle( R * resource )
 	{
-//		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
+		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
 		assert( nullptr != resource );
 		resource->IncrementUsers();
 		Destroy();
@@ -227,7 +234,7 @@ public:
 	template<typename R>
 	DeviceResourceHandle( DeviceResourceHandle<R> & other )
 	{
-//		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
+		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
 		if( res_handle != other.res_handle ) {
 			other.res_handle->IncrementUsers();
 			Destroy();
@@ -237,7 +244,7 @@ public:
 	template<typename R>
 	DeviceResourceHandle( DeviceResourceHandle<R> && other )
 	{
-//		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
+		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
 		Swap( res_handle, other.res_handle );
 	}
 
@@ -253,7 +260,7 @@ public:
 	template<typename R>
 	void operator=( DeviceResourceHandle<R> & other )
 	{
-//		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
+		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
 		if( res_handle != other.res_handle ) {
 			other.res_handle->IncrementUsers();
 			Destroy();
@@ -263,7 +270,7 @@ public:
 	template<typename R>
 	void operator=( DeviceResourceHandle<R> && other )
 	{
-//		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
+		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
 		Swap( res_handle, other.res_handle );
 	}
 	void operator=( nullptr_t )
@@ -276,7 +283,7 @@ public:
 	template<typename R>
 	bool operator==( const FileResourceHandle<R> & other ) const
 	{
-//		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
+		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
 		return ( res_handle == other.res_handle );
 	}
 	bool operator==( const FileResource * resource ) const
@@ -286,7 +293,7 @@ public:
 	template<typename R>
 	bool operator!=( const FileResourceHandle<R> & other ) const
 	{
-//		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
+		static_assert( std::is_base_of<DeviceResource, R>::value, "Not base of DeviceResource" );
 		return ( res_handle != other.res_handle );
 	}
 	bool operator!=( const FileResource * resource ) const

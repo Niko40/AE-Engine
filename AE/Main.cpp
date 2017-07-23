@@ -7,12 +7,6 @@
 
 #include "Engine/IncludeAll.h"
 
-struct data
-{
-	int i = 50;
-	int a = 10;
-};
-
 int main( int argc, char ** argv )
 {
 	// parse arguments into a vector

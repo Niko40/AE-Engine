@@ -11,6 +11,7 @@
 // To add a device resource seek steps 1 and 2
 
 // 1: include all device resources here
+#include "GraphicsPipeline\DeviceResource_GraphicsPipeline.h"
 #include "Image/DeviceResource_Image.h"
 #include "Mesh/DeviceResource_Mesh.h"
 
@@ -197,6 +198,8 @@ void DeviceWorkerThread( Engine * engine, DeviceResourceManager * device_resourc
 						while( it != device_resource_manager->resources_list.end() ) {
 							auto & res = *it;
 							std::lock_guard<std::mutex> resource_guard( res->mutex );
+							// only unload a resource if it's users match to 0 AND the resource was created using this same thread originally
+							// thread id check is mandatory for some resources depend on per-thread vulkan memory or buffer pools
 							if( res->users == 0 && res->locked_worker_thread_id == std::this_thread::get_id() ) {
 								if( res->state != DeviceResource::State::LOADING && res->state != DeviceResource::State::LOADING_QUEUED ) {
 									res->state		= DeviceResource::State::UNLOADING;
@@ -450,6 +453,11 @@ DeviceResourceHandle<DeviceResource_Image> DeviceResourceManager::RequestResourc
 	return DeviceResourceHandle<DeviceResource_Image>( RequestResource( AE::DeviceResource::Type::IMAGE, file_resource_paths, resource_flags ) );
 }
 
+DeviceResourceHandle<DeviceResource_GraphicsPipeline> DeviceResourceManager::RequestResource_GraphicsPipeline( const Vector<Path>& file_resource_paths, DeviceResource::Flags resource_flags )
+{
+	return DeviceResourceHandle<DeviceResource_GraphicsPipeline>( RequestResource( AE::DeviceResource::Type::GRAPHICS_PIPELINE, file_resource_paths, resource_flags ) );
+}
+
 void DeviceResourceManager::SignalWorkers_One()
 {
 	worker_threads_wakeup.notify_one();
@@ -467,8 +475,26 @@ void DeviceResourceManager::ParsePreloadList()
 	while( pl_it != preload_list.end() ) {
 		bool file_resources_ready		= true;
 		for( auto & f : ( *pl_it )->file_resources ) {
-			if( !f->IsReadyForUse() ) {
+			// check each file resource within this device resource if they're ready
+			auto current_file_resource_state		= f->GetState();
+			if( current_file_resource_state != FileResource::State::LOADED ) {
 				file_resources_ready	= false;
+				// check if an error happened
+				if( current_file_resource_state == FileResource::State::UNABLE_TO_LOAD ||
+					current_file_resource_state == FileResource::State::UNABLE_TO_LOAD_FILE_NOT_FOUND ) {
+					// if unable to load any of the file resources, we just remove this device resource from
+					// the preload_list, we hang on to the resource handle as usual until it's reference counter reaches 0
+					// ( already in resource_list )
+					{
+						LOCK_GUARD( ( *pl_it )->mutex );
+						// Assign a random worker thread id so that the resource gets destroyed and won't hang the program
+						( *pl_it )->locked_worker_thread_id		= worker_threads[ rand() % BUILD_DEVICE_RESOURCE_MANAGER_WORKER_THREAD_COUNT ].get_id();
+						( *pl_it )->state						= DeviceResource::State::UNABLE_TO_LOAD;
+					}
+					pl_it										= preload_list.erase( pl_it );
+					// side effect: this skips the next resource on the list because
+					// pl_it practically gets incremented twice, not worth fixing though
+				}
 				break;
 			}
 		}
@@ -713,6 +739,9 @@ UniquePointer<DeviceResource> DeviceResourceManager::CreateResource( DeviceResou
 	switch( resource_type ) {
 
 		// 2: Create all individual device resources here
+	case AE::DeviceResource::Type::GRAPHICS_PIPELINE:
+		return MakeUniquePointer<DeviceResource_GraphicsPipeline>( p_engine, resource_flags );
+
 	case AE::DeviceResource::Type::MESH:
 		return MakeUniquePointer<DeviceResource_Mesh>( p_engine, resource_flags );
 

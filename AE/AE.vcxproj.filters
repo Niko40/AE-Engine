@@ -89,6 +89,9 @@
     <Filter Include="Engine\FileResource\Lua">
       <UniqueIdentifier>{05d46359-fc0d-47b5-8fb7-a1f0f690956e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Renderer\DeviceResource\GraphicsPipeline">
+      <UniqueIdentifier>{4300b9fb-a16c-4683-9107-4594eaff7d43}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Engine.cpp">
@@ -190,6 +193,9 @@
     </ClCompile>
     <ClCompile Include="Engine\World\Scene\SceneNodeBase.cpp">
       <Filter>Engine\World\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Renderer\DeviceResource\GraphicsPipeline\DeviceResource_GraphicsPipeline.cpp">
+      <Filter>Engine\Renderer\DeviceResource\GraphicsPipeline</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -316,9 +322,19 @@
     <ClInclude Include="Engine\World\Scene\SceneNodeBase.h">
       <Filter>Engine\World\Scene</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Renderer\DeviceResource\GraphicsPipeline\DeviceResource_GraphicsPipeline.h">
+      <Filter>Engine\Renderer\DeviceResource\GraphicsPipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\FileResource\Mesh\MeshInfo.h">
+      <Filter>Engine\FileResource\Mesh</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Xml Include="..\install\data\shaders\default\default.xml" />
     <Xml Include="..\install\data\scene_nodes\objects\shapes\torus_knot.xml" />
+    <Xml Include="..\install\data\graphics_pipelines\default\default.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\install\data\graphics_pipelines\default\default.frag" />
+    <None Include="..\install\data\graphics_pipelines\default\default.vert" />
   </ItemGroup>
 </Project>
