@@ -1,14 +1,25 @@
 #version 450
 
-layout(location=0) in vec3 Fragment_Color;
-layout(location=1) in vec2 Fragment_UV;
 
-layout(set=2, binding=0) uniform sampler2D tex;
+// uniform buffers and images input
+layout(set=2, binding=0) uniform PipelineData
+{
+	mat4 todo;
+} pipeline_data;
 
-layout(location=0) out vec4 FinalColor;
+layout(set=3, binding=0) uniform sampler2D diffuse;
 
+
+// input from other shader stages
+layout(location=0) in vec2 fragment_uv;
+
+
+// output of final colors
+layout(location=0) out vec4 final_color;
+
+
+// main entry function to shader
 void main()
 {
-	FinalColor = vec4( Fragment_Color, 1.0f );
-	FinalColor = texture( tex, Fragment_UV );
+	final_color = texture( diffuse, fragment_uv );
 }

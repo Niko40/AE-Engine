@@ -19,6 +19,8 @@ public:
 	DeviceResource_GraphicsPipeline( Engine * engine, DeviceResource::Flags resource_flags );
 	~DeviceResource_GraphicsPipeline();
 
+	uint32_t									GetImageCount() const;
+
 private:
 	LoadingState								Load();
 	UnloadingState								Unload();
@@ -36,6 +38,9 @@ private:
 	FileResourceHandle<FileResource_RawData>	tessellation_evaluation_shader_resource;
 	FileResourceHandle<FileResource_RawData>	geometry_shader_resource;
 	FileResourceHandle<FileResource_RawData>	fragment_shader_resource;
+
+	// this is the amount of images the pipeline uses in the shaders
+	uint32_t									image_count									= 0;
 
 	Vector<vk::DynamicState>					dynamic_states;
 };

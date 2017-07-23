@@ -21,6 +21,11 @@ DeviceResource_GraphicsPipeline::~DeviceResource_GraphicsPipeline()
 {
 }
 
+uint32_t DeviceResource_GraphicsPipeline::GetImageCount() const
+{
+	return image_count;
+}
+
 bool ContinueGraphicsPipelineLoadTest_1( DeviceResource * resource )
 {
 	auto res			= static_cast<DeviceResource_GraphicsPipeline*>( resource );
@@ -76,6 +81,11 @@ DeviceResource::LoadingState ContinueGraphicsPipelineLoad_1( DeviceResource * re
 
 	// Graphics shaders
 	Vector<vk::PipelineShaderStageCreateInfo>				shader_stages;
+	String vert_shader_entry_point;
+	String tesc_shader_entry_point;
+	String tese_shader_entry_point;
+	String geom_shader_entry_point;
+	String frag_shader_entry_point;
 	{
 		auto xml_shaders									= xml_root->FirstChildElement( "SHADERS" );
 		if( !xml_shaders ) {
@@ -136,13 +146,18 @@ DeviceResource::LoadingState ContinueGraphicsPipelineLoad_1( DeviceResource * re
 		auto tese_iter			= entry_points.find( "tessellation_evaluation" );
 		auto geom_iter			= entry_points.find( "geometry" );
 		auto frag_iter			= entry_points.find( "fragment" );
+		vert_shader_entry_point		= ( vert_iter != entry_points.end() ) ? std::move( vert_iter->second ) : "main";
+		tesc_shader_entry_point		= ( tesc_iter != entry_points.end() ) ? std::move( tesc_iter->second ) : "main";
+		tese_shader_entry_point		= ( tese_iter != entry_points.end() ) ? std::move( tese_iter->second ) : "main";
+		geom_shader_entry_point		= ( geom_iter != entry_points.end() ) ? std::move( geom_iter->second ) : "main";
+		frag_shader_entry_point		= ( frag_iter != entry_points.end() ) ? std::move( frag_iter->second ) : "main";
 
 		if( res->vk_vertex_shader_module ) {
 			shader_stages.push_back( {} );
 			auto & stage				= shader_stages.back();
 			stage.stage					= vk::ShaderStageFlagBits::eVertex;
 			stage.module				= res->vk_vertex_shader_module;
-			stage.pName					= ( vert_iter != entry_points.end() ) ? vert_iter->second.c_str() : "main";
+			stage.pName					= vert_shader_entry_point.c_str();
 			stage.pSpecializationInfo	= nullptr;	// not used at this time
 		}
 		if( res->vk_tessellation_control_shader_module ) {
@@ -150,7 +165,7 @@ DeviceResource::LoadingState ContinueGraphicsPipelineLoad_1( DeviceResource * re
 			auto & stage				= shader_stages.back();
 			stage.stage					= vk::ShaderStageFlagBits::eTessellationControl;
 			stage.module				= res->vk_tessellation_control_shader_module;
-			stage.pName					= ( tesc_iter != entry_points.end() ) ? tesc_iter->second.c_str() : "main";
+			stage.pName					= tesc_shader_entry_point.c_str();
 			stage.pSpecializationInfo	= nullptr;	// not used at this time
 		}
 		if( res->vk_tessellation_evaluation_shader_module ) {
@@ -158,7 +173,7 @@ DeviceResource::LoadingState ContinueGraphicsPipelineLoad_1( DeviceResource * re
 			auto & stage				= shader_stages.back();
 			stage.stage					= vk::ShaderStageFlagBits::eTessellationEvaluation;
 			stage.module				= res->vk_tessellation_evaluation_shader_module;
-			stage.pName					= ( tese_iter != entry_points.end() ) ? tese_iter->second.c_str() : "main";
+			stage.pName					= tese_shader_entry_point.c_str();
 			stage.pSpecializationInfo	= nullptr;	// not used at this time
 		}
 		if( res->vk_geometry_shader_module ) {
@@ -166,7 +181,7 @@ DeviceResource::LoadingState ContinueGraphicsPipelineLoad_1( DeviceResource * re
 			auto & stage				= shader_stages.back();
 			stage.stage					= vk::ShaderStageFlagBits::eGeometry;
 			stage.module				= res->vk_geometry_shader_module;
-			stage.pName					= ( geom_iter != entry_points.end() ) ? geom_iter->second.c_str() : "main";
+			stage.pName					= geom_shader_entry_point.c_str();
 			stage.pSpecializationInfo	= nullptr;	// not used at this time
 		}
 		if( res->vk_fragment_shader_module ) {
@@ -174,7 +189,7 @@ DeviceResource::LoadingState ContinueGraphicsPipelineLoad_1( DeviceResource * re
 			auto & stage				= shader_stages.back();
 			stage.stage					= vk::ShaderStageFlagBits::eFragment;
 			stage.module				= res->vk_fragment_shader_module;
-			stage.pName					= ( frag_iter != entry_points.end() ) ? frag_iter->second.c_str() : "main";
+			stage.pName					= frag_shader_entry_point.c_str();
 			stage.pSpecializationInfo	= nullptr;	// not used at this time
 		}
 	}
@@ -523,6 +538,19 @@ DeviceResource::LoadingState ContinueGraphicsPipelineLoad_1( DeviceResource * re
 	}
 
 
+	res->image_count					= uint32_t( xml_file->GetFieldValue_Int64( xml_root, "image_count", 0 ) );
+	if( res->image_count > BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT ) {
+		std::stringstream ss;
+		ss << "Graphics pipeline xml file: "
+			<< xml_file->GetPath().string()
+			<< " <image_count> exceeds maximum of "
+			<< BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT
+			<< " images past maximum are ignored and may result to undefined behaviour in the shader\n";
+		res->p_logger->LogWarning( ss.str() );
+		assert( 0 && "Image count exceeded" );
+		res->image_count = BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT - 1;
+	}
+
 	vk::GraphicsPipelineCreateInfo pipeline_CI {};
 	pipeline_CI.flags					= vulkan_flags;
 	pipeline_CI.stageCount				= uint32_t( shader_stages.size() );
@@ -536,7 +564,7 @@ DeviceResource::LoadingState ContinueGraphicsPipelineLoad_1( DeviceResource * re
 	pipeline_CI.pDepthStencilState		= &depth_stencil_state_CI;
 	pipeline_CI.pColorBlendState		= &color_blend_state_CI;
 	pipeline_CI.pDynamicState			= &dynamic_state_CI;
-	pipeline_CI.layout					= nullptr;
+	pipeline_CI.layout					= res->p_renderer->GetVulkanGraphicsPipelineLayout( res->image_count );
 	pipeline_CI.renderPass				= res->p_renderer->GetVulkanRenderPass();
 	pipeline_CI.subpass					= 0; TODO( "G-buffers, pipeline working either with G-buffers or final render" );
 	pipeline_CI.basePipelineHandle		= nullptr;
@@ -628,6 +656,7 @@ DeviceResource::UnloadingState DeviceResource_GraphicsPipeline::Unload()
 	geometry_shader_resource					= nullptr;
 	fragment_shader_resource					= nullptr;
 
+	image_count									= 0;
 	dynamic_states.clear();
 	return UnloadingState::UNLOADED;
 }

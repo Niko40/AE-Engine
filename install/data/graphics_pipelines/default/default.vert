@@ -1,26 +1,33 @@
 #version 450
 
-layout(location=0) in vec3 Vertex_Location;
-layout(location=1) in vec3 Vertex_Color;
-layout(location=2) in vec2 Vertex_UV;
 
-layout(set=0, binding=0) uniform ShaderData_Camera
+// vertex input
+layout(location=0) in vec3 vertex_location;
+layout(location=1) in vec3 vertex_normal;
+layout(location=2) in vec2 vertex_uv;
+layout(location=3) in int vertex_material_index;
+
+
+// uniform buffers input
+layout(set=0, binding=0) uniform CameraData
 {
-	mat4 View_Matrix;
-	mat4 Projection_Matrix;
-} shader_data_camera;
+	mat4 view_matrix;
+	mat4 projection_matrix;
+} camera_data;
 
-layout(set=1, binding=0) uniform ShaderData_Object
+layout(set=1, binding=0) uniform ObjectData
 {
-	mat4 Model_Matrix;
-} shader_data_object;
+	mat4 model_matrix;
+} object_data;
 
-layout(location=0) out vec3 Fragment_Color;
-layout(location=1) out vec2 Fragment_UV;
 
+// output to other shader stages
+layout(location=0) out vec2 fragment_uv;
+
+
+// main entry function to shader
 void main()
 {
-	Fragment_Color 	= Vertex_Color;
-	Fragment_UV		= Vertex_UV;
-	gl_Position		= shader_data_camera.Projection_Matrix * shader_data_camera.View_Matrix * shader_data_object.Model_Matrix * vec4( Vertex_Location, 1.0f );
+	fragment_uv		= vertex_uv;
+	gl_Position		= camera_data.projection_matrix * camera_data.view_matrix * object_data.model_matrix * vec4( vertex_location, 1.0f );
 }

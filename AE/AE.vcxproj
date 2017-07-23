@@ -96,6 +96,10 @@
     <Xml Include="..\install\data\graphics_pipelines\default\default.xml" />
     <Xml Include="..\install\data\scene_nodes\objects\shapes\torus_knot.xml" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\install\data\graphics_pipelines\default\default.frag" />
+    <None Include="..\install\data\graphics_pipelines\default\default.vert" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{9A694D7D-931E-4E14-8110-9F129A9832EF}</ProjectGuid>
     <RootNamespace>AE</RootNamespace>

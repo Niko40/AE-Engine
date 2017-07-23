@@ -9,6 +9,10 @@
   -->
   <flags f1="DISABLE_OPTIMIZATION_BIT" />
 
+  <!--How many images are we using in this pipeline, this directly affects how
+  many image bindings on set number 3 we can have in the shaders, default is 0 ( no images )-->
+  <image_count value="1"/>
+
   <SHADERS>
     <!--
     shader paths example with all possible shader stages set
@@ -233,7 +237,4 @@
     For now I'll keep it in here for experimentation purposes-->
     <states f1="" />
   </DYNAMIC_STATES>
-  
-  <!--other shader options here whenever I figure them out TODO-->
-  
 </GRAPHICS_PIPELINE>

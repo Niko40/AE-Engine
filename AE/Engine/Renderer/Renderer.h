@@ -83,6 +83,12 @@ public:
 	const vk::PhysicalDeviceFeatures	&	GetPhysicalDeviceFeatures() const;
 	const vk::PhysicalDeviceLimits		&	GetPhysicalDeviceLimits() const;
 
+	vk::PipelineLayout						GetVulkanGraphicsPipelineLayout( uint32_t supported_image_count ) const;
+	vk::DescriptorSetLayout					GetVulkanDescriptorSetLayoutForCamera() const;
+	vk::DescriptorSetLayout					GetVulkanDescriptorSetLayoutForObject() const;
+	vk::DescriptorSetLayout					GetVulkanDescriptorSetLayoutForPipeline() const;
+	vk::DescriptorSetLayout					GetVulkanDescriptorSetLayoutForImageBindingCount( uint32_t image_binding_count ) const;
+
 	bool									IsFormatSupported( vk::ImageTiling tiling, vk::Format format, vk::FormatFeatureFlags feature_flags );
 
 private:
@@ -122,6 +128,12 @@ private:
 
 	void									CreateWindowFramebuffers();
 	void									DestroyWindowFramebuffers();
+
+	void									CreateDescriptorSetLayouts();
+	void									DestroyDescriptorSetLayouts();
+
+	void									CreateGraphicsPipelineLayouts();
+	void									DestroyGraphicsPipelineLayouts();
 
 
 	WindowManager						*	p_window								= nullptr;
@@ -192,6 +204,18 @@ private:
 	vk::RenderPass							vk_render_pass							= nullptr;
 
 	Vector<vk::Framebuffer>					vk_framebuffers;
+
+	// related to graphics pipeline layouts
+	vk::DescriptorSetLayout					vk_descriptor_set_layout_for_camera		= nullptr;
+	vk::DescriptorSetLayout					vk_descriptor_set_layout_for_object		= nullptr;
+	vk::DescriptorSetLayout					vk_descriptor_set_layout_for_pipeline	= nullptr;
+	Vector<vk::DescriptorSetLayout>			vk_descriptor_set_layouts_for_images;
+
+	// graphics pipeline layouts, we only deal with static sets so we don't need a custom layout per pipeline
+	// only thing that can change in a set is the amount of textures,
+	// for only 1 texture, choose layout at index 0, for 2 textures, choose layout at index 1...
+	// the amount of layouts matches BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT
+	Vector<vk::PipelineLayout>				vk_graphics_pipeline_layouts;
 
 	VkDebugReportCallbackEXT				debug_report_callback					= VK_NULL_HANDLE;
 	VkDebugReportCallbackCreateInfoEXT		debug_report_callback_create_info		= {};

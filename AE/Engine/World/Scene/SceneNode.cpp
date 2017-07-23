@@ -75,6 +75,7 @@ tinyxml2::XMLElement * SceneNode::ParseConfigFile_SceneNodeSection()
 		mesh.scale.z		= ( scale.find( "z" ) != scale.end() ) ? scale[ "z" ] : 1;
 
 		// handle render info
+		mesh.render_info.image_info.image_count		= -1;
 		auto xml_render_info	= config_file->GetChildElement( xml_mesh, "RENDER_INFO" );
 		if( nullptr != xml_render_info ) {
 			TODO( "Pipeline resources" );
@@ -84,14 +85,17 @@ tinyxml2::XMLElement * SceneNode::ParseConfigFile_SceneNodeSection()
 			auto xml_images	= config_file->GetChildElement( xml_render_info, "IMAGES" );
 			if( nullptr != xml_images ) {
 				for( auto i = xml_images->FirstChildElement( "image" ); i; i = i->NextSiblingElement( "image" ) ) {
-					auto attr_index		= i->Attribute( "index" );
+					auto attr_binding	= i->Attribute( "binding" );
 					auto attr_path		= i->Attribute( "path" );
-					if( nullptr != attr_index && nullptr != attr_path ) {
-						mesh.render_info.image_info.image_resources[ i->Int64Attribute( "index" ) ]	= p_device_resource_manager->RequestResource_Image( { attr_path } );
+					if( nullptr != attr_binding && nullptr != attr_path ) {
+						auto index		= i->Int64Attribute( "binding", 0 );
+						mesh.render_info.image_info.image_resources[ index ]	= p_device_resource_manager->RequestResource_Image( { attr_path } );
+						mesh.render_info.image_info.image_count					= std::max( mesh.render_info.image_info.image_count, int32_t( index ) );
 					}
 				}
 			}
 		}
+		mesh.render_info.image_info.image_count++;
 	}
 
 	return xml_root;

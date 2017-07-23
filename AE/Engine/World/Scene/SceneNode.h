@@ -26,6 +26,7 @@ public:
 	struct ImageInfo
 	{
 		Array<DeviceResourceHandle<DeviceResource_Image>, BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT>		image_resources;
+		int32_t																							image_count			= -1;
 	};
 
 	struct RenderInfo

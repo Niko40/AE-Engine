@@ -18,7 +18,9 @@
     <RENDER_INFO>
       <graphics_pipeline_path value ="data/graphics_pipelines/default/default.xml" />
       <IMAGES>
-        <image index="0" path="data/images/shapes/torus_knot.diff.png" />
+        <!--individual images are introduced like this
+        Note that the binding is exactly the binding value in the shader-->
+        <image binding="0" path="data/images/shapes/torus_knot.diff.png" />
       </IMAGES>
     </RENDER_INFO>
   </MESH>
