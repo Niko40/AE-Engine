@@ -6,27 +6,10 @@
 #include "../../Math/Math.h"
 
 #include "../FileResource.h"
+#include "MeshInfo.h"
 
 namespace AE
 {
-
-struct Vertex
-{
-	glm::vec3	position;
-	glm::vec3	normal;
-	glm::vec2	uv;
-	int			material;
-};
-
-struct CopyVertex
-{
-	int32_t		copy_from_index;
-};
-
-struct Polygon
-{
-	int32_t		indices[ 3 ];
-};
 
 class FileResource_Mesh : public FileResource
 {

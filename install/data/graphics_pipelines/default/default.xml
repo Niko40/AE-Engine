@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<GRAPHICS_PIPELINE>
+  <name>Default Pipeline</name>
+  <!--
+  flags cares little about the name of the attribute, only the values, it counts them all and bit or's them together ( f1 | f2 | ... )
+  example with all possible flags set:
+  <flags f1="DISABLE_OPTIMIZATION_BIT" f2="ALLOW_DERIVATIVES_BIT" f3="DERIVATIVE_BIT" />
+  -->
+  <flags f1="DISABLE_OPTIMIZATION_BIT" />
+
+  <SHADERS>
+    <!--
+    shader paths example with all possible shader stages set
+    <paths
+      vertex="vert.spv"
+      tessellation_control="tesc.spv"
+      tessellation_evaluation="tese.spv"
+      geometry="geom.spv"
+      fragment="frag.spv"/>
+      -->
+    
+    <!--You only need to include stages that you need, as usual at least vertex and fragment shaders are required-->
+    <paths
+      vertex="data/graphics_pipelines/default/default.vert.spv"
+      fragment="data/graphics_pipelines/default/default.frag.spv"/>
+    
+    <!--Same prinsiple as with shader_paths, define entry points for every shader, "main" is default if not set-->
+    <entry_points
+      vertex="main"
+      fragment="main"/>
+  </SHADERS>
+
+  <INPUT_ASSEMBLY>
+    <!--
+    topology tells how the triangles are created, default value, and the fallback is TRIANGLE_LIST
+    all possible values:
+    POINT_LIST
+    LINE_LIST
+    LINE_STRIP
+    TRIANGLE_LIST     <- default
+    TRIANGLE_STRIP
+    TRIANGLE_FAN
+    LINE_LIST_WITH_ADJACENCY
+    LINE_STRIP_WITH_ADJACENCY
+    TRIANGLE_LIST_WITH_ADJACENCY
+    TRIANGLE_STRIP_WITH_ADJACENCY
+    -->
+    <topology value="TRIANGLE_LIST"/>
+    
+    <!--Restart primitive drawing if the index list includes a special value,
+    that value is UINT32_MAX, by default this will be disabled-->
+    <primitive_restart_enable value="false"/>
+  </INPUT_ASSEMBLY>
+  
+  <!--tessellation state, this is ignored if either tessellation control or evaluation shaders are missing-->
+  <TESSELLATION>
+    <!--this is the amount of control points given to the tessellation control shader, default is 3
+    this is also automatically clamped to the maximum supported limit of the GPU this runs on,
+    Vulkan guarantees that the maximum patch control points value is at least 32-->
+    <patch_control_points value="3"/>
+  </TESSELLATION>
+
+  <!--rasterization state-->
+  <RASTERIZATION>
+    <!--Clamp the fragment depth values instead of clipping them, default is false,
+    in which case fragments outside depth boundaries will not be rendered-->
+    <depth_clamp_enable value="false"/>
+    
+    <!--Discard primitives immediately before rasterization state, default is false-->
+    <rasterizer_discard_enable value="false"/>
+    
+    <!--Polygon mode tells how the polygon is handled, possible values are
+    FILL    <- default
+    LINE
+    POINT
+    -->
+    <polygon_mode value="FILL"/>
+
+    <!--Cull mode tells which side of the triangle IS NOT rendered, possible values are
+    NONE      <- default
+    FRONT
+    BACK
+    FRONT_AND_BACK
+    -->
+    <cull_mode value="NONE"/>
+
+    <!--Tell which face of the polygon is the front, possible values are
+    COUNTER_CLOCKWISE     <- default
+    CLOCKWISE
+    -->
+    <front_face value="COUNTER_CLOCKWISE"/>
+
+    <!--Depth bias settings-->
+    <depth_bias_enable value="false"/>
+    <depth_bias_constant_factor value="0.0"/>
+    <depth_bias_clamp value="0.0"/>
+    <depth_bias_slope_factor value="0.0"/>
+    
+    <!--This only has an effect when drawing lines-->
+    <line_width value="1.0"/>
+    
+  </RASTERIZATION>
+
+  <DEPTH_STENCIL>
+    <!--Enable depth testing-->
+    <depth_test_enable value="true"/>
+    
+    <!--Enable depth writing after testing, always false if depth_test_enable is false-->
+    <depth_write_enable value="true"/>
+
+    <!--depth compare operation, vulkan depth goes from 0 to 1 with 0 being at screen level and 1 behind the screen
+    if new fragment depth is less, that is closer, then we draw that fragment, thus default value is LESS,
+    other regularly selected value is LESS_OR_EQUAL, all possible values are:
+    NEVER
+    LESS      <- default
+    EQUAL
+    LESS_OR_EQUAL
+    GREATER
+    NOT_EQUAL
+    GREATER_OR_EQUAL
+    ALWAYS
+    -->
+    <compare_op value="LESS"/>
+
+    <!--depth bounds testing, used to only render a specific depth range
+    by default this is disabled-->
+    <depth_bounds_test_enable value="false"/>
+    <min_depth_bounds value="0.0" />
+    <max_depth_bounds value="1.0"/>
+  </DEPTH_STENCIL>
+
+  <COLOR_BLEND>
+    <!--Enable logical operations between the fragments color and existing color in the framebuffer-->
+    <logic_op_enable value="false"/>
+    
+    <!--Logical operations to perform before writing to the framebuffer, possible values are
+    CLEAR
+    AND
+    AND_REVERSE
+    COPY      <- default
+    AND_INVERTED
+    NO_OP
+    XOR
+    OR
+    NOR
+    EQUIVALENT
+    INVERT
+    OR_REVERSE
+    COPY_INVERTED
+    INVERTED
+    NAND
+    SET
+    -->
+    <logic_op value="COPY"/>
+
+    <!--One blend attachment is require per framebuffer / G-buffer-->
+    <BLEND_ATTACHMENT>
+      <!--This tells which G-buffer this blend attachment considers-->
+      <!--G-buffers are TODO so this value is ignored for now-->
+      <g_buffer_name value="OUTPUT"/>
+      
+      <!--Tells if we want to enable color blending for this blend attachment-->
+      <blend_enable value="false"/>
+
+      <!--How to blend the colours from the fragment to the framebuffer is described below, if blend_enable == true
+      all possible values for all blend factors are
+      ZERO                    <- default for dst factors
+      ONE
+      SRC_COLOR               <- default for src factors
+      ONE_MINUS_SRC_COLOR
+      DST_COLOR
+      ONE_MINUS_DST_COLOR
+      SRC_ALPHA
+      ONE_MINUS_SRC_ALPHA
+      DST_ALPHA
+      ONE_MINUS_DST_ALPHA
+      CONSTANT_COLOR
+      ONE_MINUS_CONSTANT_COLOR
+      CONSTANT_ALPHA
+      ONE_MINUS_CONSTANT_ALPHA
+      SRC_ALPHA_SATURATE
+      SRC1_COLOR
+      ONE_MINUS_SRC1_COLOR
+      SRC1_ALPHA
+      ONE_MINUS_SRC1_ALPHA
+      -->
+      <src_color_blend_factor value="SRC_COLOR"/>
+      <dst_color_blend_factor value="ZERO"/>
+      <src_alpha_blend_factor value="SRC_COLOR"/>
+      <dst_alpha_blend_factor value="ZERO"/>
+
+      <!--Blend operation of how to blend from fragment to the framebuffer
+      all possible values for all blend operations are
+      ADD     <- default
+      SUBTRACT
+      REVERSE_SUBTRACT
+      MIN
+      MAX
+      -->
+      <color_blend_op value="ADD"/>
+      <alpha_blend_op value="ADD"/>
+      
+      <!--Example of alpha blending:
+      <src_color_blend_factor value="SRC_ALPHA"/>
+      <dst_color_blend_factor value="ONE_MINUS_SRC_ALPHA"/>
+      <src_alpha_blend_factor value="ONE"/>
+      <dst_alpha_blend_factor value="ONE_MINUS_SRC_ALPHA"/>
+      <color_blend_op value="ADD"/>
+      <alpha_blend_op value="ADD"/>
+      -->
+
+      <!--This tells which color components to actually write to the framebuffer, by default this is empty so nothing would be visible-->
+      <color_component_flags f1="R" f2="G" f3="B" f4="A"/>
+    </BLEND_ATTACHMENT>
+    
+    <!--Blend constants for BLEND_ATTACHMENTs only used if any of the blend factors uses CONSTANT-->
+    <blend_constant_r value="1.0"/>
+    <blend_constant_g value="1.0"/>
+    <blend_constant_b value="1.0"/>
+    <blend_constant_a value="1.0"/>
+  </COLOR_BLEND>
+
+  <DYNAMIC_STATES>
+    <!--Dynamic states are states that can be changed during runtime, instead of recompiling pipelines
+    all possible flags are: (Viewport and Scissor are always dynamic to allow using pipelines on different sized framebuffers without recompiling them)
+    LINE_WIDTH
+    DEPTH_BIAS
+    BLEND_CONSTANTS
+    DEPTH_BOUNDS
+    -->
+    <!--NOTE! I might remove this from the config files, this is mostly engine internal stuff anyways,
+    For now I'll keep it in here for experimentation purposes-->
+    <states f1="" />
+  </DYNAMIC_STATES>
+  
+  <!--other shader options here whenever I figure them out TODO-->
+  
+</GRAPHICS_PIPELINE>

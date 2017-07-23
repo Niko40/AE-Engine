@@ -28,6 +28,7 @@
     <ClCompile Include="Engine\Renderer\DeviceMemory\DeviceMemoryManager.cpp" />
     <ClCompile Include="Engine\Renderer\DeviceResource\DeviceResource.cpp" />
     <ClCompile Include="Engine\Renderer\DeviceResource\DeviceResourceManager.cpp" />
+    <ClCompile Include="Engine\Renderer\DeviceResource\GraphicsPipeline\DeviceResource_GraphicsPipeline.cpp" />
     <ClCompile Include="Engine\Renderer\DeviceResource\Image\DeviceResource_Image.cpp" />
     <ClCompile Include="Engine\Renderer\DeviceResource\Mesh\DeviceResource_Mesh.cpp" />
     <ClCompile Include="Engine\Renderer\Renderer.cpp" />
@@ -56,6 +57,7 @@
     <ClInclude Include="Engine\FileResource\Lua\FileResource_Lua.h" />
     <ClInclude Include="Engine\FileResource\Mesh\FileResource_Mesh.h" />
     <ClInclude Include="Engine\FileResource\Mesh\ME3DFile.h" />
+    <ClInclude Include="Engine\FileResource\Mesh\MeshInfo.h" />
     <ClInclude Include="Engine\FileResource\RawData\FileResource_RawData.h" />
     <ClInclude Include="Engine\FileResource\XML\FileResource_XML.h" />
     <ClInclude Include="Engine\FileSystem\FileStream.h" />
@@ -71,6 +73,7 @@
     <ClInclude Include="Engine\Renderer\DeviceMemory\DeviceMemoryManager.h" />
     <ClInclude Include="Engine\Renderer\DeviceResource\DeviceResource.h" />
     <ClInclude Include="Engine\Renderer\DeviceResource\DeviceResourceManager.h" />
+    <ClInclude Include="Engine\Renderer\DeviceResource\GraphicsPipeline\DeviceResource_GraphicsPipeline.h" />
     <ClInclude Include="Engine\Renderer\DeviceResource\Image\DeviceResource_Image.h" />
     <ClInclude Include="Engine\Renderer\DeviceResource\Mesh\DeviceResource_Mesh.h" />
     <ClInclude Include="Engine\Renderer\Renderer.h" />
@@ -90,6 +93,7 @@
     <ClInclude Include="Engine\World\WorldRenderer\WorldRenderer.h" />
   </ItemGroup>
   <ItemGroup>
+    <Xml Include="..\install\data\graphics_pipelines\default\default.xml" />
     <Xml Include="..\install\data\scene_nodes\objects\shapes\torus_knot.xml" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

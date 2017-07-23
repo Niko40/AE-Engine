@@ -13,41 +13,6 @@ namespace AE
 
 class FileResource_XML : public FileResource
 {
-	struct XMLRootStruct_SceneNode
-	{
-		tinyxml2::XMLElement	*	element					= nullptr;
-		String						type;
-		String						name;
-		bool						visible					= true;
-		bool						is_ok					= false;
-	};
-
-	struct XMLStruct_Mesh
-	{
-		tinyxml2::XMLElement	*	element					= nullptr;
-		String						name;
-		Path						path;
-		bool						visible					= true;
-		Vec3						position				= Vec3( 0, 0, 0 );
-		Quat						rotation				= Quat( 1, 0, 0, 0 );
-		Vec3						scale					= Vec3( 1, 1, 1 );
-		bool						is_ok					= false;
-	};
-
-	struct XMLStruct_RenderInfo
-	{
-		tinyxml2::XMLElement	*	element					= nullptr;
-		Path						pipeline_path;
-		bool						is_ok					= false;
-	};
-
-	struct XMLStruct_Images
-	{
-		tinyxml2::XMLElement	*	element					= nullptr;
-		Array<Path, BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT>			texture_paths			= {};
-		bool						is_ok					= false;
-	};
-
 public:
 	FileResource_XML( Engine * engine, FileResourceManager * file_resource_manager );
 	~FileResource_XML();
@@ -57,10 +22,10 @@ public:
 
 	tinyxml2::XMLDocument			*	GetRawXML();
 
-	String								GetFieldValue_Text( tinyxml2::XMLElement * parent, const String & field_name );
-	int64_t								GetFieldValue_Int64( tinyxml2::XMLElement * parent, const String & field_name );
-	double								GetFieldValue_Double( tinyxml2::XMLElement * parent, const String & field_name );
-	bool								GetFieldValue_Bool( tinyxml2::XMLElement * parent, const String & field_name );
+	String								GetFieldValue_Text( tinyxml2::XMLElement * parent, const String & field_name, const String & default_value = "" );
+	int64_t								GetFieldValue_Int64( tinyxml2::XMLElement * parent, const String & field_name, int64_t default_value = 0 );
+	double								GetFieldValue_Double( tinyxml2::XMLElement * parent, const String & field_name, double default_value = 0.0 );
+	bool								GetFieldValue_Bool( tinyxml2::XMLElement * parent, const String & field_name, bool default_value = false );
 
 	Map<String, String>					GetMultiFieldValues_Text( tinyxml2::XMLElement * parent, const String & field_name );
 	Map<String, int64_t>				GetMultiFieldValues_Int64( tinyxml2::XMLElement * parent, const String & field_name );

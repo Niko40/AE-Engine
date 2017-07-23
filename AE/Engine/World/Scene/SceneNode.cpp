@@ -6,6 +6,7 @@
 #include "../../Engine.h"
 #include "../../Logger/Logger.h"
 #include "../../Renderer/DeviceResource/DeviceResourceManager.h"
+#include "../../Renderer/DeviceResource/GraphicsPipeline/DeviceResource_GraphicsPipeline.h"
 #include "../../Renderer/DeviceResource/Mesh/DeviceResource_Mesh.h"
 #include "../../Renderer/DeviceResource/Image/DeviceResource_Image.h"
 
@@ -77,7 +78,7 @@ tinyxml2::XMLElement * SceneNode::ParseConfigFile_SceneNodeSection()
 		auto xml_render_info	= config_file->GetChildElement( xml_mesh, "RENDER_INFO" );
 		if( nullptr != xml_render_info ) {
 			TODO( "Pipeline resources" );
-//			mesh.render_info.pipeline_resource	= p_device_resource_manager->RequestResource_Pipeline( { config_file->GetFieldValue_Text( xml_render_info, "pipeline_path" ) } );
+			mesh.render_info.graphics_pipeline_resource	= p_device_resource_manager->RequestResource_GraphicsPipeline( { config_file->GetFieldValue_Text( xml_render_info, "graphics_pipeline_path" ) } );
 
 			// handle images
 			auto xml_images	= config_file->GetChildElement( xml_render_info, "IMAGES" );

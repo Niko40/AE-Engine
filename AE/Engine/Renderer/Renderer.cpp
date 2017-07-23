@@ -212,6 +212,11 @@ VulkanDevice Renderer::GetVulkanDevice() const
 	return vk_device;
 }
 
+vk::RenderPass Renderer::GetVulkanRenderPass() const
+{
+	return vk_render_pass;
+}
+
 DeviceMemoryManager * Renderer::GetDeviceMemoryManager() const
 {
 	return device_memory_manager.Get();

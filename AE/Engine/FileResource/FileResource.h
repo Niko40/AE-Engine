@@ -74,7 +74,10 @@ private:
 	bool						LoadFromManager( FileStream * stream, const Path & path );
 	bool						UnloadFromManager();
 
+public:
 	State						GetState();
+
+private:
 	void						SetState( State new_state );
 
 protected:

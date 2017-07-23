@@ -14,13 +14,17 @@ namespace AE
 DeviceResource::DeviceResource( Engine * engine, Type device_resource_type, DeviceResource::Flags resource_flags )
 {
 	p_engine					= engine;
-	assert( nullptr != p_engine );
+	assert( p_engine );
+	p_logger					= p_engine->GetLogger();
 	p_renderer					= p_engine->GetRenderer();
-	assert( nullptr != p_renderer );
+	p_file_resource_manager		= p_engine->GetFileResourceManager();
+	assert( p_logger );
+	assert( p_renderer );
+	assert( p_file_resource_manager );
 	p_device_memory_manager		= p_renderer->GetDeviceMemoryManager();
 	p_device_resource_manager	= p_renderer->GetDeviceResourceManager();
-	assert( nullptr != p_device_memory_manager );
-	assert( nullptr != p_device_resource_manager );
+	assert( p_device_memory_manager );
+	assert( p_device_resource_manager );
 
 	flags	|= resource_flags;
 	type	= device_resource_type;

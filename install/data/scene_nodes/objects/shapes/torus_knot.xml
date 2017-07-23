@@ -16,7 +16,7 @@
     <rotation x="0" y="0" z="0" w="1" />
     <scale x="1" y="1" z="1" />
     <RENDER_INFO>
-      <pipeline_path value ="data/pipelines/default/default.xml" />
+      <graphics_pipeline_path value ="data/graphics_pipelines/default/default.xml" />
       <IMAGES>
         <image index="0" path="data/images/shapes/torus_knot.diff.png" />
       </IMAGES>

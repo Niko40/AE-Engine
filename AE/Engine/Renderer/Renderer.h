@@ -64,6 +64,7 @@ public:
 	vk::Instance							GetVulkanInstance() const;
 	vk::PhysicalDevice						GetVulkanPhysicalDevice() const;
 	VulkanDevice							GetVulkanDevice() const;
+	vk::RenderPass							GetVulkanRenderPass() const;
 
 	DeviceMemoryManager					*	GetDeviceMemoryManager() const;
 	DeviceResourceManager				*	GetDeviceResourceManager() const;
