@@ -23,6 +23,8 @@
 
 // renderer
 #include "Renderer/Renderer.h"
+#include "Renderer/DescriptorSet/DescriptorPoolManager.h"
+#include "Renderer/DescriptorSet/DescriptorSetHandle.h"
 
 // device memory
 #include "Renderer/DeviceMemory/DeviceMemoryManager.h"

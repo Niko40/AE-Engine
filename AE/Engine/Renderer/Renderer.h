@@ -18,6 +18,7 @@ class Logger;
 class WindowManager;
 class DeviceMemoryManager;
 class DeviceResourceManager;
+class DescriptorPoolManager;
 
 class Renderer : public SubSystem
 {
@@ -88,6 +89,8 @@ public:
 	vk::DescriptorSetLayout					GetVulkanDescriptorSetLayoutForObject() const;
 	vk::DescriptorSetLayout					GetVulkanDescriptorSetLayoutForPipeline() const;
 	vk::DescriptorSetLayout					GetVulkanDescriptorSetLayoutForImageBindingCount( uint32_t image_binding_count ) const;
+
+	DescriptorPoolManager				*	GetDescriptorPoolManagerForThisThread();
 
 	bool									IsFormatSupported( vk::ImageTiling tiling, vk::Format format, vk::FormatFeatureFlags feature_flags );
 
@@ -216,6 +219,8 @@ private:
 	// for only 1 texture, choose layout at index 0, for 2 textures, choose layout at index 1...
 	// the amount of layouts matches BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT
 	Vector<vk::PipelineLayout>				vk_graphics_pipeline_layouts;
+
+	Map<std::thread::id, UniquePointer<DescriptorPoolManager>>								descriptor_pools;
 
 	VkDebugReportCallbackEXT				debug_report_callback					= VK_NULL_HANDLE;
 	VkDebugReportCallbackCreateInfoEXT		debug_report_callback_create_info		= {};

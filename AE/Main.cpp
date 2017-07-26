@@ -3,6 +3,7 @@
 #include <string>
 
 #include <lua.hpp>
+#include <iostream>
 #include <tinyxml2.h>
 
 #include "Engine/IncludeAll.h"
@@ -22,6 +23,9 @@ int main( int argc, char ** argv )
 	auto file_resman	= engine.GetFileResourceManager();
 	auto renderer		= engine.GetRenderer();
 	auto device_resman	= renderer->GetDeviceResourceManager();
+
+	auto descriptor_pool	= renderer->GetDescriptorPoolManagerForThisThread();
+	auto set				= descriptor_pool->AllocateDescriptorSetForCamera();
 
 	{
 		auto scene_node		= scene_manager->GetActiveScene()->CreateChild( AE::SceneNodeBase::Type::SHAPE, "data/scene_nodes/objects/shapes/torus_knot.xml" );

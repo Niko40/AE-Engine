@@ -9,6 +9,7 @@
 #include "DeviceResource/DeviceResourceManager.h"
 #include "../Logger/Logger.h"
 #include "../Window/WindowManager.h"
+#include "../Renderer/DescriptorSet/DescriptorPoolManager.h"
 
 
 namespace AE
@@ -322,6 +323,29 @@ vk::DescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForPipeline() cons
 vk::DescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForImageBindingCount( uint32_t image_binding_count ) const
 {
 	return vk_descriptor_set_layouts_for_images[ image_binding_count ];
+}
+
+DescriptorPoolManager * Renderer::GetDescriptorPoolManagerForThisThread()
+{
+	auto p_iter		= descriptor_pools.find( std::this_thread::get_id() );
+	if( p_iter != descriptor_pools.end() ) {
+		// found, return this pool
+		return p_iter->second.Get();
+	} else {
+		// not found, create new and return that
+		auto unique	= MakeUniquePointer<DescriptorPoolManager>( p_engine, this );
+		if( unique ) {
+			auto ptr = unique.Get();
+			descriptor_pools.insert( std::pair<std::thread::id, UniquePointer<DescriptorPoolManager>>( std::this_thread::get_id(), std::move( unique ) ) );
+			return ptr;
+		} else {
+			std::stringstream ss;
+			ss << "Can't create new descriptor pool manager for thread: "
+				<< std::this_thread::get_id();
+			p_logger->LogCritical( ss.str().c_str() );
+		}
+	}
+	return nullptr;
 }
 
 bool Renderer::IsFormatSupported( vk::ImageTiling tiling, vk::Format format, vk::FormatFeatureFlags feature_flags )
