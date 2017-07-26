@@ -92,6 +92,9 @@
     <Filter Include="Engine\Renderer\DeviceResource\GraphicsPipeline">
       <UniqueIdentifier>{4300b9fb-a16c-4683-9107-4594eaff7d43}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Renderer\DescriptorSet">
+      <UniqueIdentifier>{c474e161-c25b-4766-a14e-bc6c58d469e3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Engine.cpp">
@@ -196,6 +199,15 @@
     </ClCompile>
     <ClCompile Include="Engine\Renderer\DeviceResource\GraphicsPipeline\DeviceResource_GraphicsPipeline.cpp">
       <Filter>Engine\Renderer\DeviceResource\GraphicsPipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Renderer\DescriptorSet\DescriptorSetHandle.cpp">
+      <Filter>Engine\Renderer\DescriptorSet</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Renderer\DescriptorSet\DescriptorPoolInfo.cpp">
+      <Filter>Engine\Renderer\DescriptorSet</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Renderer\DescriptorSet\DescriptorPoolManager.cpp">
+      <Filter>Engine\Renderer\DescriptorSet</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -327,6 +339,15 @@
     </ClInclude>
     <ClInclude Include="Engine\FileResource\Mesh\MeshInfo.h">
       <Filter>Engine\FileResource\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Renderer\DescriptorSet\DescriptorSetHandle.h">
+      <Filter>Engine\Renderer\DescriptorSet</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Renderer\DescriptorSet\DescriptorPoolInfo.h">
+      <Filter>Engine\Renderer\DescriptorSet</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Renderer\DescriptorSet\DescriptorPoolManager.h">
+      <Filter>Engine\Renderer\DescriptorSet</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

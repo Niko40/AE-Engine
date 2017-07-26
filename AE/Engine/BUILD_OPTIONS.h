@@ -27,7 +27,7 @@
 // this engine tries to create 3 vulkan queues, one for primary rendering (scene, window, framebuffers,
 // visible rendering), one for secondary rendering (non visible rendering, image scaling, etc...)
 // and one for transfering data from ram to the physical device, priorities for each queue can be set below
-// VALUES: float
+// VALUES: float, 0.0 (minimum priority) - 1.0 (maximum priority)
 #define BUILD_VULKAN_PRIMARY_RENDER_QUEUE_PRIORITY						1.0f
 #define BUILD_VULKAN_SECONDARY_RENDER_QUEUE_PRIORITY					0.6f
 #define BUILD_VULKAN_PRIMARY_TRANSFER_QUEUE_PRIORITY					0.5f
@@ -50,3 +50,11 @@
 // allocated for the amount given, but rather the absolute maximum that is possible to allocate
 // VALUES: maximum nuber of sampled images per shader
 #define BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT						8
+
+// This tells the maximum amount of descriptor sets in a single vulkan descriptor pool
+// Practically this tells how often a new memory pool is allocated when the previous one is full
+// so we never really run out of descriptor sets, but how often a new pool is allocated can
+// impact performance, on the other end you don't want to allocate too much at once either.
+// Descriptor pools like all the other vulkan pools in this engine are created per thread
+// VALUES: maximum number of how many descriptor sets we can allocate from a single vulkan pool
+#define BUILD_MAX_DESCRIPTOR_SETS_IN_POOL								128

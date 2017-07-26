@@ -25,6 +25,9 @@
     <ClCompile Include="Engine\Logger\Logger.cpp" />
     <ClCompile Include="Engine\Math\Math.cpp" />
     <ClCompile Include="Engine\Memory\MemoryPool\MemoryPool.cpp" />
+    <ClCompile Include="Engine\Renderer\DescriptorSet\DescriptorPoolManager.cpp" />
+    <ClCompile Include="Engine\Renderer\DescriptorSet\DescriptorPoolInfo.cpp" />
+    <ClCompile Include="Engine\Renderer\DescriptorSet\DescriptorSetHandle.cpp" />
     <ClCompile Include="Engine\Renderer\DeviceMemory\DeviceMemoryManager.cpp" />
     <ClCompile Include="Engine\Renderer\DeviceResource\DeviceResource.cpp" />
     <ClCompile Include="Engine\Renderer\DeviceResource\DeviceResourceManager.cpp" />
@@ -69,6 +72,9 @@
     <ClInclude Include="Engine\Memory\MemoryPool\MemoryPool.h" />
     <ClInclude Include="Engine\Memory\MemoryTypes.h" />
     <ClInclude Include="Engine\Platform.h" />
+    <ClInclude Include="Engine\Renderer\DescriptorSet\DescriptorPoolManager.h" />
+    <ClInclude Include="Engine\Renderer\DescriptorSet\DescriptorPoolInfo.h" />
+    <ClInclude Include="Engine\Renderer\DescriptorSet\DescriptorSetHandle.h" />
     <ClInclude Include="Engine\Renderer\DeviceMemory\DeviceMemoryInfo.h" />
     <ClInclude Include="Engine\Renderer\DeviceMemory\DeviceMemoryManager.h" />
     <ClInclude Include="Engine\Renderer\DeviceResource\DeviceResource.h" />
@@ -145,6 +151,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
     <Link>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;Lua.lib;tinyxml2.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -158,6 +165,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
