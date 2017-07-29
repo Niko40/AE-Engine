@@ -421,7 +421,7 @@ DeviceResource::LoadingState DeviceResource_Image::Load()
 					vk_image, vk::ImageLayout::eTransferSrcOptimal,
 					vk_image, vk::ImageLayout::eTransferDstOptimal,
 					region,
-					vk::Filter::eCubicIMG );
+					vk::Filter::eLinear );
 			}
 
 			// Record: Transition current mip level to be the source for the next mip level

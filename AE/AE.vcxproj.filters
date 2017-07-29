@@ -209,6 +209,9 @@
     <ClCompile Include="Engine\Renderer\DescriptorSet\DescriptorPoolManager.cpp">
       <Filter>Engine\Renderer\DescriptorSet</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Renderer\QueueInfo.cpp">
+      <Filter>Engine\Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Engine.h">
@@ -348,6 +351,9 @@
     </ClInclude>
     <ClInclude Include="Engine\Renderer\DescriptorSet\DescriptorPoolManager.h">
       <Filter>Engine\Renderer\DescriptorSet</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Renderer\QueueInfo.h">
+      <Filter>Engine\Renderer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
