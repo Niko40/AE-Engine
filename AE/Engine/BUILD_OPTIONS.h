@@ -24,6 +24,19 @@
 // 0 = OFF
 #define BUILD_DEBUG_LOG_FUNCTION_NAME_AND_LINE							0
 
+// in debugging modes, in which lines we want to assert? for example if an application detects
+// an error and then reports it using the usual interface, and BUILD_DEBUG_LOG_ASSERT_ERROR_LINES
+// is 1, then the program will also stop the execution by asserting on that line,
+// Critical errors are always asserted.
+// Values:
+// 1 = ON
+// 0 = OFF
+#define BUILD_DEBUG_LOG_ASSERT_INFO_LINES								0
+#define BUILD_DEBUG_LOG_ASSERT_WARNING_LINES							0
+#define BUILD_DEBUG_LOG_ASSERT_ERROR_LINES								0
+#define BUILD_DEBUG_LOG_ASSERT_VULKAN_LINES								0
+#define BUILD_DEBUG_LOG_ASSERT_OTHER_LINES								0
+
 // this engine tries to create 3 vulkan queues, one for primary rendering (scene, window, framebuffers,
 // visible rendering), one for secondary rendering (non visible rendering, image scaling, etc...)
 // and one for transfering data from ram to the physical device, priorities for each queue can be set below

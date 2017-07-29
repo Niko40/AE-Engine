@@ -10,6 +10,7 @@
 #include "../Vulkan/Vulkan.h"
 
 #include "DeviceMemory/DeviceMemoryInfo.h"
+#include "QueueInfo.h"
 
 namespace AE
 {
@@ -23,37 +24,6 @@ class DescriptorPoolManager;
 class Renderer : public SubSystem
 {
 public:
-	enum class QueueAvailability : uint32_t
-	{
-		UNDEFINED,
-
-		F3_PR1_SR2_PT3,		// 3 families, primary render on family 1, secondary render on family 2, primary transfer on family 3
-
-		F2_PR1_SR1_PT2,		// 2 families, primary render on family 1, secondary render on family 1, primary transfer on family 2
-		F2_PR1_SR2_PT2,		// 2 families, primary render on family 1, secondary render on family 2, primary transfer on family 2
-		F2_PR1_SR2_PT1,		// 2 families, primary render on family 1, secondary render on family 2, primary transfer on family 1
-		F2_PR1_SR2,			// 2 families, primary render on family 1, secondary render on family 2
-		F2_PR1_PT2,			// 2 families, primary render on family 1, primary transfer on family 2
-
-		F1_PR1_SR1_PT1,		// 1 families, primary render on family 1, secondary render on family 1, primary transfer on family 1
-		F1_PR1_PT1,			// 1 families, primary render on family 1, primary transfer on family 1
-		F1_PR1_SR1,			// 1 families, primary render on family 1, secondary render on family 1
-		F1_PR1,				// 1 families, primary render on family 1
-	};
-
-	enum class UsedQueuesFlags : uint32_t
-	{
-		PRIMARY_RENDER		= 1 << 0,
-		SECONDARY_RENDER	= 1 << 1,
-		PRIMARY_TRANSFER	= 1 << 2,
-	};
-
-	struct SharingModeInfo
-	{
-		vk::SharingMode		sharing_mode;
-		Vector<uint32_t>	shared_queue_family_indices;
-	};
-
 	Renderer( Engine * engine, std::string application_name, uint32_t application_version );
 	~Renderer();
 
@@ -220,16 +190,12 @@ private:
 	// the amount of layouts matches BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT
 	Vector<vk::PipelineLayout>				vk_graphics_pipeline_layouts;
 
-	Map<std::thread::id, UniquePointer<DescriptorPoolManager>>								descriptor_pools;
+	Map<std::thread::id, UniquePointer<DescriptorPoolManager>>						descriptor_pools;
 
 	VkDebugReportCallbackEXT				debug_report_callback					= VK_NULL_HANDLE;
 	VkDebugReportCallbackCreateInfoEXT		debug_report_callback_create_info		= {};
 
 	bool									render_initialized_to_window			= false;
 };
-
-Renderer::UsedQueuesFlags operator|( Renderer::UsedQueuesFlags f1, Renderer::UsedQueuesFlags f2 );
-Renderer::UsedQueuesFlags operator&( Renderer::UsedQueuesFlags f1, Renderer::UsedQueuesFlags f2 );
-Renderer::UsedQueuesFlags operator|=( Renderer::UsedQueuesFlags f1, Renderer::UsedQueuesFlags f2 );
 
 }

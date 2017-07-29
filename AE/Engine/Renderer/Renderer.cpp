@@ -262,16 +262,16 @@ VulkanQueue Renderer::GetPrimaryTransferQueue() const
 	return vk_primary_transfer_queue;
 }
 
-Renderer::SharingModeInfo Renderer::GetSharingModeInfo( Renderer::UsedQueuesFlags used_queues )
+SharingModeInfo Renderer::GetSharingModeInfo( UsedQueuesFlags used_queues )
 {
 	SharingModeInfo ret;
-	if( uint32_t( used_queues & Renderer::UsedQueuesFlags::PRIMARY_RENDER ) ) {
+	if( uint32_t( used_queues & UsedQueuesFlags::PRIMARY_RENDER ) ) {
 		ret.shared_queue_family_indices.push_back( primary_render_queue_family_index );
 	}
-	if( uint32_t( used_queues & Renderer::UsedQueuesFlags::SECONDARY_RENDER ) ) {
+	if( uint32_t( used_queues & UsedQueuesFlags::SECONDARY_RENDER ) ) {
 		ret.shared_queue_family_indices.push_back( secondary_render_queue_family_index );
 	}
-	if( uint32_t( used_queues & Renderer::UsedQueuesFlags::PRIMARY_TRANSFER ) ) {
+	if( uint32_t( used_queues & UsedQueuesFlags::PRIMARY_TRANSFER ) ) {
 		ret.shared_queue_family_indices.push_back( primary_transfer_queue_family_index );
 	}
 	// remove doubles
@@ -585,7 +585,7 @@ void Renderer::FindQueueFamilies()
 	}
 
 	switch( queue_availability ) {
-	case AE::Renderer::QueueAvailability::F3_PR1_SR2_PT3:
+	case QueueAvailability::F3_PR1_SR2_PT3:
 		device_queue_create_infos.resize( 3 );
 		device_queue_create_infos[ 0 ].queueFamilyIndex			= primary_render_queue_family_index;
 		device_queue_create_infos[ 0 ].queueCount				= 1;
@@ -597,7 +597,7 @@ void Renderer::FindQueueFamilies()
 		device_queue_create_infos[ 2 ].queueCount				= 1;
 		device_queue_create_infos[ 2 ].pQueuePriorities			= &queue_priorities[ 2 ];
 		break;
-	case AE::Renderer::QueueAvailability::F2_PR1_SR1_PT2:
+	case QueueAvailability::F2_PR1_SR1_PT2:
 		device_queue_create_infos.resize( 2 );
 		device_queue_create_infos[ 0 ].queueFamilyIndex			= primary_render_queue_family_index;
 		device_queue_create_infos[ 0 ].queueCount				= 2;
@@ -606,7 +606,7 @@ void Renderer::FindQueueFamilies()
 		device_queue_create_infos[ 1 ].queueCount				= 1;
 		device_queue_create_infos[ 1 ].pQueuePriorities			= &queue_priorities[ 2 ];
 		break;
-	case AE::Renderer::QueueAvailability::F2_PR1_SR2_PT2:
+	case QueueAvailability::F2_PR1_SR2_PT2:
 		device_queue_create_infos.resize( 2 );
 		device_queue_create_infos[ 0 ].queueFamilyIndex			= primary_render_queue_family_index;
 		device_queue_create_infos[ 0 ].queueCount				= 1;
@@ -615,7 +615,7 @@ void Renderer::FindQueueFamilies()
 		device_queue_create_infos[ 1 ].queueCount				= 2;
 		device_queue_create_infos[ 1 ].pQueuePriorities			= &queue_priorities[ 1 ];
 		break;
-	case AE::Renderer::QueueAvailability::F2_PR1_SR2_PT1:
+	case QueueAvailability::F2_PR1_SR2_PT1:
 		device_queue_create_infos.resize( 2 );
 		device_queue_create_infos[ 0 ].queueFamilyIndex			= primary_render_queue_family_index;
 		device_queue_create_infos[ 0 ].queueCount				= 2;
@@ -624,7 +624,7 @@ void Renderer::FindQueueFamilies()
 		device_queue_create_infos[ 1 ].queueCount				= 1;
 		device_queue_create_infos[ 1 ].pQueuePriorities			= &queue_priorities_2[ 1 ];
 		break;
-	case AE::Renderer::QueueAvailability::F2_PR1_SR2:
+	case QueueAvailability::F2_PR1_SR2:
 		device_queue_create_infos.resize( 2 );
 		device_queue_create_infos[ 0 ].queueFamilyIndex			= primary_render_queue_family_index;
 		device_queue_create_infos[ 0 ].queueCount				= 1;
@@ -633,7 +633,7 @@ void Renderer::FindQueueFamilies()
 		device_queue_create_infos[ 1 ].queueCount				= 1;
 		device_queue_create_infos[ 1 ].pQueuePriorities			= &queue_priorities[ 1 ];
 		break;
-	case AE::Renderer::QueueAvailability::F2_PR1_PT2:
+	case QueueAvailability::F2_PR1_PT2:
 		device_queue_create_infos.resize( 2 );
 		device_queue_create_infos[ 0 ].queueFamilyIndex			= primary_render_queue_family_index;
 		device_queue_create_infos[ 0 ].queueCount				= 1;
@@ -642,25 +642,25 @@ void Renderer::FindQueueFamilies()
 		device_queue_create_infos[ 1 ].queueCount				= 1;
 		device_queue_create_infos[ 1 ].pQueuePriorities			= &queue_priorities_2[ 1 ];
 		break;
-	case AE::Renderer::QueueAvailability::F1_PR1_SR1_PT1:
+	case QueueAvailability::F1_PR1_SR1_PT1:
 		device_queue_create_infos.resize( 1 );
 		device_queue_create_infos[ 0 ].queueFamilyIndex			= primary_render_queue_family_index;
 		device_queue_create_infos[ 0 ].queueCount				= 3;
 		device_queue_create_infos[ 0 ].pQueuePriorities			= &queue_priorities[ 0 ];
 		break;
-	case AE::Renderer::QueueAvailability::F1_PR1_PT1:
+	case QueueAvailability::F1_PR1_PT1:
 		device_queue_create_infos.resize( 1 );
 		device_queue_create_infos[ 0 ].queueFamilyIndex			= primary_render_queue_family_index;
 		device_queue_create_infos[ 0 ].queueCount				= 2;
 		device_queue_create_infos[ 0 ].pQueuePriorities			= &queue_priorities_2[ 0 ];
 		break;
-	case AE::Renderer::QueueAvailability::F1_PR1_SR1:
+	case QueueAvailability::F1_PR1_SR1:
 		device_queue_create_infos.resize( 1 );
 		device_queue_create_infos[ 0 ].queueFamilyIndex			= primary_render_queue_family_index;
 		device_queue_create_infos[ 0 ].queueCount				= 2;
 		device_queue_create_infos[ 0 ].pQueuePriorities			= &queue_priorities[ 0 ];
 		break;
-	case AE::Renderer::QueueAvailability::F1_PR1:
+	case QueueAvailability::F1_PR1:
 		device_queue_create_infos.resize( 1 );
 		device_queue_create_infos[ 0 ].queueFamilyIndex			= primary_render_queue_family_index;
 		device_queue_create_infos[ 0 ].queueCount				= 1;
@@ -695,7 +695,7 @@ void Renderer::DestroyDevice()
 void Renderer::GetQueueHandles()
 {
 	switch( queue_availability ) {
-	case AE::Renderer::QueueAvailability::F3_PR1_SR2_PT3:
+	case QueueAvailability::F3_PR1_SR2_PT3:
 		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
 		vk_secondary_render_queue.object	= vk_device.object.getQueue( secondary_render_queue_family_index, 0 );
 		vk_primary_transfer_queue.object	= vk_device.object.getQueue( primary_transfer_queue_family_index, 0 );
@@ -703,7 +703,7 @@ void Renderer::GetQueueHandles()
 		vk_secondary_render_queue.mutex		= &secondary_render_queue_mutex;
 		vk_primary_transfer_queue.mutex		= &primary_transfer_queue_mutex;
 		break;
-	case AE::Renderer::QueueAvailability::F2_PR1_SR1_PT2:
+	case QueueAvailability::F2_PR1_SR1_PT2:
 		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
 		vk_secondary_render_queue.object	= vk_device.object.getQueue( secondary_render_queue_family_index, 1 );
 		vk_primary_transfer_queue.object	= vk_device.object.getQueue( primary_transfer_queue_family_index, 0 );
@@ -711,7 +711,7 @@ void Renderer::GetQueueHandles()
 		vk_secondary_render_queue.mutex		= &secondary_render_queue_mutex;
 		vk_primary_transfer_queue.mutex		= &primary_transfer_queue_mutex;
 		break;
-	case AE::Renderer::QueueAvailability::F2_PR1_SR2_PT2:
+	case QueueAvailability::F2_PR1_SR2_PT2:
 		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
 		vk_secondary_render_queue.object	= vk_device.object.getQueue( secondary_render_queue_family_index, 0 );
 		vk_primary_transfer_queue.object	= vk_device.object.getQueue( primary_transfer_queue_family_index, 1 );
@@ -719,7 +719,7 @@ void Renderer::GetQueueHandles()
 		vk_secondary_render_queue.mutex		= &secondary_render_queue_mutex;
 		vk_primary_transfer_queue.mutex		= &primary_transfer_queue_mutex;
 		break;
-	case AE::Renderer::QueueAvailability::F2_PR1_SR2_PT1:
+	case QueueAvailability::F2_PR1_SR2_PT1:
 		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
 		vk_secondary_render_queue.object	= vk_device.object.getQueue( secondary_render_queue_family_index, 0 );
 		vk_primary_transfer_queue.object	= vk_device.object.getQueue( primary_transfer_queue_family_index, 1 );
@@ -727,7 +727,7 @@ void Renderer::GetQueueHandles()
 		vk_secondary_render_queue.mutex		= &secondary_render_queue_mutex;
 		vk_primary_transfer_queue.mutex		= &primary_transfer_queue_mutex;
 		break;
-	case AE::Renderer::QueueAvailability::F2_PR1_SR2:
+	case QueueAvailability::F2_PR1_SR2:
 		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
 		vk_secondary_render_queue.object	= vk_device.object.getQueue( secondary_render_queue_family_index, 0 );
 		vk_primary_transfer_queue.object	= vk_secondary_render_queue.object;
@@ -735,7 +735,7 @@ void Renderer::GetQueueHandles()
 		vk_secondary_render_queue.mutex		= &secondary_render_queue_mutex;
 		vk_primary_transfer_queue.mutex		= &secondary_render_queue_mutex;
 		break;
-	case AE::Renderer::QueueAvailability::F2_PR1_PT2:
+	case QueueAvailability::F2_PR1_PT2:
 		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
 		vk_secondary_render_queue.object	= vk_primary_render_queue.object;
 		vk_primary_transfer_queue.object	= vk_device.object.getQueue( primary_transfer_queue_family_index, 0 );
@@ -743,7 +743,7 @@ void Renderer::GetQueueHandles()
 		vk_secondary_render_queue.mutex		= &primary_render_queue_mutex;
 		vk_primary_transfer_queue.mutex		= &primary_transfer_queue_mutex;
 		break;
-	case AE::Renderer::QueueAvailability::F1_PR1_SR1_PT1:
+	case QueueAvailability::F1_PR1_SR1_PT1:
 		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
 		vk_secondary_render_queue.object	= vk_device.object.getQueue( secondary_render_queue_family_index, 1 );
 		vk_primary_transfer_queue.object	= vk_device.object.getQueue( primary_transfer_queue_family_index, 2 );
@@ -751,7 +751,7 @@ void Renderer::GetQueueHandles()
 		vk_secondary_render_queue.mutex		= &secondary_render_queue_mutex;
 		vk_primary_transfer_queue.mutex		= &primary_transfer_queue_mutex;
 		break;
-	case AE::Renderer::QueueAvailability::F1_PR1_PT1:
+	case QueueAvailability::F1_PR1_PT1:
 		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
 		vk_secondary_render_queue.object	= vk_primary_render_queue.object;
 		vk_primary_transfer_queue.object	= vk_device.object.getQueue( primary_transfer_queue_family_index, 1 );
@@ -759,7 +759,7 @@ void Renderer::GetQueueHandles()
 		vk_secondary_render_queue.mutex		= &primary_render_queue_mutex;
 		vk_primary_transfer_queue.mutex		= &primary_transfer_queue_mutex;
 		break;
-	case AE::Renderer::QueueAvailability::F1_PR1_SR1:
+	case QueueAvailability::F1_PR1_SR1:
 		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
 		vk_secondary_render_queue.object	= vk_device.object.getQueue( secondary_render_queue_family_index, 1 );
 		vk_primary_transfer_queue.object	= vk_secondary_render_queue.object;
@@ -767,7 +767,7 @@ void Renderer::GetQueueHandles()
 		vk_secondary_render_queue.mutex		= &secondary_render_queue_mutex;
 		vk_primary_transfer_queue.mutex		= &secondary_render_queue_mutex;
 		break;
-	case AE::Renderer::QueueAvailability::F1_PR1:
+	case QueueAvailability::F1_PR1:
 		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
 		vk_secondary_render_queue.object	= vk_primary_render_queue.object;
 		vk_primary_transfer_queue.object	= vk_primary_render_queue.object;
@@ -1263,21 +1263,6 @@ void Renderer::DestroyGraphicsPipelineLayouts()
 		vk_device.object.destroyPipelineLayout( l );
 		l	= nullptr;
 	}
-}
-
-Renderer::UsedQueuesFlags operator|( Renderer::UsedQueuesFlags f1, Renderer::UsedQueuesFlags f2 )
-{
-	return Renderer::UsedQueuesFlags( uint32_t( f1 ) | uint32_t( f2 ) );
-}
-
-Renderer::UsedQueuesFlags operator&( Renderer::UsedQueuesFlags f1, Renderer::UsedQueuesFlags f2 )
-{
-	return Renderer::UsedQueuesFlags( uint32_t( f1 ) & uint32_t( f2 ) );
-}
-
-Renderer::UsedQueuesFlags operator|=( Renderer::UsedQueuesFlags f1, Renderer::UsedQueuesFlags f2 )
-{
-	return f1 | f2;
 }
 
 }

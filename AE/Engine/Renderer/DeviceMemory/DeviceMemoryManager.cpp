@@ -4,6 +4,7 @@
 #include "../../Engine.h"
 #include "../../Logger/Logger.h"
 #include "../Renderer.h"
+#include "../QueueInfo.h"
 
 namespace AE
 {
@@ -21,10 +22,28 @@ DeviceMemoryManager::DeviceMemoryManager( Engine * engine, Renderer * renderer )
 	ref_vk_device							= p_renderer->GetVulkanDevice();
 	ref_vk_physical_device					= p_renderer->GetVulkanPhysicalDevice();
 	vk_physical_device_memory_properties	= ref_vk_physical_device.getMemoryProperties();
+
+	vk::BufferCreateInfo c;
 }
 
 DeviceMemoryManager::~DeviceMemoryManager()
 {
+}
+
+vk::Buffer DeviceMemoryManager::CreateBuffer( vk::BufferCreateFlags flags, vk::DeviceSize buffer_size, vk::BufferUsageFlags usage_flags, UsedQueuesFlags shared_between_queues )
+{
+	auto sharing_mode_info		= p_renderer->GetSharingModeInfo( shared_between_queues );
+
+	vk::BufferCreateInfo CI {};
+	CI.flags					= flags;
+	CI.size						= buffer_size;
+	CI.usage					= usage_flags;
+	CI.sharingMode				= sharing_mode_info.sharing_mode;
+	CI.queueFamilyIndexCount	= uint32_t( sharing_mode_info.shared_queue_family_indices.size() );
+	CI.pQueueFamilyIndices		= sharing_mode_info.shared_queue_family_indices.data();
+
+	LOCK_GUARD( *ref_vk_device.mutex );
+	return ref_vk_device.object.createBuffer( CI );
 }
 
 DeviceMemoryInfo DeviceMemoryManager::AllocateImageMemory( vk::Image image, vk::MemoryPropertyFlags memory_properties )

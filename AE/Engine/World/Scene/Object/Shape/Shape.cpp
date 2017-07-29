@@ -25,7 +25,7 @@ void SceneNode_Shape::Update()
 
 bool SceneNode_Shape::ParseConfigFile()
 {
-	assert( config_file->IsReadyForUse() );		// config file resource should be loaded before this function is called
+	assert( config_file->IsReadyForUse() );		// config file resource should have been loaded before this function is called
 
 	auto object_level	= ParseConfigFile_ObjectSection();
 	if( nullptr != object_level ) {

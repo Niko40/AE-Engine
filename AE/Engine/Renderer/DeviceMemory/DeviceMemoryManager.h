@@ -6,6 +6,7 @@
 #include "../../Vulkan/Vulkan.h"
 
 #include "DeviceMemoryInfo.h"
+#include "../QueueInfo.h"
 
 namespace AE
 {
@@ -19,6 +20,15 @@ class DeviceMemoryManager
 public:
 	DeviceMemoryManager( Engine * engine, Renderer * renderer );
 	~DeviceMemoryManager();
+
+	// Convenience function:
+	// Create buffer object in either device memory or host memory,
+	// this is non-managed return which means that the receiver is
+	// responsible for freeing the object
+	vk::Buffer								CreateBuffer( vk::BufferCreateFlags flags,
+														  vk::DeviceSize buffer_size,
+														  vk::BufferUsageFlags usage_flags,
+														  UsedQueuesFlags shared_between_queues = UsedQueuesFlags( 0 ) );
 
 	DeviceMemoryInfo						AllocateImageMemory( vk::Image image, vk::MemoryPropertyFlags memory_properties );
 	DeviceMemoryInfo						AllocateAndBindImageMemory( vk::Image image, vk::MemoryPropertyFlags memory_properties );

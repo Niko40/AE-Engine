@@ -34,6 +34,7 @@
     <ClCompile Include="Engine\Renderer\DeviceResource\GraphicsPipeline\DeviceResource_GraphicsPipeline.cpp" />
     <ClCompile Include="Engine\Renderer\DeviceResource\Image\DeviceResource_Image.cpp" />
     <ClCompile Include="Engine\Renderer\DeviceResource\Mesh\DeviceResource_Mesh.cpp" />
+    <ClCompile Include="Engine\Renderer\QueueInfo.cpp" />
     <ClCompile Include="Engine\Renderer\Renderer.cpp" />
     <ClCompile Include="Engine\SubSystem.cpp" />
     <ClCompile Include="Engine\Vulkan\Vulkan.cpp" />
@@ -82,6 +83,7 @@
     <ClInclude Include="Engine\Renderer\DeviceResource\GraphicsPipeline\DeviceResource_GraphicsPipeline.h" />
     <ClInclude Include="Engine\Renderer\DeviceResource\Image\DeviceResource_Image.h" />
     <ClInclude Include="Engine\Renderer\DeviceResource\Mesh\DeviceResource_Mesh.h" />
+    <ClInclude Include="Engine\Renderer\QueueInfo.h" />
     <ClInclude Include="Engine\Renderer\Renderer.h" />
     <ClInclude Include="Engine\SubSystem.h" />
     <ClInclude Include="Engine\Threading\Threading.h" />

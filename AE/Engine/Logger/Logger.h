@@ -132,20 +132,50 @@ private:
 	time_t					last_time				= 0;
 };
 
-#if BUILD_DEBUG_LOG_FUNCTION_NAME_AND_LINE
-#define LogInfo( message )			Write( AE::LogType::LT_INFO, message, __func__, __LINE__ )
-#define LogWarning( message )		Write( AE::LogType::LT_WARNING, message, __func__, __LINE__)
-#define LogError( message )			Write( AE::LogType::LT_ERROR, message, __func__, __LINE__ )
-#define LogCritical( message )		Write( AE::LogType::LT_CRITICAL, message, __func__, __LINE__ )
-#define LogVulkan( message )		Write( AE::LogType::LT_VULKAN, message, __func__, __LINE__ )
-#define LogOther( message )			Write( AE::LogType::LT_OTHER, message, __func__, __LINE__ )
+#if BUILD_DEBUG_LOG_ASSERT_INFO_LINES
+#define assert_LogLineInfo ;assert( 0 )
 #else
-#define LogInfo( message )			Write( AE::LogType::LT_INFO, message )
-#define LogWarning( message )		Write( AE::LogType::LT_WARNING, message )
-#define LogError( message )			Write( AE::LogType::LT_ERROR, message )
-#define LogCritical( message )		Write( AE::LogType::LT_CRITICAL, message )
-#define LogVulkan( message )		Write( AE::LogType::LT_VULKAN, message )
-#define LogOther( message )			Write( AE::LogType::LT_OTHER, message )
+#define assert_LogLineInfo
+#endif
+
+#if BUILD_DEBUG_LOG_ASSERT_WARNING_LINES
+#define assert_LogLineWarning ;assert( 0 )
+#else
+#define assert_LogLineWarning
+#endif
+
+#if BUILD_DEBUG_LOG_ASSERT_ERROR_LINES
+#define assert_LogLineError ;assert( 0 )
+#else
+#define assert_LogLineError
+#endif
+
+#if BUILD_DEBUG_LOG_ASSERT_VULKAN_LINES
+#define assert_LogLineVulkan ;assert( 0 )
+#else
+#define assert_LogLineVulkan
+#endif
+
+#if BUILD_DEBUG_LOG_ASSERT_OTHER_LINES
+#define assert_LogLineOther ;assert( 0 )
+#else
+#define assert_LogLineOther
+#endif
+
+#if BUILD_DEBUG_LOG_FUNCTION_NAME_AND_LINE
+#define LogInfo( message )			Write( AE::LogType::LT_INFO, message, __func__, __LINE__ ) assert_LogLineInfo
+#define LogWarning( message )		Write( AE::LogType::LT_WARNING, message, __func__, __LINE__) assert_LogLineWarning
+#define LogError( message )			Write( AE::LogType::LT_ERROR, message, __func__, __LINE__ ) assert_LogLineError
+#define LogCritical( message )		Write( AE::LogType::LT_CRITICAL, message, __func__, __LINE__ ); assert( 0 )
+#define LogVulkan( message )		Write( AE::LogType::LT_VULKAN, message, __func__, __LINE__ ) assert_LogLineVulkan
+#define LogOther( message )			Write( AE::LogType::LT_OTHER, message, __func__, __LINE__ ) assert_LogLineOther
+#else
+#define LogInfo( message )			Write( AE::LogType::LT_INFO, message ) assert_LogLineInfo
+#define LogWarning( message )		Write( AE::LogType::LT_WARNING, message ) assert_LogLineWarning
+#define LogError( message )			Write( AE::LogType::LT_ERROR, message ) assert_LogLineError
+#define LogCritical( message )		Write( AE::LogType::LT_CRITICAL, message ); assert( 0 )
+#define LogVulkan( message )		Write( AE::LogType::LT_VULKAN, message ) assert_LogLineVulkan
+#define LogOther( message )			Write( AE::LogType::LT_OTHER, message ) assert_LogLineOther
 #endif
 
 }
