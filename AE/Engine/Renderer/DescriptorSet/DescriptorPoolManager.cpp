@@ -48,10 +48,10 @@ DescriptorSetHandle DescriptorPoolManager::AllocateDescriptorSetForCamera()
 	return AllocateDescriptorSet( descriptor_set_AI, false );
 }
 
-DescriptorSetHandle DescriptorPoolManager::AllocateDescriptorSetForObject()
+DescriptorSetHandle DescriptorPoolManager::AllocateDescriptorSetForMesh()
 {
 	vk::DescriptorSetAllocateInfo descriptor_set_AI {};
-	descriptor_set_AI.pSetLayouts			= &p_renderer->GetVulkanDescriptorSetLayoutForObject();
+	descriptor_set_AI.pSetLayouts			= &p_renderer->GetVulkanDescriptorSetLayoutForMesh();
 	return AllocateDescriptorSet( descriptor_set_AI, false );
 }
 

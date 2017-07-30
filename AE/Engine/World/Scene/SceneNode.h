@@ -61,11 +61,11 @@ public:
 	// 3d position of the object
 	Vec3						position						= Vec3( 0, 0, 0 );
 
-	// 3d scale of the object
-	Vec3						scale							= Vec3( 1, 1, 1 );
-
 	// Quaternion rotation of the object
 	Quat						rotation						= Quat( 1, 0, 0, 0 );
+
+	// 3d scale of the object
+	Vec3						scale							= Vec3( 1, 1, 1 );
 
 	// transformation matrix of the object to be used with other calculations that need it or with rendering
 	// this value is not calculated automatically, use CalculateTransformationMatrixFromPosScaleRot before using this
@@ -74,9 +74,21 @@ public:
 protected:
 	// because it's easier to call parent functions than branching child object's functions
 	// I have inverted the parsing into sections, ParseConfigFile() is responsible for calling it's immediate
-	// parent class parse function and the function will parse that section of the XML file as well as any below
+	// parent class parse function and the function will parse that level of the XML file as well as any below
 	// returns new parent xml element for the next stage or nullptr if error
-	tinyxml2::XMLElement	*	ParseConfigFile_SceneNodeSection();
+	tinyxml2::XMLElement	*	ParseConfigFile_SceneNodeLevel();
+
+	// because it's easier to call parent functions than branching child object's functions
+	// I have inverted the resource checking, CheckResourcesLoaded() is responsible for calling it's immediate
+	// parent class check function and the function will check that level's resources that were requested by the XML file as well as any below
+	// returns READY if everyting on this level was loaded, NOT_READY if something was missing and UNABLE_TO_LOAD if something went wrong
+	ResourcesLoadState			CheckResourcesLoaded_SceneNodeLevel();
+
+	// because it's easier to call parent functions than branching child object's functions
+	// I have inverted the finalizing into levels, Finalize() is responsible for calling it's immediate
+	// parent class'es finalize function and the function will finalize that level of resources defined by the XML file as well as any below
+	// returns true if everything is OK, false if there was an error in which case this scene node will not participate in updates or rendering operations
+	bool						Finalize_SceneNodeLevel();
 
 private:
 	Vector<MeshInfo>			mesh_info_list;

@@ -1,0 +1,18 @@
+
+TODO:
+
+Higher priority tasks towards top.
+Formatting is:
+- Task type: Task description ( files )
+
+
+- Add functionality: Descriptor set allocation for meshes ( SceneNode.cpp )
+- Add data: Uniform buffer objects for meshes ( SceneNode.cpp )
+
+- Add functionality: Descriptor set allocation for pipelines ( DeviceResource_GraphicsPipeline.cpp )
+- Add data: Uniform buffer objects for pipelines ( DeviceResource_GraphicsPipeline.cpp )
+
+- Add class: Camera scene node ( <no files> )
+
+- Add functionality: Descriptor set allocation functions for cameras
+- Add data: Uniform buffer objects for cameras

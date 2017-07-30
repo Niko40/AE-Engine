@@ -32,27 +32,27 @@ bool ContinueGraphicsPipelineLoadTest_1( DeviceResource * resource )
 	assert( res );
 
 	if( res->vertex_shader_resource ) {
-		if( !res->vertex_shader_resource->IsReadyForUse() ) {
+		if( !res->vertex_shader_resource->IsResourceReadyForUse() ) {
 			return false;
 		}
 	}
 	if( res->tessellation_control_shader_resource ) {
-		if( !res->tessellation_control_shader_resource->IsReadyForUse() ) {
+		if( !res->tessellation_control_shader_resource->IsResourceReadyForUse() ) {
 			return false;
 		}
 	}
 	if( res->tessellation_evaluation_shader_resource ) {
-		if( !res->tessellation_evaluation_shader_resource->IsReadyForUse() ) {
+		if( !res->tessellation_evaluation_shader_resource->IsResourceReadyForUse() ) {
 			return false;
 		}
 	}
 	if( res->geometry_shader_resource ) {
-		if( !res->geometry_shader_resource->IsReadyForUse() ) {
+		if( !res->geometry_shader_resource->IsResourceReadyForUse() ) {
 			return false;
 		}
 	}
 	if( res->fragment_shader_resource ) {
-		if( !res->fragment_shader_resource->IsReadyForUse() ) {
+		if( !res->fragment_shader_resource->IsResourceReadyForUse() ) {
 			return false;
 		}
 	}

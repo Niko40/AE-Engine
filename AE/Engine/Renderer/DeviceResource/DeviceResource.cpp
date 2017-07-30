@@ -45,13 +45,19 @@ String DeviceResource::Debug_GetHexAddressOfThisAsString()
 	return ss.str().c_str();
 }
 
-bool DeviceResource::IsReadyForUse()
+bool DeviceResource::IsResourceReadyForUse()
 {
 	std::lock_guard<std::mutex> resource_guard( mutex );
 	return ( State::LOADED == state );
 }
 
-uint32_t DeviceResource::GetUsers()
+bool DeviceResource::IsResourceOK()
+{
+	LOCK_GUARD( mutex );
+	return !( State::UNABLE_TO_LOAD == state || State::UNABLE_TO_UNLOAD == state );
+}
+
+uint32_t DeviceResource::GetResourceUsers()
 {
 	std::lock_guard<std::mutex> resource_guard( mutex );
 	return users;
@@ -62,7 +68,7 @@ DeviceResource::Type DeviceResource::GetResourceType() const
 	return type;
 }
 
-DeviceResource::Flags DeviceResource::GetFlags() const
+DeviceResource::Flags DeviceResource::GetResourceFlags() const
 {
 	return flags;
 }
@@ -136,13 +142,13 @@ std::thread::id DeviceResource::GetWorkerThreadID()
 	return locked_worker_thread_id;
 }
 
-DeviceResource::State DeviceResource::GetState()
+DeviceResource::State DeviceResource::GetResourceState()
 {
 	std::lock_guard<std::mutex> resource_guard( mutex );
 	return state;
 }
 
-void DeviceResource::SetState( DeviceResource::State new_state )
+void DeviceResource::SetResourceState( DeviceResource::State new_state )
 {
 	std::lock_guard<std::mutex> resource_guard( mutex );
 	state		= new_state;

@@ -450,7 +450,7 @@ const Vector<Polygon>& DeviceResource_Mesh::GetPolygons() const
 
 Vector<Vertex>& DeviceResource_Mesh::GetEditableVertices()
 {
-	if( GetFlags() == DeviceResource::Flags::STATIC ) {
+	if( GetResourceFlags() == DeviceResource::Flags::STATIC ) {
 		assert( 0 && "Requested editable vertices on static resource, mesh will not be updated" );
 		if( !warned_editable_static_return_vertices ) {
 			p_engine->GetLogger()->LogWarning( "DeviceResource_Mesh, requested editable vertices on static resource: " + Debug_GetHexAddressOfThisAsString() + ", mesh will not be updated" );
@@ -462,7 +462,7 @@ Vector<Vertex>& DeviceResource_Mesh::GetEditableVertices()
 
 Vector<CopyVertex>& DeviceResource_Mesh::GetEditableCopyVertices()
 {
-	if( GetFlags() == DeviceResource::Flags::STATIC ) {
+	if( GetResourceFlags() == DeviceResource::Flags::STATIC ) {
 		assert( 0 && "Requested editable copy vertices on static resource, mesh will not be updated" );
 		if( !warned_editable_static_return_copy_vertices ) {
 			p_engine->GetLogger()->LogWarning( "DeviceResource_Mesh, requested editable copy vertices on static resource: " + Debug_GetHexAddressOfThisAsString() + ", mesh will not be updated" );
@@ -474,7 +474,7 @@ Vector<CopyVertex>& DeviceResource_Mesh::GetEditableCopyVertices()
 
 Vector<Polygon>& DeviceResource_Mesh::GetEditablePolygons()
 {
-	if( GetFlags() == DeviceResource::Flags::STATIC ) {
+	if( GetResourceFlags() == DeviceResource::Flags::STATIC ) {
 		assert( 0 && "Requested editable polygons on static resource, mesh will not be updated" );
 		if( !warned_editable_static_return_polygons ) {
 			p_engine->GetLogger()->LogWarning( "DeviceResource_Mesh, requested editable polygons on static resource: " + Debug_GetHexAddressOfThisAsString() + ", mesh will not be updated" );

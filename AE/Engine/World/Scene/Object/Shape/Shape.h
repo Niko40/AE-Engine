@@ -5,9 +5,6 @@
 
 #include "../Object.h"
 
-#include "../../../../Renderer/DeviceResource/Mesh/DeviceResource_Mesh.h"
-#include "../../../../Renderer/DeviceResource/Image/DeviceResource_Image.h"
-
 namespace AE
 {
 
@@ -20,6 +17,8 @@ public:
 	void									Update();
 
 	bool									ParseConfigFile();
+	ResourcesLoadState						CheckResourcesLoaded();
+	bool									Finalize();
 
 private:
 };

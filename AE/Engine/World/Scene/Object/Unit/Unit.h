@@ -14,7 +14,9 @@ public:
 	virtual						~SceneNode_Unit();
 
 protected:
-	tinyxml2::XMLElement	*	ParseConfigFile_UnitSection();
+	tinyxml2::XMLElement	*	ParseConfigFile_UnitLevel();
+	ResourcesLoadState			CheckResourcesLoaded_UnitLevel();
+	bool						Finalize_UnitLevel();
 
 private:
 

@@ -21,6 +21,8 @@ private:
 	void							Update();
 
 	bool							ParseConfigFile();
+	ResourcesLoadState				CheckResourcesLoaded();
+	bool							Finalize();
 };
 
 }

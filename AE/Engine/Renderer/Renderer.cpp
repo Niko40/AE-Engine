@@ -310,9 +310,9 @@ vk::DescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForCamera() const
 	return vk_descriptor_set_layout_for_camera;
 }
 
-vk::DescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForObject() const
+vk::DescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForMesh() const
 {
-	return vk_descriptor_set_layout_for_object;
+	return vk_descriptor_set_layout_for_mesh;
 }
 
 vk::DescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForPipeline() const
@@ -1159,9 +1159,9 @@ void Renderer::CreateDescriptorSetLayouts()
 		descriptor_set_layout_CI.flags				= vk::DescriptorSetLayoutCreateFlagBits( 0 );
 		descriptor_set_layout_CI.bindingCount		= 1;
 		descriptor_set_layout_CI.pBindings			= &descriptor_set_bindings;
-		vk_descriptor_set_layout_for_object			= vk_device.object.createDescriptorSetLayout( descriptor_set_layout_CI );
+		vk_descriptor_set_layout_for_mesh			= vk_device.object.createDescriptorSetLayout( descriptor_set_layout_CI );
 
-		if( !vk_descriptor_set_layout_for_object ) {
+		if( !vk_descriptor_set_layout_for_mesh ) {
 			p_logger->LogCritical( "Unable to create descriptor set layout for object" );
 		}
 	}
@@ -1219,7 +1219,7 @@ void Renderer::DestroyDescriptorSetLayouts()
 	LOCK_GUARD( *vk_device.mutex );
 
 	vk_device.object.destroyDescriptorSetLayout( vk_descriptor_set_layout_for_camera );
-	vk_device.object.destroyDescriptorSetLayout( vk_descriptor_set_layout_for_object );
+	vk_device.object.destroyDescriptorSetLayout( vk_descriptor_set_layout_for_mesh );
 	vk_device.object.destroyDescriptorSetLayout( vk_descriptor_set_layout_for_pipeline );
 	for( auto & d : vk_descriptor_set_layouts_for_images ) {
 		vk_device.object.destroyDescriptorSetLayout( d );
@@ -1237,7 +1237,7 @@ void Renderer::CreateGraphicsPipelineLayouts()
 		Vector<vk::DescriptorSetLayout>		layouts;
 		layouts.reserve( 4 );
 		layouts.push_back( vk_descriptor_set_layout_for_camera );
-		layouts.push_back( vk_descriptor_set_layout_for_object );
+		layouts.push_back( vk_descriptor_set_layout_for_mesh );
 		layouts.push_back( vk_descriptor_set_layout_for_pipeline );
 		layouts.push_back( vk_descriptor_set_layouts_for_images[ pl ] );
 

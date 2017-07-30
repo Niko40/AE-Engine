@@ -23,7 +23,7 @@ public:
 	~DescriptorPoolManager();
 
 	DescriptorSetHandle					AllocateDescriptorSetForCamera();
-	DescriptorSetHandle					AllocateDescriptorSetForObject();
+	DescriptorSetHandle					AllocateDescriptorSetForMesh();
 	DescriptorSetHandle					AllocateDescriptorSetForPipeline();
 	DescriptorSetHandle					AllocateDescriptorSetForImages( uint32_t shader_image_count );
 
@@ -38,8 +38,8 @@ private:
 
 	VulkanDevice						ref_vk_device				= {};
 
-	List<DescriptorSubPoolInfo>		uniform_pool_list;
-	List<DescriptorSubPoolInfo>		image_pool_list;
+	List<DescriptorSubPoolInfo>			uniform_pool_list;
+	List<DescriptorSubPoolInfo>			image_pool_list;
 };
 
 }

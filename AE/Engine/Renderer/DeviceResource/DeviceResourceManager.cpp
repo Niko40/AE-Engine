@@ -63,7 +63,7 @@ void DeviceWorkerThread( Engine * engine, DeviceResourceManager * device_resourc
 					switch( loading_state ) {
 					case AE::DeviceResource::LoadingState::UNABLE_TO_LOAD:
 					{
-						resource->SetState( DeviceResource::State::UNABLE_TO_LOAD );
+						resource->SetResourceState( DeviceResource::State::UNABLE_TO_LOAD );
 						assert( 0 && "Unable to load resource" );
 						break;
 					}
@@ -75,7 +75,7 @@ void DeviceWorkerThread( Engine * engine, DeviceResourceManager * device_resourc
 					}
 					case AE::DeviceResource::LoadingState::LOADED:
 					{
-						resource->SetState( DeviceResource::State::LOADED );
+						resource->SetResourceState( DeviceResource::State::LOADED );
 						break;
 					}
 					default:
@@ -116,7 +116,7 @@ void DeviceWorkerThread( Engine * engine, DeviceResourceManager * device_resourc
 							switch( load_state ) {
 							case AE::DeviceResource::LoadingState::UNABLE_TO_LOAD:
 							{
-								resource->SetState( DeviceResource::State::UNABLE_TO_LOAD );
+								resource->SetResourceState( DeviceResource::State::UNABLE_TO_LOAD );
 								break;
 							}
 							case AE::DeviceResource::LoadingState::CONTINUE_LOADING:
@@ -127,7 +127,7 @@ void DeviceWorkerThread( Engine * engine, DeviceResourceManager * device_resourc
 							}
 							case AE::DeviceResource::LoadingState::LOADED:
 							{
-								resource->SetState( DeviceResource::State::LOADED );
+								resource->SetResourceState( DeviceResource::State::LOADED );
 								break;
 							}
 							default:
@@ -168,7 +168,7 @@ void DeviceWorkerThread( Engine * engine, DeviceResourceManager * device_resourc
 						switch( loading_state ) {
 						case AE::DeviceResource::UnloadingState::UNABLE_TO_UNLOAD:
 						{
-							resource->SetState( DeviceResource::State::UNABLE_TO_UNLOAD );
+							resource->SetResourceState( DeviceResource::State::UNABLE_TO_UNLOAD );
 							assert( 0 && "Failed to unload device resource, we'll try and destroy the object anyway" );
 							break;
 						}
@@ -180,7 +180,7 @@ void DeviceWorkerThread( Engine * engine, DeviceResourceManager * device_resourc
 						}
 						case AE::DeviceResource::UnloadingState::UNLOADED:
 						{
-							resource->SetState( DeviceResource::State::UNLOADED );
+							resource->SetResourceState( DeviceResource::State::UNLOADED );
 							break;
 						}
 						default:
@@ -219,7 +219,7 @@ void DeviceWorkerThread( Engine * engine, DeviceResourceManager * device_resourc
 						switch( state ) {
 						case AE::DeviceResource::UnloadingState::UNABLE_TO_UNLOAD:
 						{
-							resource->SetState( DeviceResource::State::UNABLE_TO_UNLOAD );
+							resource->SetResourceState( DeviceResource::State::UNABLE_TO_UNLOAD );
 							assert( 0 && "Unable to unload resource, we'll try and delete it anyways" );
 							break;
 						}
@@ -231,7 +231,7 @@ void DeviceWorkerThread( Engine * engine, DeviceResourceManager * device_resourc
 						}
 						case AE::DeviceResource::UnloadingState::UNLOADED:
 						{
-							resource->SetState( DeviceResource::State::UNLOADED );
+							resource->SetResourceState( DeviceResource::State::UNLOADED );
 							break;
 						}
 						default:
@@ -417,7 +417,7 @@ DeviceResourceHandle<DeviceResource> DeviceResourceManager::RequestResource( Dev
 			for( size_t i=0; i < file_resource_paths.size(); ++i ) {
 				resource->file_resources[ i ]	= p_file_resource_manager->RequestResource( file_resource_paths[ i ] );
 				if( resource->file_resources[ i ] ) {
-					if( !resource->file_resources[ i ]->IsReadyForUse() ) {
+					if( !resource->file_resources[ i ]->IsResourceReadyForUse() ) {
 						all_file_resources_loaded	= false;
 					}
 				} else {
@@ -476,7 +476,7 @@ void DeviceResourceManager::ParsePreloadList()
 		bool file_resources_ready		= true;
 		for( auto & f : ( *pl_it )->file_resources ) {
 			// check each file resource within this device resource if they're ready
-			auto current_file_resource_state		= f->GetState();
+			auto current_file_resource_state		= f->GetResourceState();
 			if( current_file_resource_state != FileResource::State::LOADED ) {
 				file_resources_ready	= false;
 				// check if an error happened
@@ -537,7 +537,7 @@ bool DeviceResourceManager::HasPendingUnloadWork()
 	{
 		std::lock_guard<std::mutex> resources_list_guard( mutex_resources_list );
 		for( auto & r : resources_list ) {
-			if( !r->GetUsers() ) return true;
+			if( !r->GetResourceUsers() ) return true;
 		}
 	}
 	return false;

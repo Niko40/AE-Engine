@@ -52,8 +52,9 @@ public:
 								FileResource( Engine * engine, FileResourceManager * file_resource_manager, Type file_resource_type );
 	virtual						~FileResource();
 
-	bool						IsReadyForUse();
-	uint32_t					GetUsers();
+	bool						IsResourceReadyForUse();
+	bool						IsResourceOK();
+	uint32_t					GetResourceUsers();
 	Type						GetResourceType() const;
 
 	// if you use FileResourceHandle you don't manually need to call this function
@@ -75,10 +76,10 @@ private:
 	bool						UnloadFromManager();
 
 public:
-	State						GetState();
+	State						GetResourceState();
 
 private:
-	void						SetState( State new_state );
+	void						SetResourceState( State new_state );
 
 protected:
 	Engine					*	p_engine					= nullptr;

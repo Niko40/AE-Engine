@@ -39,7 +39,7 @@ void SceneNode::CalculatePosScaleRotFromTransformationMatrix( const Mat4 & new_t
 	rotation	= glm::conjugate( rotation );		// returned rotation is a conjugate so we need to flip it
 }
 
-tinyxml2::XMLElement * SceneNode::ParseConfigFile_SceneNodeSection()
+tinyxml2::XMLElement * SceneNode::ParseConfigFile_SceneNodeLevel()
 {
 	auto xml_root = config_file->GetRootElement();
 	if( nullptr == xml_root ) return nullptr;
@@ -79,7 +79,7 @@ tinyxml2::XMLElement * SceneNode::ParseConfigFile_SceneNodeSection()
 		auto xml_render_info	= config_file->GetChildElement( xml_mesh, "RENDER_INFO" );
 		if( nullptr != xml_render_info ) {
 			TODO( "Pipeline resources" );
-			mesh.render_info.graphics_pipeline_resource	= p_device_resource_manager->RequestResource_GraphicsPipeline( { config_file->GetFieldValue_Text( xml_render_info, "graphics_pipeline_path" ) } );
+			mesh.render_info.graphics_pipeline_resource	= p_device_resource_manager->RequestResource_GraphicsPipeline( { config_file->GetFieldValue_Text( xml_render_info, "graphics_pipeline_path", "Graphics pipeline path not defined" ) } );
 
 			// handle images
 			auto xml_images	= config_file->GetChildElement( xml_render_info, "IMAGES" );
@@ -99,6 +99,33 @@ tinyxml2::XMLElement * SceneNode::ParseConfigFile_SceneNodeSection()
 	}
 
 	return xml_root;
+}
+
+SceneNodeBase::ResourcesLoadState SceneNode::CheckResourcesLoaded_SceneNodeLevel()
+{
+	for( auto & m : mesh_info_list ) {
+		if( !m.mesh_resource->IsResourceOK() ) return ResourcesLoadState::UNABLE_TO_LOAD;
+		if( !m.mesh_resource->IsResourceReadyForUse() ) return ResourcesLoadState::NOT_READY;
+
+		if( !m.render_info.graphics_pipeline_resource->IsResourceOK() ) return ResourcesLoadState::UNABLE_TO_LOAD;
+		if( !m.render_info.graphics_pipeline_resource->IsResourceReadyForUse() ) return ResourcesLoadState::NOT_READY;
+
+		for( auto & i : m.render_info.image_info.image_resources ) {
+			if( i ) {
+				if( !i->IsResourceOK() ) return ResourcesLoadState::UNABLE_TO_LOAD;
+				if( !i->IsResourceReadyForUse() ) return ResourcesLoadState::NOT_READY;
+			}
+		}
+	}
+	return ResourcesLoadState::READY;
+}
+
+bool SceneNode::Finalize_SceneNodeLevel()
+{
+	// todo:
+	// - create uniform buffers for meshes
+	// - allocate descriptor sets for mesh uniform buffers
+	return true;
 }
 
 }
