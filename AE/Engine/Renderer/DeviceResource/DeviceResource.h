@@ -96,10 +96,11 @@ public:
 
 	String						Debug_GetHexAddressOfThisAsString();
 
-	bool						IsReadyForUse();
-	uint32_t					GetUsers();
+	bool						IsResourceReadyForUse();
+	bool						IsResourceOK();
+	uint32_t					GetResourceUsers();
 	Type						GetResourceType() const;
-	Flags						GetFlags() const;
+	Flags						GetResourceFlags() const;
 
 	// if you use DeviceResourceHandle you don't manually need to call this function
 	void						Release();
@@ -137,9 +138,11 @@ private:
 
 	std::thread::id				GetWorkerThreadID();
 
+public:
+	State						GetResourceState();
+
 protected:
-	State						GetState();
-	void						SetState( DeviceResource::State new_state );
+	void						SetResourceState( DeviceResource::State new_state );
 
 	// MUST BE SET BEFORE EXITING Load() function or previous call to next unload operation if these functions return CONTINUE_LOADING
 	// test function must return true before the operation function is called by the device resource manager

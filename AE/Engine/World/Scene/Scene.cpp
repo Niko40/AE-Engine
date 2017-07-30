@@ -22,4 +22,14 @@ bool Scene::ParseConfigFile()
 	return false;
 }
 
+SceneNodeBase::ResourcesLoadState Scene::CheckResourcesLoaded()
+{
+	return ResourcesLoadState::READY;
+}
+
+bool Scene::Finalize()
+{
+	return true;
+}
+
 }

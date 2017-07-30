@@ -68,11 +68,11 @@ void FileWorkerThread( Engine * engine, FileResourceManager * file_resource_mana
 						auto fs		= p_filesystem->OpenFileStream( path );
 						if( nullptr != fs ) {
 							auto loaded	= resource->LoadFromManager( fs, path );
-							resource->SetState( loaded ? FileResource::State::LOADED : FileResource::State::UNABLE_TO_LOAD );
+							resource->SetResourceState( loaded ? FileResource::State::LOADED : FileResource::State::UNABLE_TO_LOAD );
 							p_filesystem->CloseFileStream( fs );
 							load_operation_ran			= true;
 						} else {
-							resource->SetState( FileResource::State::UNABLE_TO_LOAD_FILE_NOT_FOUND );
+							resource->SetResourceState( FileResource::State::UNABLE_TO_LOAD_FILE_NOT_FOUND );
 						}
 					}
 				}
@@ -104,9 +104,9 @@ void FileWorkerThread( Engine * engine, FileResourceManager * file_resource_mana
 				}
 				if( resource ) {
 					if( resource->UnloadFromManager() ) {
-						resource->SetState( FileResource::State::UNLOADED );
+						resource->SetResourceState( FileResource::State::UNLOADED );
 					} else {
-						resource->SetState( FileResource::State::UNABLE_TO_UNLOAD );
+						resource->SetResourceState( FileResource::State::UNABLE_TO_UNLOAD );
 						assert( 0 && "Unable to unload resource, we'll try and delete it anyways" );
 					}
 				}
@@ -219,7 +219,7 @@ bool FileResourceManager::HasPendingUnloadWork()
 {
 	std::lock_guard<std::mutex> resources_list_guard( mutex_resources_list );
 	for( auto & r : resources_list ) {
-		if( !r.second->GetUsers() ) return true;
+		if( !r.second->GetResourceUsers() ) return true;
 	}
 	return false;
 }

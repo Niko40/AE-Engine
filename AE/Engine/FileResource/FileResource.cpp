@@ -21,13 +21,19 @@ FileResource::~FileResource()
 {
 }
 
-bool FileResource::IsReadyForUse()
+bool FileResource::IsResourceReadyForUse()
 {
 	std::lock_guard<std::mutex> guard( mutex );
 	return ( State::LOADED == state );
 }
 
-uint32_t FileResource::GetUsers()
+bool FileResource::IsResourceOK()
+{
+	LOCK_GUARD( mutex );
+	return !( State::UNABLE_TO_LOAD == state || State::UNABLE_TO_UNLOAD == state || State::UNABLE_TO_LOAD_FILE_NOT_FOUND == state );
+}
+
+uint32_t FileResource::GetResourceUsers()
 {
 	std::lock_guard<std::mutex> guard( mutex );
 	return users;
@@ -92,13 +98,13 @@ bool FileResource::UnloadFromManager()
 	return result;
 }
 
-FileResource::State FileResource::GetState()
+FileResource::State FileResource::GetResourceState()
 {
 	std::lock_guard<std::mutex> guard( mutex );
 	return state;
 }
 
-void FileResource::SetState( State new_state )
+void FileResource::SetResourceState( State new_state )
 {
 	std::lock_guard<std::mutex> guard( mutex );
 	state		= new_state;

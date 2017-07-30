@@ -56,7 +56,7 @@ public:
 
 	vk::PipelineLayout						GetVulkanGraphicsPipelineLayout( uint32_t supported_image_count ) const;
 	vk::DescriptorSetLayout					GetVulkanDescriptorSetLayoutForCamera() const;
-	vk::DescriptorSetLayout					GetVulkanDescriptorSetLayoutForObject() const;
+	vk::DescriptorSetLayout					GetVulkanDescriptorSetLayoutForMesh() const;
 	vk::DescriptorSetLayout					GetVulkanDescriptorSetLayoutForPipeline() const;
 	vk::DescriptorSetLayout					GetVulkanDescriptorSetLayoutForImageBindingCount( uint32_t image_binding_count ) const;
 
@@ -180,7 +180,7 @@ private:
 
 	// related to graphics pipeline layouts
 	vk::DescriptorSetLayout					vk_descriptor_set_layout_for_camera		= nullptr;
-	vk::DescriptorSetLayout					vk_descriptor_set_layout_for_object		= nullptr;
+	vk::DescriptorSetLayout					vk_descriptor_set_layout_for_mesh		= nullptr;
 	vk::DescriptorSetLayout					vk_descriptor_set_layout_for_pipeline	= nullptr;
 	Vector<vk::DescriptorSetLayout>			vk_descriptor_set_layouts_for_images;
 

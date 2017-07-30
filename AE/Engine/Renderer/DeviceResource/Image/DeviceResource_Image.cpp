@@ -84,7 +84,7 @@ DeviceResource::LoadingState DeviceResource_Image::Load()
 	}
 	auto image_resource = dynamic_cast<FileResource_Image*>( file_resources[ 0 ].Get() );
 
-	assert( image_resource->IsReadyForUse() );
+	assert( image_resource->IsResourceReadyForUse() );
 
 	auto image_data = ConvertImageToPhysicalDeviceSupportedFormat( p_renderer, image_resource->GetImageData() );
 	if( image_data.width == 0 || image_data.height == 0 ) {

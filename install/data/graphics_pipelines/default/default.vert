@@ -15,10 +15,10 @@ layout(set=0, binding=0) uniform CameraData
 	mat4 projection_matrix;
 } camera_data;
 
-layout(set=1, binding=0) uniform ObjectData
+layout(set=1, binding=0) uniform MeshData
 {
 	mat4 model_matrix;
-} object_data;
+} mesh_data;
 
 
 // output to other shader stages
@@ -29,5 +29,5 @@ layout(location=0) out vec2 fragment_uv;
 void main()
 {
 	fragment_uv		= vertex_uv;
-	gl_Position		= camera_data.projection_matrix * camera_data.view_matrix * object_data.model_matrix * vec4( vertex_location, 1.0f );
+	gl_Position		= camera_data.projection_matrix * camera_data.view_matrix * mesh_data.model_matrix * vec4( vertex_location, 1.0f );
 }

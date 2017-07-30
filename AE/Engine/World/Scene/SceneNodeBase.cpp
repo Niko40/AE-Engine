@@ -73,16 +73,43 @@ SceneNode * SceneNodeBase::CreateChild( SceneNodeBase::Type scene_node_type, con
 
 void SceneNodeBase::UpdateFromManager()
 {
-	if( !IsConfigFileParsed() ) {
-		if( IsConfigFileLoaded() ) {
-			if( !ParseConfigFile() ) {
-				is_scene_node_ok		= false;
-				p_engine->GetLogger()->LogError( "Parsing scene node XML file failed" );
+	if( is_scene_node_ok ) {
+		if( is_scene_node_use_ready ) {
+			Update();
+		} else {
+			if( !IsConfigFileParsed() ) {
+				if( IsConfigFileLoaded() ) {
+					if( !ParseConfigFile() ) {
+						is_scene_node_ok		= false;
+						p_engine->GetLogger()->LogError( "Parsing scene node XML file failed" );
+					}
+					is_config_file_parsed		= true;
+				}
 			}
-			is_config_file_parsed		= true;
+			if( IsConfigFileParsed() && is_scene_node_ok ) {
+				auto result = CheckResourcesLoaded();
+				switch( result ) {
+				case ResourcesLoadState::READY:
+				{
+					if( Finalize() ) {
+						is_scene_node_use_ready	= true;
+					} else {
+						is_scene_node_ok		= false;
+					}
+					break;
+				}
+				case ResourcesLoadState::NOT_READY:
+					break;
+				case ResourcesLoadState::UNABLE_TO_LOAD:
+					is_scene_node_ok			= false;
+					break;
+				default:
+					assert( !"Illegal value, check if the value is set?" );
+					break;
+				}
+			}
 		}
 	}
-	Update();
 	for( auto & c : child_list ) {
 		c->UpdateFromManager();
 	}
@@ -95,7 +122,12 @@ bool SceneNodeBase::IsConfigFileParsed()
 
 bool SceneNodeBase::IsConfigFileLoaded()
 {
-	return config_file->IsReadyForUse();
+	return config_file->IsResourceReadyForUse();
+}
+
+bool SceneNodeBase::IsSceneNodeUseReady()
+{
+	return is_scene_node_use_ready && is_scene_node_ok;
 }
 
 const Path & SceneNodeBase::GetConfigFilePath()

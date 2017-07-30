@@ -13,17 +13,36 @@ SceneNode_Object::~SceneNode_Object()
 {
 }
 
-tinyxml2::XMLElement * SceneNode_Object::ParseConfigFile_ObjectSection()
+tinyxml2::XMLElement * SceneNode_Object::ParseConfigFile_ObjectLevel()
 {
-	auto parent_element			= ParseConfigFile_SceneNodeSection();
-	if( nullptr != parent_element ) {
-		auto object_element		= parent_element->FirstChildElement( "OBJECT" );
+	auto scene_node_element			= ParseConfigFile_SceneNodeLevel();
+	if( nullptr != scene_node_element ) {
+		auto object_element		= scene_node_element->FirstChildElement( "OBJECT" );
 		if( nullptr != object_element ) {
 			// do object level stuff
 		}
 		return object_element;
 	}
 	return nullptr;
+}
+
+SceneNodeBase::ResourcesLoadState SceneNode_Object::CheckResourcesLoaded_ObjectLevel()
+{
+	auto scene_node_level	= CheckResourcesLoaded_SceneNodeLevel();
+	if( scene_node_level == ResourcesLoadState::READY ) {
+		// check requested resources on shape level
+		return ResourcesLoadState::READY;
+	}
+	return scene_node_level;
+}
+
+bool SceneNode_Object::Finalize_ObjectLevel()
+{
+	if( Finalize_SceneNodeLevel() ) {
+		// finalize shape level stuff
+		return true;
+	}
+	return false;
 }
 
 }

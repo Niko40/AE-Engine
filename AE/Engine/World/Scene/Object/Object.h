@@ -19,7 +19,9 @@ protected:
 	// I have inverted the parsing into sections, ParseConfigFile() is responsible for calling it's immediate
 	// parent class parse function and the function will parse that section of the XML file as well as any below
 	// returns new parent xml element for the next stage or nullptr if error
-	tinyxml2::XMLElement	*	ParseConfigFile_ObjectSection();
+	tinyxml2::XMLElement	*	ParseConfigFile_ObjectLevel();
+	ResourcesLoadState			CheckResourcesLoaded_ObjectLevel();
+	bool						Finalize_ObjectLevel();
 
 private:
 
