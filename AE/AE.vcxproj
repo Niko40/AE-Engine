@@ -75,6 +75,7 @@
     <ClInclude Include="Engine\Memory\MemoryTypes.h" />
     <ClInclude Include="Engine\Platform.h" />
     <ClInclude Include="Engine\Renderer\Buffer\UniformBuffer.h" />
+    <ClInclude Include="Engine\Renderer\Buffer\UniformBufferTypes.h" />
     <ClInclude Include="Engine\Renderer\DescriptorSet\DescriptorPoolManager.h" />
     <ClInclude Include="Engine\Renderer\DescriptorSet\DescriptorPoolInfo.h" />
     <ClInclude Include="Engine\Renderer\DescriptorSet\DescriptorSetHandle.h" />

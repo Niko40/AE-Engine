@@ -16,6 +16,7 @@ namespace AE
 {
 
 class Engine;
+class UniformBuffer;
 class DeviceResource_GraphicsPipeline;
 class DeviceResource_Mesh;
 class DeviceResource_Image;
@@ -44,8 +45,7 @@ public:
 		Vec3								scale					= Vec3( 1, 1, 1 );
 
 		DeviceResourceHandle<DeviceResource_Mesh>					mesh_resource;
-		vk::Buffer							vk_mesh_UBO_host		= nullptr;
-		vk::Buffer							vk_mesh_UBO_device		= nullptr;
+		UniquePointer<UniformBuffer>		uniform_buffer;
 
 		RenderInfo							render_info				= {};
 	};

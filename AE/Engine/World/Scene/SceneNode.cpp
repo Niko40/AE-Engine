@@ -5,6 +5,8 @@
 
 #include "../../Engine.h"
 #include "../../Logger/Logger.h"
+#include "../../Renderer/Buffer/UniformBuffer.h"
+#include "../../Renderer/Buffer/UniformBufferTypes.h"
 #include "../../Renderer/DeviceResource/DeviceResourceManager.h"
 #include "../../Renderer/DeviceResource/GraphicsPipeline/DeviceResource_GraphicsPipeline.h"
 #include "../../Renderer/DeviceResource/Mesh/DeviceResource_Mesh.h"
@@ -123,11 +125,12 @@ SceneNodeBase::ResourcesLoadState SceneNode::CheckResourcesLoaded_SceneNodeLevel
 bool SceneNode::Finalize_SceneNodeLevel()
 {
 	// todo:
-	// - create uniform buffers for meshes
 	// - allocate descriptor sets for mesh uniform buffers
 
 	for( auto & i : mesh_info_list ) {
-		i.vk_mesh_UBO_host	= 
+		i.uniform_buffer	= MakeUniquePointer<UniformBuffer>( p_engine, p_engine->GetRenderer() );
+		assert( i.uniform_buffer );
+		i.uniform_buffer->Initialize( sizeof( UniformBufferData_Mesh ) );
 	}
 
 	return true;

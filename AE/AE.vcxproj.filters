@@ -364,6 +364,9 @@
     <ClInclude Include="Engine\Renderer\Buffer\UniformBuffer.h">
       <Filter>Engine\Renderer\Buffer</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Renderer\Buffer\UniformBufferTypes.h">
+      <Filter>Engine\Renderer\Buffer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="..\install\data\scene_nodes\objects\shapes\torus_knot.xml" />
