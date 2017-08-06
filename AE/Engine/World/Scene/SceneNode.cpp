@@ -125,6 +125,11 @@ bool SceneNode::Finalize_SceneNodeLevel()
 	// todo:
 	// - create uniform buffers for meshes
 	// - allocate descriptor sets for mesh uniform buffers
+
+	for( auto & i : mesh_info_list ) {
+		i.vk_mesh_UBO_host	= 
+	}
+
 	return true;
 }
 

@@ -44,6 +44,9 @@ public:
 		Vec3								scale					= Vec3( 1, 1, 1 );
 
 		DeviceResourceHandle<DeviceResource_Mesh>					mesh_resource;
+		vk::Buffer							vk_mesh_UBO_host		= nullptr;
+		vk::Buffer							vk_mesh_UBO_device		= nullptr;
+
 		RenderInfo							render_info				= {};
 	};
 
