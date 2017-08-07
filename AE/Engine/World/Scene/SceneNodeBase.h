@@ -4,6 +4,7 @@
 #include "../../Platform.h"
 
 #include "../../Memory/MemoryTypes.h"
+#include "../../Vulkan/Vulkan.h"
 
 #include "../../FileResource/XML/FileResource_XML.h"
 
@@ -11,8 +12,10 @@ namespace AE
 {
 
 class Engine;
+class Renderer;
 class FileResourceManager;
 class DeviceResourceManager;
+class DescriptorPoolManager;
 class SceneManager;
 class SceneNode;
 
@@ -43,7 +46,7 @@ public:
 		UNABLE_TO_LOAD,
 	};
 
-											SceneNodeBase( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type );
+											SceneNodeBase( Engine * engine, SceneManager * scene_manager, DescriptorPoolManager * descriptor_pool_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type );
 	virtual									~SceneNodeBase();
 
 	SceneNode							*	CreateChild( SceneNodeBase::Type scene_node_type, const Path & scene_node_path );
@@ -84,7 +87,11 @@ protected:
 	Engine								*	p_engine						= nullptr;
 	SceneManager						*	p_scene_manager					= nullptr;
 	FileResourceManager					*	p_file_resource_manager			= nullptr;
+	Renderer							*	p_renderer						= nullptr;
 	DeviceResourceManager				*	p_device_resource_manager		= nullptr;
+	DescriptorPoolManager				*	p_descriptor_pool_manager		= nullptr;
+
+	VulkanDevice							ref_vk_device					= {};
 
 	FileResourceHandle<FileResource_XML>	config_file						= nullptr;
 

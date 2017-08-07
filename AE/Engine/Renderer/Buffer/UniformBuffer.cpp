@@ -28,21 +28,23 @@ UniformBuffer::~UniformBuffer()
 void UniformBuffer::Initialize( vk::DeviceSize uniform_buffer_size )
 {
 	buffer_size						= uniform_buffer_size;
-	assert( !buffer_size );
+	assert( buffer_size );
 
 	vk::BufferCreateInfo buffer_CI {};
-	buffer_CI.flags					= vk::BufferCreateFlagBits( 0 );
-	buffer_CI.size					= buffer_size;
-	buffer_CI.sharingMode			= vk::SharingMode::eExclusive;
-	buffer_CI.queueFamilyIndexCount	= 0;
-	buffer_CI.pQueueFamilyIndices	= nullptr;
+	buffer_CI.flags						= vk::BufferCreateFlagBits( 0 );
+	buffer_CI.size						= buffer_size;
+	buffer_CI.sharingMode				= vk::SharingMode::eExclusive;
+	buffer_CI.queueFamilyIndexCount		= 0;
+	buffer_CI.pQueueFamilyIndices		= nullptr;
 
 	{
 		LOCK_GUARD( *ref_vk_device.mutex );
 		buffer_CI.usage					= vk::BufferUsageFlagBits::eTransferSrc;
 		vk_buffer_host					= ref_vk_device.object.createBuffer( buffer_CI );
+		assert( vk_buffer_host );
 		buffer_CI.usage					= vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eUniformBuffer;
 		vk_buffer_device				= ref_vk_device.object.createBuffer( buffer_CI );
+		assert( vk_buffer_device );
 	}
 
 	auto memory_man						= p_renderer->GetDeviceMemoryManager();
@@ -92,6 +94,16 @@ void UniformBuffer::RecordHostToDeviceBufferCopy( vk::CommandBuffer command_buff
 	region.dstOffset	= 0;
 	region.size			= buffer_size;
 	command_buffer.copyBuffer( vk_buffer_host, vk_buffer_device, region );
+}
+
+vk::Buffer UniformBuffer::GetHostBuffer() const
+{
+	return vk_buffer_host;
+}
+
+vk::Buffer UniformBuffer::GetDeviceBuffer() const
+{
+	return vk_buffer_device;
 }
 
 }

@@ -10,7 +10,7 @@ namespace AE
 class SceneNode_Unit : public SceneNode_Object
 {
 public:
-								SceneNode_Unit( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type );
+								SceneNode_Unit( Engine * engine, SceneManager * scene_manager, DescriptorPoolManager * descriptor_pool_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type );
 	virtual						~SceneNode_Unit();
 
 protected:

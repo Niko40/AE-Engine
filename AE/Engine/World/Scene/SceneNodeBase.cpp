@@ -21,16 +21,22 @@
 namespace AE
 {
 
-SceneNodeBase::SceneNodeBase( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type )
+SceneNodeBase::SceneNodeBase( Engine * engine, SceneManager * scene_manager, DescriptorPoolManager * descriptor_pool_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type )
 {
 	p_engine					= engine;
 	p_scene_manager				= scene_manager;
+	p_descriptor_pool_manager	= descriptor_pool_manager;
 	assert( p_engine );
 	assert( p_scene_manager );
+	assert( p_descriptor_pool_manager );
 	p_file_resource_manager		= p_engine->GetFileResourceManager();
-	p_device_resource_manager	= p_engine->GetRenderer()->GetDeviceResourceManager();
+	p_renderer					= p_engine->GetRenderer();
+	assert( p_renderer );
 	assert( p_file_resource_manager );
+	p_device_resource_manager	= p_renderer->GetDeviceResourceManager();
+	ref_vk_device				= p_renderer->GetVulkanDevice();
 	assert( p_device_resource_manager );
+	assert( ref_vk_device.object );
 
 	type					= scene_node_type;
 	assert( type != Type::UNDEFINED );
@@ -52,7 +58,7 @@ SceneNode * SceneNodeBase::CreateChild( SceneNodeBase::Type scene_node_type, con
 
 	case Type::SHAPE:
 	{
-		unique = MakeUniquePointer<SceneNode_Shape>( p_engine, p_scene_manager, scene_node_path );
+		unique = MakeUniquePointer<SceneNode_Shape>( p_engine, p_scene_manager, p_descriptor_pool_manager, scene_node_path );
 		break;
 	}
 

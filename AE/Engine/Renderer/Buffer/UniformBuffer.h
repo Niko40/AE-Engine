@@ -4,6 +4,7 @@
 #include "../../Platform.h"
 
 #include "../../Vulkan/Vulkan.h"
+#include "../../Renderer/DeviceMemory/DeviceMemoryInfo.h"
 
 namespace AE
 {
@@ -23,6 +24,9 @@ public:
 
 	void						CopyDataToHostBuffer( void * data, vk::DeviceSize byte_size );
 	void						RecordHostToDeviceBufferCopy( vk::CommandBuffer command_buffer );
+
+	vk::Buffer					GetHostBuffer() const;
+	vk::Buffer					GetDeviceBuffer() const;
 
 private:
 	Engine					*	p_engine						= nullptr;

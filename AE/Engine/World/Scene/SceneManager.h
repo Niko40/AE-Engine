@@ -11,6 +11,8 @@ namespace AE
 
 class Engine;
 class Logger;
+class Renderer;
+class DescriptorPoolManager;
 class World;
 class Scene;
 class SceneNode;
@@ -35,7 +37,10 @@ public:
 private:
 	Engine								*	p_engine					= nullptr;
 	Logger								*	p_logger					= nullptr;
+	Renderer							*	p_renderer					= nullptr;
 	World								*	p_world						= nullptr;
+
+	DescriptorPoolManager				*	p_active_scene_descriptor_pool_manager	= nullptr;
 
 	UniquePointer<Scene>					active_scene;
 	DynamicGrid2D<SharedPointer<Scene>>		grid_nodes;
