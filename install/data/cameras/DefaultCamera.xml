@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<SCENE_NODE>
+  <name value="Default Camera" />
+  <visible value ="true" />
+  <OBJECT>
+    <CAMERA>
+
+    </CAMERA>
+  </OBJECT>
+</SCENE_NODE>

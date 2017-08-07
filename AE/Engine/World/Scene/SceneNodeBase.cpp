@@ -13,6 +13,7 @@
 
 // include all scene node final derivatives here
 // Simple objects
+#include "Object/Camera/Camera.h"
 #include "Object/Shape/Shape.h"
 
 // Units
@@ -51,14 +52,20 @@ SceneNodeBase::~SceneNodeBase()
 
 SceneNode * SceneNodeBase::CreateChild( SceneNodeBase::Type scene_node_type, const Path & scene_node_path )
 {
-	UniquePointer<SceneNode> unique = nullptr;
+	UniquePointer<SceneNode> unique_ptr = nullptr;
 
 	// create scene node
 	switch( scene_node_type ) {
 
+	case Type::CAMERA:
+	{
+		unique_ptr	= MakeUniquePointer<SceneNode_Camera>( p_engine, p_scene_manager, p_descriptor_pool_manager, scene_node_path );
+		break;
+	}
+
 	case Type::SHAPE:
 	{
-		unique = MakeUniquePointer<SceneNode_Shape>( p_engine, p_scene_manager, p_descriptor_pool_manager, scene_node_path );
+		unique_ptr	= MakeUniquePointer<SceneNode_Shape>( p_engine, p_scene_manager, p_descriptor_pool_manager, scene_node_path );
 		break;
 	}
 
@@ -68,10 +75,10 @@ SceneNode * SceneNodeBase::CreateChild( SceneNodeBase::Type scene_node_type, con
 		break;
 	}
 
-	if( unique ) {
+	if( unique_ptr ) {
 		// add scene node into the child list
-		SceneNode * node_ptr	= unique.Get();
-		child_list.push_back( std::move( unique ) );
+		SceneNode * node_ptr	= unique_ptr.Get();
+		child_list.push_back( std::move( unique_ptr ) );
 		return node_ptr;
 	}
 	return nullptr;

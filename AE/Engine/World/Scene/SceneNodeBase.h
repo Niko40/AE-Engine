@@ -29,6 +29,8 @@ public:
 		UNDEFINED							= 0,
 		SCENE,								// Special, only used by scene
 
+		CAMERA,
+
 		// Simple types
 		SHAPE,
 

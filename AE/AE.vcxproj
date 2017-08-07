@@ -41,6 +41,7 @@
     <ClCompile Include="Engine\Vulkan\Vulkan.cpp" />
     <ClCompile Include="Engine\Window\WindowManager.cpp" />
     <ClCompile Include="Engine\World\Scene\Ground\Ground.cpp" />
+    <ClCompile Include="Engine\World\Scene\Object\Camera\Camera.cpp" />
     <ClCompile Include="Engine\World\Scene\Object\Object.cpp" />
     <ClCompile Include="Engine\World\Scene\Object\Shape\Shape.cpp" />
     <ClCompile Include="Engine\World\Scene\Object\Unit\Unit.cpp" />
@@ -93,7 +94,9 @@
     <ClInclude Include="Engine\Vulkan\Vulkan.h" />
     <ClInclude Include="Engine\Window\WindowManager.h" />
     <ClInclude Include="Engine\World\Scene\Ground\Ground.h" />
+    <ClInclude Include="Engine\World\Scene\Object\Camera\Camera.h" />
     <ClInclude Include="Engine\World\Scene\Object\Object.h" />
+    <ClInclude Include="Engine\World\Scene\Object\ObjectTemplate.h" />
     <ClInclude Include="Engine\World\Scene\Object\Shape\Shape.h" />
     <ClInclude Include="Engine\World\Scene\Object\Unit\Unit.h" />
     <ClInclude Include="Engine\World\Scene\Scene.h" />
@@ -104,6 +107,7 @@
     <ClInclude Include="Engine\World\WorldRenderer\WorldRenderer.h" />
   </ItemGroup>
   <ItemGroup>
+    <Xml Include="..\install\data\cameras\DefaultCamera.xml" />
     <Xml Include="..\install\data\graphics_pipelines\default\default.xml" />
     <Xml Include="..\install\data\scene_nodes\objects\shapes\torus_knot.xml" />
   </ItemGroup>

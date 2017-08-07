@@ -15,7 +15,6 @@ public:
 	~SceneNode_Shape();
 
 	void									Update();
-
 	bool									ParseConfigFile();
 	ResourcesLoadState						CheckResourcesLoaded();
 	bool									Finalize();
