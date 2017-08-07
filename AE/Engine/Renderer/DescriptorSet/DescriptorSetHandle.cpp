@@ -47,6 +47,11 @@ DescriptorSetHandle & DescriptorSetHandle::operator=( DescriptorSetHandle && oth
 	return *this;
 }
 
+DescriptorSetHandle::operator bool()
+{
+	return set;
+}
+
 DescriptorSetHandle::operator vk::DescriptorSet()
 {
 	return set;

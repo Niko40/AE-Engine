@@ -13,6 +13,7 @@
 
 // include all scene node final derivatives here
 // Simple objects
+#include "Object/Camera/Camera.h"
 #include "Object/Shape/Shape.h"
 
 // Units
@@ -21,16 +22,22 @@
 namespace AE
 {
 
-SceneNodeBase::SceneNodeBase( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type )
+SceneNodeBase::SceneNodeBase( Engine * engine, SceneManager * scene_manager, DescriptorPoolManager * descriptor_pool_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type )
 {
 	p_engine					= engine;
 	p_scene_manager				= scene_manager;
+	p_descriptor_pool_manager	= descriptor_pool_manager;
 	assert( p_engine );
 	assert( p_scene_manager );
+	assert( p_descriptor_pool_manager );
 	p_file_resource_manager		= p_engine->GetFileResourceManager();
-	p_device_resource_manager	= p_engine->GetRenderer()->GetDeviceResourceManager();
+	p_renderer					= p_engine->GetRenderer();
+	assert( p_renderer );
 	assert( p_file_resource_manager );
+	p_device_resource_manager	= p_renderer->GetDeviceResourceManager();
+	ref_vk_device				= p_renderer->GetVulkanDevice();
 	assert( p_device_resource_manager );
+	assert( ref_vk_device.object );
 
 	type					= scene_node_type;
 	assert( type != Type::UNDEFINED );
@@ -45,14 +52,20 @@ SceneNodeBase::~SceneNodeBase()
 
 SceneNode * SceneNodeBase::CreateChild( SceneNodeBase::Type scene_node_type, const Path & scene_node_path )
 {
-	UniquePointer<SceneNode> unique = nullptr;
+	UniquePointer<SceneNode> unique_ptr = nullptr;
 
 	// create scene node
 	switch( scene_node_type ) {
 
+	case Type::CAMERA:
+	{
+		unique_ptr	= MakeUniquePointer<SceneNode_Camera>( p_engine, p_scene_manager, p_descriptor_pool_manager, scene_node_path );
+		break;
+	}
+
 	case Type::SHAPE:
 	{
-		unique = MakeUniquePointer<SceneNode_Shape>( p_engine, p_scene_manager, scene_node_path );
+		unique_ptr	= MakeUniquePointer<SceneNode_Shape>( p_engine, p_scene_manager, p_descriptor_pool_manager, scene_node_path );
 		break;
 	}
 
@@ -62,10 +75,10 @@ SceneNode * SceneNodeBase::CreateChild( SceneNodeBase::Type scene_node_type, con
 		break;
 	}
 
-	if( unique ) {
+	if( unique_ptr ) {
 		// add scene node into the child list
-		SceneNode * node_ptr	= unique.Get();
-		child_list.push_back( std::move( unique ) );
+		SceneNode * node_ptr	= unique_ptr.Get();
+		child_list.push_back( std::move( unique_ptr ) );
 		return node_ptr;
 	}
 	return nullptr;

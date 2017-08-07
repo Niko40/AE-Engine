@@ -25,6 +25,7 @@
     <ClCompile Include="Engine\Logger\Logger.cpp" />
     <ClCompile Include="Engine\Math\Math.cpp" />
     <ClCompile Include="Engine\Memory\MemoryPool\MemoryPool.cpp" />
+    <ClCompile Include="Engine\Renderer\Buffer\UniformBuffer.cpp" />
     <ClCompile Include="Engine\Renderer\DescriptorSet\DescriptorPoolManager.cpp" />
     <ClCompile Include="Engine\Renderer\DescriptorSet\DescriptorPoolInfo.cpp" />
     <ClCompile Include="Engine\Renderer\DescriptorSet\DescriptorSetHandle.cpp" />
@@ -40,6 +41,7 @@
     <ClCompile Include="Engine\Vulkan\Vulkan.cpp" />
     <ClCompile Include="Engine\Window\WindowManager.cpp" />
     <ClCompile Include="Engine\World\Scene\Ground\Ground.cpp" />
+    <ClCompile Include="Engine\World\Scene\Object\Camera\Camera.cpp" />
     <ClCompile Include="Engine\World\Scene\Object\Object.cpp" />
     <ClCompile Include="Engine\World\Scene\Object\Shape\Shape.cpp" />
     <ClCompile Include="Engine\World\Scene\Object\Unit\Unit.cpp" />
@@ -73,6 +75,8 @@
     <ClInclude Include="Engine\Memory\MemoryPool\MemoryPool.h" />
     <ClInclude Include="Engine\Memory\MemoryTypes.h" />
     <ClInclude Include="Engine\Platform.h" />
+    <ClInclude Include="Engine\Renderer\Buffer\UniformBuffer.h" />
+    <ClInclude Include="Engine\Renderer\Buffer\UniformBufferTypes.h" />
     <ClInclude Include="Engine\Renderer\DescriptorSet\DescriptorPoolManager.h" />
     <ClInclude Include="Engine\Renderer\DescriptorSet\DescriptorPoolInfo.h" />
     <ClInclude Include="Engine\Renderer\DescriptorSet\DescriptorSetHandle.h" />
@@ -90,7 +94,9 @@
     <ClInclude Include="Engine\Vulkan\Vulkan.h" />
     <ClInclude Include="Engine\Window\WindowManager.h" />
     <ClInclude Include="Engine\World\Scene\Ground\Ground.h" />
+    <ClInclude Include="Engine\World\Scene\Object\Camera\Camera.h" />
     <ClInclude Include="Engine\World\Scene\Object\Object.h" />
+    <ClInclude Include="Engine\World\Scene\Object\ObjectTemplate.h" />
     <ClInclude Include="Engine\World\Scene\Object\Shape\Shape.h" />
     <ClInclude Include="Engine\World\Scene\Object\Unit\Unit.h" />
     <ClInclude Include="Engine\World\Scene\Scene.h" />
@@ -101,6 +107,7 @@
     <ClInclude Include="Engine\World\WorldRenderer\WorldRenderer.h" />
   </ItemGroup>
   <ItemGroup>
+    <Xml Include="..\install\data\cameras\DefaultCamera.xml" />
     <Xml Include="..\install\data\graphics_pipelines\default\default.xml" />
     <Xml Include="..\install\data\scene_nodes\objects\shapes\torus_knot.xml" />
   </ItemGroup>

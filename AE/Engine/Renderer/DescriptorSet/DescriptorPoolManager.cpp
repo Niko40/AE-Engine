@@ -95,7 +95,7 @@ void DescriptorPoolManager::FreeDescriptorSet( DescriptorSubPoolInfo * pool_info
 
 DescriptorSetHandle DescriptorPoolManager::AllocateDescriptorSet( vk::DescriptorSetAllocateInfo & allocate_info, bool is_image_pool )
 {
-	VkDescriptorSetLayout	layout		= allocate_info.pSetLayouts[ 0 ];
+	VkDescriptorSetLayout		layout		= allocate_info.pSetLayouts[ 0 ];
 
 	VkDescriptorSetAllocateInfo AI {};
 	AI.sType					= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -121,7 +121,7 @@ DescriptorSetHandle DescriptorPoolManager::AllocateDescriptorSet( vk::Descriptor
 	VkDescriptorSet		set		= VK_NULL_HANDLE;
 
 	if( is_image_pool ) {
-		for( auto p : image_pool_list ) {
+		for( auto & p : image_pool_list ) {
 			LOCK_GUARD( *ref_vk_device.mutex );
 			AI.descriptorPool	= p.pool;
 			set = lambda_allocate_set( p_logger, ref_vk_device, AI );
@@ -131,7 +131,7 @@ DescriptorSetHandle DescriptorPoolManager::AllocateDescriptorSet( vk::Descriptor
 			}
 		}
 	} else {
-		for( auto p : uniform_pool_list ) {
+		for( auto & p : uniform_pool_list ) {
 			LOCK_GUARD( *ref_vk_device.mutex );
 			AI.descriptorPool	= p.pool;
 			set = lambda_allocate_set( p_logger, ref_vk_device, AI );

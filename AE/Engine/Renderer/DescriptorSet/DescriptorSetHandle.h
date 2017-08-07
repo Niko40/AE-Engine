@@ -31,6 +31,8 @@ public:
 	DescriptorSetHandle				&	operator=( const DescriptorSetHandle & other ) = delete;
 	DescriptorSetHandle				&	operator=( DescriptorSetHandle && other );
 
+	operator							bool();
+
 	operator							vk::DescriptorSet();
 
 private:
@@ -39,7 +41,7 @@ private:
 	Engine							*	p_engine						= nullptr;
 
 	DescriptorPoolManager			*	pool							= nullptr;
-	DescriptorSubPoolInfo		*	pool_info						= nullptr;
+	DescriptorSubPoolInfo			*	pool_info						= nullptr;
 	vk::DescriptorSet					set								= nullptr;
 };
 

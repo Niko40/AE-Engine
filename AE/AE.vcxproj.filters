@@ -95,6 +95,12 @@
     <Filter Include="Engine\Renderer\DescriptorSet">
       <UniqueIdentifier>{c474e161-c25b-4766-a14e-bc6c58d469e3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Renderer\Buffer">
+      <UniqueIdentifier>{c256f847-cef5-408f-99fb-f85f6c1797b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\World\Scene\Object\Camera">
+      <UniqueIdentifier>{31b5e142-6d17-45d3-a1e1-aa049753d9f3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Engine.cpp">
@@ -211,6 +217,12 @@
     </ClCompile>
     <ClCompile Include="Engine\Renderer\QueueInfo.cpp">
       <Filter>Engine\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Renderer\Buffer\UniformBuffer.cpp">
+      <Filter>Engine\Renderer\Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\World\Scene\Object\Camera\Camera.cpp">
+      <Filter>Engine\World\Scene\Object\Camera</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -355,10 +367,23 @@
     <ClInclude Include="Engine\Renderer\QueueInfo.h">
       <Filter>Engine\Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Renderer\Buffer\UniformBuffer.h">
+      <Filter>Engine\Renderer\Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Renderer\Buffer\UniformBufferTypes.h">
+      <Filter>Engine\Renderer\Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\World\Scene\Object\Camera\Camera.h">
+      <Filter>Engine\World\Scene\Object\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\World\Scene\Object\ObjectTemplate.h">
+      <Filter>Engine\World\Scene\Object</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="..\install\data\scene_nodes\objects\shapes\torus_knot.xml" />
     <Xml Include="..\install\data\graphics_pipelines\default\default.xml" />
+    <Xml Include="..\install\data\cameras\DefaultCamera.xml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\install\data\graphics_pipelines\default\default.frag" />
