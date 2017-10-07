@@ -109,4 +109,8 @@ private:
 	List<UniquePointer<SceneNode>>			child_list;
 };
 
+
+// Parser helper function to hide some boiler plate code
+bool ParseConfigFileHelper( tinyxml2::XMLElement * previous_level, String child_element_name, std::function<bool()> child_element_parser );
+
 }

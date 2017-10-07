@@ -27,16 +27,10 @@ bool SceneNode_Shape::ParseConfigFile()
 {
 	assert( config_file->IsResourceReadyForUse() );		// config file resource should have been loaded before this function is called
 
-	auto object_level	= ParseConfigFile_ObjectLevel();
-	if( nullptr != object_level ) {
-		auto shape_level	= object_level->FirstChildElement( "SHAPE" );
-		if( nullptr != shape_level ) {
-			// Parse shape level stuff
-
-			return true;
-		}
-	}
-	return false;
+	return ParseConfigFileHelper( ParseConfigFile_ObjectLevel(), "SHAPE", [ this ]() {
+		// Parse shape level stuff here
+		return true;
+	} );
 }
 
 SceneNodeBase::ResourcesLoadState SceneNode_Shape::CheckResourcesLoaded()

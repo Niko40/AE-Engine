@@ -148,4 +148,16 @@ const Path & SceneNodeBase::GetConfigFilePath()
 	return config_file_path;
 }
 
+
+bool ParseConfigFileHelper( tinyxml2::XMLElement * previous_level, String child_element_name, std::function<bool()> child_element_parser )
+{
+	if( previous_level ) {
+		auto next_level		= previous_level->FirstChildElement( child_element_name.c_str() );
+		if( next_level ) {
+			return child_element_parser();
+		}
+	}
+	return false;
+}
+
 }

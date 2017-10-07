@@ -37,16 +37,10 @@ bool SceneNode_Camera::ParseConfigFile()
 {
 	assert( config_file->IsResourceReadyForUse() );		// config file resource should have been loaded before this function is called
 
-	auto object_level	= ParseConfigFile_ObjectLevel();
-	if( object_level ) {
-		auto camera_level	= object_level->FirstChildElement( "CAMERA" );
-		if( camera_level ) {
-			// Parse camera level stuff
-
-			return true;
-		}
-	}
-	return false;
+	return ParseConfigFileHelper( ParseConfigFile_ObjectLevel(), "CAMERA", [ this ]() {
+		// Parse camera level stuff here
+		return true;
+	} );
 }
 
 SceneNodeBase::ResourcesLoadState SceneNode_Camera::CheckResourcesLoaded()
