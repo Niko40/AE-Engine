@@ -28,12 +28,12 @@ tinyxml2::XMLElement * SceneNode_Object::ParseConfigFile_ObjectLevel()
 
 SceneNodeBase::ResourcesLoadState SceneNode_Object::CheckResourcesLoaded_ObjectLevel()
 {
-	auto scene_node_level	= CheckResourcesLoaded_SceneNodeLevel();
-	if( scene_node_level == ResourcesLoadState::READY ) {
+	auto scene_node_level_resources_state	= CheckResourcesLoaded_SceneNodeLevel();
+	if( scene_node_level_resources_state == ResourcesLoadState::READY ) {
 		// check requested resources on shape level
 		return ResourcesLoadState::READY;
 	}
-	return scene_node_level;
+	return scene_node_level_resources_state;
 }
 
 bool SceneNode_Object::Finalize_ObjectLevel()

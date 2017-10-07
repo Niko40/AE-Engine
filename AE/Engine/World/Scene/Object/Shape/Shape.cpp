@@ -41,12 +41,12 @@ bool SceneNode_Shape::ParseConfigFile()
 
 SceneNodeBase::ResourcesLoadState SceneNode_Shape::CheckResourcesLoaded()
 {
-	auto object_level	= CheckResourcesLoaded_ObjectLevel();
-	if( object_level == ResourcesLoadState::READY ) {
+	auto object_level_resources_state	= CheckResourcesLoaded_ObjectLevel();
+	if( object_level_resources_state == ResourcesLoadState::READY ) {
 		// check requested resources on shape level
 		return ResourcesLoadState::READY;
 	}
-	return object_level;
+	return object_level_resources_state;
 }
 
 bool SceneNode_Shape::Finalize()
