@@ -18,11 +18,12 @@ public:
 	~Scene();
 
 private:
-	void							Update();
+	void							Update_Animation();
+	void							Update_Logic();
 
 	bool							ParseConfigFile();
 	ResourcesLoadState				CheckResourcesLoaded();
-	bool							Finalize();
+	bool							FinalizeResources();
 };
 
 }

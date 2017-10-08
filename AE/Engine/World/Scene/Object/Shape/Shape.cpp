@@ -19,10 +19,6 @@ SceneNode_Shape::~SceneNode_Shape()
 {
 }
 
-void SceneNode_Shape::Update()
-{
-}
-
 bool SceneNode_Shape::ParseConfigFile()
 {
 	assert( config_file->IsResourceReadyForUse() );		// config file resource should have been loaded before this function is called
@@ -43,13 +39,21 @@ SceneNodeBase::ResourcesLoadState SceneNode_Shape::CheckResourcesLoaded()
 	return object_level_resources_state;
 }
 
-bool SceneNode_Shape::Finalize()
+bool SceneNode_Shape::FinalizeResources()
 {
-	if( Finalize_ObjectLevel() ) {
+	if( FinalizeResources_ObjectLevel() ) {
 		// finalize shape level stuff
 		return true;
 	}
 	return false;
+}
+
+void SceneNode_Shape::Update_Animation()
+{
+}
+
+void SceneNode_Shape::Update_Logic()
+{
 }
 
 }

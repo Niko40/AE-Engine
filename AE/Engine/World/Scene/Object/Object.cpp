@@ -36,9 +36,9 @@ SceneNodeBase::ResourcesLoadState SceneNode_Object::CheckResourcesLoaded_ObjectL
 	return scene_node_level_resources_state;
 }
 
-bool SceneNode_Object::Finalize_ObjectLevel()
+bool SceneNode_Object::FinalizeResources_ObjectLevel()
 {
-	if( Finalize_SceneNodeLevel() ) {
+	if( FinalizeResources_SceneNodeLevel() ) {
 		// finalize shape level stuff
 		return true;
 	}

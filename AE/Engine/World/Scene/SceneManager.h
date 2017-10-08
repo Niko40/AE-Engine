@@ -28,9 +28,6 @@ public:
 	// general update called once a frame
 	void									Update();
 
-	void									UpdateLogic();
-	void									UpdateAnimations();
-
 	Scene								*	GetActiveScene() const;
 	Scene								*	GetGridScene( Vec3 world_coords ) const;
 

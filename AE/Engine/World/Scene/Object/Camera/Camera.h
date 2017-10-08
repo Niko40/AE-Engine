@@ -18,10 +18,12 @@ public:
 	Mat4						&	CalculateProjectionMatrix( double fov_angle, VkExtent2D viewport_size, double near_plane, double far_plane );
 
 private:
-	void							Update();
+	void							Update_Animation();
+	void							Update_Logic();
+
 	bool							ParseConfigFile();
 	ResourcesLoadState				CheckResourcesLoaded();
-	bool							Finalize();
+	bool							FinalizeResources();
 
 	Mat4							view_matrix							= Mat4( 1 );
 	Mat4							projection_matrix					= Mat4( 1 );

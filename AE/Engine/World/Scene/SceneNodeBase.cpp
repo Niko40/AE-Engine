@@ -84,12 +84,10 @@ SceneNode * SceneNodeBase::CreateChild( SceneNodeBase::Type scene_node_type, con
 	return nullptr;
 }
 
-void SceneNodeBase::UpdateFromManager()
+void SceneNodeBase::UpdateResourcesFromManager()
 {
 	if( is_scene_node_ok ) {
-		if( is_scene_node_use_ready ) {
-			Update();
-		} else {
+		if( !is_scene_node_use_ready ) {
 			if( !IsConfigFileParsed() ) {
 				if( IsConfigFileLoaded() ) {
 					if( !ParseConfigFile() ) {
@@ -104,9 +102,10 @@ void SceneNodeBase::UpdateFromManager()
 				switch( result ) {
 				case ResourcesLoadState::READY:
 				{
-					if( Finalize() ) {
+					if( FinalizeResources() ) {
 						is_scene_node_use_ready	= true;
 					} else {
+						is_scene_node_use_ready	= false;
 						is_scene_node_ok		= false;
 					}
 					break;
@@ -124,7 +123,7 @@ void SceneNodeBase::UpdateFromManager()
 		}
 	}
 	for( auto & c : child_list ) {
-		c->UpdateFromManager();
+		c->UpdateResourcesFromManager();
 	}
 }
 

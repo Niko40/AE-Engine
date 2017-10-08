@@ -90,10 +90,10 @@ protected:
 	ResourcesLoadState						CheckResourcesLoaded_SceneNodeLevel();
 
 	// because it's easier to call parent functions than branching child object's functions
-	// I have inverted the finalizing into levels, Finalize() is responsible for calling it's immediate
+	// I have inverted the finalizing into levels, FinalizeResources() is responsible for calling it's immediate
 	// parent class'es finalize function and the function will finalize that level of resources defined by the XML file as well as any below
 	// returns true if everything is OK, false if there was an error in which case this scene node will not participate in updates or rendering operations
-	bool									Finalize_SceneNodeLevel();
+	bool									FinalizeResources_SceneNodeLevel();
 
 private:
 	Vector<SharedPointer<MeshInfo>>			mesh_info_list;

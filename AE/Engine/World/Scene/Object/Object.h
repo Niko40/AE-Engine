@@ -21,7 +21,7 @@ protected:
 	// returns new parent xml element for the next stage or nullptr if error
 	tinyxml2::XMLElement	*	ParseConfigFile_ObjectLevel();
 	ResourcesLoadState			CheckResourcesLoaded_ObjectLevel();
-	bool						Finalize_ObjectLevel();
+	bool						FinalizeResources_ObjectLevel();
 
 private:
 

@@ -13,7 +13,11 @@ Scene::~Scene()
 {
 }
 
-void Scene::Update()
+void Scene::Update_Animation()
+{
+}
+
+void Scene::Update_Logic()
 {
 }
 
@@ -27,7 +31,7 @@ SceneNodeBase::ResourcesLoadState Scene::CheckResourcesLoaded()
 	return ResourcesLoadState::READY;
 }
 
-bool Scene::Finalize()
+bool Scene::FinalizeResources()
 {
 	return true;
 }

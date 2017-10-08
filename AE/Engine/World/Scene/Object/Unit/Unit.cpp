@@ -38,7 +38,7 @@ SceneNodeBase::ResourcesLoadState SceneNode_Unit::CheckResourcesLoaded_UnitLevel
 
 bool SceneNode_Unit::Finalize_UnitLevel()
 {
-	if( Finalize_ObjectLevel() ) {
+	if( FinalizeResources_ObjectLevel() ) {
 		// finalize shape level stuff
 		return true;
 	}

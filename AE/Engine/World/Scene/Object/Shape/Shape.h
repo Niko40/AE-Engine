@@ -14,12 +14,13 @@ public:
 	SceneNode_Shape( Engine * engine, SceneManager * scene_manager, DescriptorPoolManager * descriptor_pool_manager, const Path & scene_node_path );
 	~SceneNode_Shape();
 
-	void									Update();
-	bool									ParseConfigFile();
-	ResourcesLoadState						CheckResourcesLoaded();
-	bool									Finalize();
+	bool							ParseConfigFile();
+	ResourcesLoadState				CheckResourcesLoaded();
+	bool							FinalizeResources();
 
 private:
+	void							Update_Animation();
+	void							Update_Logic();
 };
 
 }

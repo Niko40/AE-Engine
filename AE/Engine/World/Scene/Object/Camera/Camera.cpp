@@ -29,7 +29,11 @@ Mat4 & SceneNode_Camera::CalculateProjectionMatrix( double fov_angle, VkExtent2D
 	return projection_matrix;
 }
 
-void SceneNode_Camera::Update()
+void SceneNode_Camera::Update_Animation()
+{
+}
+
+void SceneNode_Camera::Update_Logic()
 {
 }
 
@@ -53,9 +57,9 @@ SceneNodeBase::ResourcesLoadState SceneNode_Camera::CheckResourcesLoaded()
 	return object_level_resources_state;
 }
 
-bool SceneNode_Camera::Finalize()
+bool SceneNode_Camera::FinalizeResources()
 {
-	if( Finalize_ObjectLevel() ) {
+	if( FinalizeResources_ObjectLevel() ) {
 		// finalize camera level stuff
 
 		uniform_buffer					= MakeUniquePointer<UniformBuffer>( p_engine, p_renderer );

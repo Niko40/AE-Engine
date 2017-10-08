@@ -123,7 +123,7 @@ SceneNodeBase::ResourcesLoadState SceneNode::CheckResourcesLoaded_SceneNodeLevel
 	return ResourcesLoadState::READY;
 }
 
-bool SceneNode::Finalize_SceneNodeLevel()
+bool SceneNode::FinalizeResources_SceneNodeLevel()
 {
 	for( auto & i : mesh_info_list ) {
 		i->uniform_buffer	= MakeUniquePointer<UniformBuffer>( p_engine, p_renderer );

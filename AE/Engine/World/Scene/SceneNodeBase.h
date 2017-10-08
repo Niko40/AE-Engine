@@ -53,8 +53,8 @@ public:
 
 	SceneNode							*	CreateChild( SceneNodeBase::Type scene_node_type, const Path & scene_node_path );
 
-	// General update function, call once a frame
-	void									UpdateFromManager();
+	// Resource update function, call until all resources used by this scene node are fully loaded and ready to use
+	void									UpdateResourcesFromManager();
 
 	// check is the primary file resource parsed, this IS NOT recursive to childs
 	bool									IsConfigFileParsed();
@@ -68,8 +68,11 @@ public:
 	const Path							&	GetConfigFilePath();
 
 protected:
-	// General update function, call once a frame
-	virtual void							Update()						= 0;
+	// Animation update function, call once a frame or as needed
+	virtual void							Update_Animation()				= 0;
+
+	// Logic update function, call once a frame or as needed
+	virtual void							Update_Logic()					= 0;
 
 	// Parse config file, this is called from UpdateFromManager()
 	virtual bool							ParseConfigFile()				= 0;
@@ -84,7 +87,7 @@ protected:
 	// able to use it when updating or rendering this scene node
 	// should return true on success and false if something went wrong in which case
 	// this scene node will not participate in updates or rendering operations
-	virtual bool							Finalize()						= 0;
+	virtual bool							FinalizeResources()				= 0;
 
 	Engine								*	p_engine						= nullptr;
 	SceneManager						*	p_scene_manager					= nullptr;

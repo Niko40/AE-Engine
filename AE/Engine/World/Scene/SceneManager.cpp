@@ -36,20 +36,12 @@ SceneManager::~SceneManager()
 
 void SceneManager::Update()
 {
-	active_scene->UpdateFromManager();
+	active_scene->UpdateResourcesFromManager();
 	for( auto & s : grid_nodes ) {
 		if( nullptr != s.Get() ) {
-			s->UpdateFromManager();
+			s->UpdateResourcesFromManager();
 		}
 	}
-}
-
-void SceneManager::UpdateLogic()
-{
-}
-
-void SceneManager::UpdateAnimations()
-{
 }
 
 Scene * SceneManager::GetActiveScene() const

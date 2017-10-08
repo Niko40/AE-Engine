@@ -11,7 +11,7 @@ TODO:
 //	   ( files )
 
 
-- Add functionality: Descriptor set data updates( Camera.cpp, Shape.cpp )
+- Add functionality: Descriptor set data updates to an actual Vulkan buffer( Camera.cpp, Shape.cpp )
 
 - Add functionality: Descriptor set allocation for pipelines ( DeviceResource_GraphicsPipeline.cpp )
 - Add data: Uniform buffer objects for pipelines ( DeviceResource_GraphicsPipeline.cpp )
