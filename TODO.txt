@@ -3,25 +3,28 @@ TODO:
 
 // Higher priority tasks towards top.
 // Formatting is:
-// - Task type: Task descriptions ( files )
-// or
-// - Task type:
-//	   - Task description 1
-//	   - Task description 2
-//	   ( files )
+// - Task type
+//	   - Sub task or description 1
+//	   - Sub task or description 2
+//	   ( files, if any )
 
 
-- Add functionality: Descriptor set data updates to an actual Vulkan buffer( Camera.cpp, Shape.cpp )
+- Add descriptor set data updates to an actual Vulkan buffer
+	( Camera.cpp, Shape.cpp )
 
-- Add functionality: Descriptor set allocation for pipelines ( DeviceResource_GraphicsPipeline.cpp )
-- Add data: Uniform buffer objects for pipelines ( DeviceResource_GraphicsPipeline.cpp )
+- Add descriptor set allocation for pipelines
+	( DeviceResource_GraphicsPipeline.cpp )
 
-- Add class: Camera scene node ( <no files> )
+- Add uniform buffer objects for pipelines
+	( DeviceResource_GraphicsPipeline.cpp )
 
-- Modify class:
+- Enable actually drawing something
+	- Add proper values to the Vulkan render pass object
+	- Add rendering into G-buffers
+	- Add render pass from G-buffers to final render
+	- Pass final image to swapchain
+
+- Modify scene hierarchy
 	- A scene depends on SceneNodeBase, it shouldn't depend on all of it
-	- Create a SceneNodeHierarchy base instead and move most of the SceneNodeBase functionality into SceneNode
+	- Create a SceneCommon base instead and move most of the SceneNodeBase functionality into SceneNode
 	( SceneNodeBase.h/cpp, SceneNode.h/cpp, <create file for SceneNodeHierarchy class> )
-
-- Add functionality: Descriptor set allocation functions for cameras
-- Add data: Uniform buffer objects for cameras

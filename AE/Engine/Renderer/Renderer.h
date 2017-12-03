@@ -61,6 +61,7 @@ public:
 	vk::DescriptorSetLayout					GetVulkanDescriptorSetLayoutForImageBindingCount( uint32_t image_binding_count ) const;
 
 	DescriptorPoolManager				*	GetDescriptorPoolManagerForThisThread();
+	DescriptorPoolManager				*	GetDescriptorPoolManagerForSpecificThread( std::thread::id thread_id );
 
 	bool									IsFormatSupported( vk::ImageTiling tiling, vk::Format format, vk::FormatFeatureFlags feature_flags );
 

@@ -159,4 +159,20 @@ bool ParseConfigFileHelper( tinyxml2::XMLElement * previous_level, String child_
 	return false;
 }
 
+SceneNodeBase::ResourcesLoadState CheckResourcesLoadedHelper( SceneNodeBase::ResourcesLoadState previous_level, std::function<SceneNodeBase::ResourcesLoadState( void )> child_element_parser )
+{
+	if( previous_level == SceneNodeBase::ResourcesLoadState::READY ) {
+		return child_element_parser();
+	}
+	return previous_level;
+}
+
+bool FinalizeResourcesHelper( bool previous_level, std::function<bool( void )> child_parser_function )
+{
+	if( previous_level ) {
+		return child_parser_function();
+	}
+	return false;
+}
+
 }

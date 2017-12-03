@@ -21,10 +21,12 @@ public:
 	~SceneNode_();
 
 private:
-	void							Update();
+	void							Update_Animation();
+	void							Update_Logic();
+
 	bool							ParseConfigFile();
 	ResourcesLoadState				CheckResourcesLoaded();
-	bool							Finalize();
+	bool							FinalizeResources();
 };
 
 }
@@ -49,39 +51,38 @@ SceneNode_::~SceneNode_()
 {
 }
 
-void SceneNode_::Update()
+void SceneNode_::Update_Animation()
 {
+	// Update all animation data
+	// Copy all animation data into Vulkan system RAM bound buffer objects
+}
+
+void SceneNode_::Update_Logic()
+{
+	// Update logic: AI, scripts, animation changes or loops
 }
 
 bool SceneNode_::ParseConfigFile()
 {
 	assert( config_file->IsResourceReadyForUse() );		// config file resource should have been loaded before this function is called
 
-	auto object_level	= ParseConfigFile_ObjectLevel();
-	if( object_level ) {
-		auto this_level	= object_level->FirstChildElement( "THIS_LEVEL_TYPE_HERE" );
-		if( nullptr != this_level ) {
-			// Parse this level stuff
-
-			return true;
-		}
-	}
-	return false;
+	return ParseConfigFileHelper( ParseConfigFile_<Parent>Level(), "THIS_LEVEL_TYPE_HERE", [ this ]() {
+		// Parse this level stuff here
+		return true;
+	} );
 }
 
 SceneNodeBase::ResourcesLoadState SceneNode_::CheckResourcesLoaded()
 {
-	auto object_level	= CheckResourcesLoaded_ObjectLevel();
-	if( object_level == ResourcesLoadState::READY ) {
-		// check requested resources on this level
-		return ResourcesLoadState::READY;
-	}
-	return object_level;
+	return CheckResourcesLoadedHelper( CheckResourcesLoaded_<Parent>Level(), [ this ]() {
+		// check requested resources on shape level
+		return SceneNodeBase::ResourcesLoadState::READY;
+	} );
 }
 
-bool SceneNode_::Finalize()
+bool SceneNode_::FinalizeResources()
 {
-	if( Finalize_ObjectLevel() ) {
+	if( Finalize_<Parent>Level() ) {
 		// finalize this level stuff
 		return true;
 	}

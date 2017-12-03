@@ -37,8 +37,6 @@ private:
 	Renderer							*	p_renderer					= nullptr;
 	World								*	p_world						= nullptr;
 
-	DescriptorPoolManager				*	p_active_scene_descriptor_pool_manager	= nullptr;
-
 	UniquePointer<Scene>					active_scene;
 	DynamicGrid2D<SharedPointer<Scene>>		grid_nodes;
 };

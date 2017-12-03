@@ -327,7 +327,12 @@ vk::DescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForImageBindingCou
 
 DescriptorPoolManager * Renderer::GetDescriptorPoolManagerForThisThread()
 {
-	auto p_iter		= descriptor_pools.find( std::this_thread::get_id() );
+	GetDescriptorPoolManagerForSpecificThread( std::this_thread::get_id() );
+}
+
+DescriptorPoolManager * Renderer::GetDescriptorPoolManagerForSpecificThread( std::thread::id thread_id )
+{
+	auto p_iter		= descriptor_pools.find( thread_id );
 	if( p_iter != descriptor_pools.end() ) {
 		// found, return this pool
 		return p_iter->second.Get();

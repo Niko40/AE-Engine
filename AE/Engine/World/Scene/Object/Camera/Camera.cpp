@@ -49,17 +49,15 @@ bool SceneNode_Camera::ParseConfigFile()
 
 SceneNodeBase::ResourcesLoadState SceneNode_Camera::CheckResourcesLoaded()
 {
-	auto object_level_resources_state	= CheckResourcesLoaded_ObjectLevel();
-	if( object_level_resources_state == ResourcesLoadState::READY ) {
+	return CheckResourcesLoadedHelper( CheckResourcesLoaded_ObjectLevel(), [ this ]() {
 		// check requested resources on shape level
 		return ResourcesLoadState::READY;
-	}
-	return object_level_resources_state;
+	} );
 }
 
 bool SceneNode_Camera::FinalizeResources()
 {
-	if( FinalizeResources_ObjectLevel() ) {
+	return FinalizeResourcesHelper( FinalizeResources_ObjectLevel(), [ this ]() {
 		// finalize camera level stuff
 
 		uniform_buffer					= MakeUniquePointer<UniformBuffer>( p_engine, p_renderer );
@@ -86,8 +84,7 @@ bool SceneNode_Camera::FinalizeResources()
 		ref_vk_device.object.updateDescriptorSets( descriptor_set_write, nullptr );
 
 		return true;
-	}
-	return false;
+	} );
 }
 
 }

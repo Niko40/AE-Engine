@@ -59,7 +59,7 @@ public:
 	// check is the primary file resource parsed, this IS NOT recursive to childs
 	bool									IsConfigFileParsed();
 
-	// check is the primary file resource parsed, this IS NOT recursive to childs
+	// check is the primary file resource loaded, this IS NOT recursive to childs
 	bool									IsConfigFileLoaded();
 
 	// check is the scene node is ready to use in general updates and renders, this IS NOT recursive to childs
@@ -68,10 +68,14 @@ public:
 	const Path							&	GetConfigFilePath();
 
 protected:
-	// Animation update function, call once a frame or as needed
+	// Animation update function, call once a frame or as needed.
+	// This will update all animations on the object and push new data into
+	// Vulkan buffers residing in system RAM.
 	virtual void							Update_Animation()				= 0;
 
-	// Logic update function, call once a frame or as needed
+	// Logic update function, call once a frame or as needed.
+	// This will update all logic attached to the scene node, animation changes,
+	// AI and scripts.
 	virtual void							Update_Logic()					= 0;
 
 	// Parse config file, this is called from UpdateFromManager()
@@ -109,11 +113,15 @@ private:
 	bool									is_config_file_parsed			= false;
 	bool									is_scene_node_use_ready			= false;
 	bool									is_scene_node_ok				= true;
+	// used to limit certain operations into only one thread, needed for Vulkan pools
+	std::thread::id							thread_specific;
 	List<UniquePointer<SceneNode>>			child_list;
 };
 
 
 // Parser helper function to hide some boiler plate code
-bool ParseConfigFileHelper( tinyxml2::XMLElement * previous_level, String child_element_name, std::function<bool()> child_element_parser );
+bool										ParseConfigFileHelper( tinyxml2::XMLElement * previous_level, String child_element_name, std::function<bool()> child_element_parser );
+SceneNodeBase::ResourcesLoadState			CheckResourcesLoadedHelper( SceneNodeBase::ResourcesLoadState previous_level, std::function<SceneNodeBase::ResourcesLoadState( void )> child_element_parser );
+bool										FinalizeResourcesHelper( bool previous_level, std::function<bool( void )> child_parser_function );
 
 }
