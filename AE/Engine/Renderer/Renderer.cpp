@@ -327,7 +327,7 @@ vk::DescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForImageBindingCou
 
 DescriptorPoolManager * Renderer::GetDescriptorPoolManagerForThisThread()
 {
-	GetDescriptorPoolManagerForSpecificThread( std::this_thread::get_id() );
+	return GetDescriptorPoolManagerForSpecificThread( std::this_thread::get_id() );
 }
 
 DescriptorPoolManager * Renderer::GetDescriptorPoolManagerForSpecificThread( std::thread::id thread_id )

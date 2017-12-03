@@ -8,8 +8,8 @@
 namespace AE
 {
 
-SceneNode_Camera::SceneNode_Camera( Engine * engine, SceneManager * scene_manager, DescriptorPoolManager * descriptor_pool_manager, const Path & scene_node_path )
-	: SceneNode_Object( engine, scene_manager, descriptor_pool_manager, scene_node_path, SceneNodeBase::Type::CAMERA )
+SceneNode_Camera::SceneNode_Camera( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path )
+	: SceneNode_Object( engine, scene_manager, scene_node_path, SceneNodeBase::Type::CAMERA )
 {
 }
 

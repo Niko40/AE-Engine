@@ -14,7 +14,7 @@ class SceneManager;
 class Scene : public SceneNodeBase
 {
 public:
-	Scene( Engine * engine, SceneManager * scene_manager, DescriptorPoolManager * descriptor_pool_manager, const Path & scene_node_path );
+	Scene( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path );
 	~Scene();
 
 private:

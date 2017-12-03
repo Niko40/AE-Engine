@@ -22,14 +22,12 @@
 namespace AE
 {
 
-SceneNodeBase::SceneNodeBase( Engine * engine, SceneManager * scene_manager, DescriptorPoolManager * descriptor_pool_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type )
+SceneNodeBase::SceneNodeBase( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type )
 {
 	p_engine					= engine;
 	p_scene_manager				= scene_manager;
-	p_descriptor_pool_manager	= descriptor_pool_manager;
 	assert( p_engine );
 	assert( p_scene_manager );
-	assert( p_descriptor_pool_manager );
 	p_file_resource_manager		= p_engine->GetFileResourceManager();
 	p_renderer					= p_engine->GetRenderer();
 	assert( p_renderer );
@@ -59,13 +57,13 @@ SceneNode * SceneNodeBase::CreateChild( SceneNodeBase::Type scene_node_type, con
 
 	case Type::CAMERA:
 	{
-		unique_ptr	= MakeUniquePointer<SceneNode_Camera>( p_engine, p_scene_manager, p_descriptor_pool_manager, scene_node_path );
+		unique_ptr	= MakeUniquePointer<SceneNode_Camera>( p_engine, p_scene_manager, scene_node_path );
 		break;
 	}
 
 	case Type::SHAPE:
 	{
-		unique_ptr	= MakeUniquePointer<SceneNode_Shape>( p_engine, p_scene_manager, p_descriptor_pool_manager, scene_node_path );
+		unique_ptr	= MakeUniquePointer<SceneNode_Shape>( p_engine, p_scene_manager, scene_node_path );
 		break;
 	}
 

@@ -48,7 +48,7 @@ public:
 		UNABLE_TO_LOAD,
 	};
 
-											SceneNodeBase( Engine * engine, SceneManager * scene_manager, DescriptorPoolManager * descriptor_pool_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type );
+											SceneNodeBase( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type );
 	virtual									~SceneNodeBase();
 
 	SceneNode							*	CreateChild( SceneNodeBase::Type scene_node_type, const Path & scene_node_path );
@@ -98,7 +98,7 @@ protected:
 	FileResourceManager					*	p_file_resource_manager			= nullptr;
 	Renderer							*	p_renderer						= nullptr;
 	DeviceResourceManager				*	p_device_resource_manager		= nullptr;
-	DescriptorPoolManager				*	p_descriptor_pool_manager		= nullptr;
+	DescriptorPoolManager				*	p_descriptor_pool_manager		= nullptr;	// Assigned later when we actually know the thread we need one from
 
 	VulkanDevice							ref_vk_device					= {};
 
