@@ -9,7 +9,7 @@ namespace AE
 {
 
 SceneNode_Camera::SceneNode_Camera( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path )
-	: SceneNode_Object( engine, scene_manager, scene_node_path, SceneNodeBase::Type::CAMERA )
+	: SceneNode_Object( engine, scene_manager, scene_node_path, SceneBase::Type::CAMERA )
 {
 }
 
@@ -47,7 +47,7 @@ bool SceneNode_Camera::ParseConfigFile()
 	} );
 }
 
-SceneNodeBase::ResourcesLoadState SceneNode_Camera::CheckResourcesLoaded()
+SceneBase::ResourcesLoadState SceneNode_Camera::CheckResourcesLoaded()
 {
 	return CheckResourcesLoadedHelper( CheckResourcesLoaded_ObjectLevel(), [ this ]() {
 		// check requested resources on shape level

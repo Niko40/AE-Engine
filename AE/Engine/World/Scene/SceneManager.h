@@ -15,6 +15,7 @@ class Renderer;
 class DescriptorPoolManager;
 class World;
 class Scene;
+class SceneBase;
 class SceneNode;
 
 // Scene manager is responsible for allocating, removing and updating individual objects on the world
@@ -30,6 +31,9 @@ public:
 
 	Scene								*	GetActiveScene() const;
 	Scene								*	GetGridScene( Vec3 world_coords ) const;
+
+	std::thread::id							GetRenderingThreadForSceneBase( SceneBase * node );
+	void									FreeRenderingThreadForSceneBase( SceneBase * node );
 
 private:
 	Engine								*	p_engine					= nullptr;

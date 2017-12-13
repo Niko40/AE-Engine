@@ -4,7 +4,7 @@
 namespace AE
 {
 
-SceneNode_Unit::SceneNode_Unit( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type )
+SceneNode_Unit::SceneNode_Unit( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneBase::Type scene_node_type )
 	: SceneNode_Object( engine, scene_manager, scene_node_path, scene_node_type )
 {
 }
@@ -26,7 +26,7 @@ tinyxml2::XMLElement * SceneNode_Unit::ParseConfigFile_UnitLevel()
 	return nullptr;
 }
 
-SceneNodeBase::ResourcesLoadState SceneNode_Unit::CheckResourcesLoaded_UnitLevel()
+SceneBase::ResourcesLoadState SceneNode_Unit::CheckResourcesLoaded_UnitLevel()
 {
 	auto object_level	= CheckResourcesLoaded_ObjectLevel();
 	if( object_level == ResourcesLoadState::READY ) {

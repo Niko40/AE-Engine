@@ -28,7 +28,7 @@ int main( int argc, char ** argv )
 	auto set				= descriptor_pool->AllocateDescriptorSetForCamera();
 
 	{
-		auto scene_node		= scene_manager->GetActiveScene()->CreateChild( AE::SceneNodeBase::Type::SHAPE, "data/scene_nodes/objects/shapes/torus_knot.xml" );
+		auto scene_node		= scene_manager->GetActiveScene()->CreateChild( AE::SceneBase::Type::SHAPE, "data/scene_nodes/objects/shapes/torus_knot.xml" );
 
 		while( engine.Run() ) {
 

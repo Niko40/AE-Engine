@@ -5,7 +5,7 @@ namespace AE
 {
 
 Scene::Scene( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path )
-	: SceneNodeBase( engine, scene_manager, scene_node_path, SceneNodeBase::Type::SCENE )
+	: SceneBase( engine, scene_manager, scene_node_path, SceneBase::Type::SCENE )
 {
 }
 
@@ -26,7 +26,7 @@ bool Scene::ParseConfigFile()
 	return false;
 }
 
-SceneNodeBase::ResourcesLoadState Scene::CheckResourcesLoaded()
+SceneBase::ResourcesLoadState Scene::CheckResourcesLoaded()
 {
 	return ResourcesLoadState::READY;
 }

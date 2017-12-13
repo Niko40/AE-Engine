@@ -48,7 +48,7 @@
     <ClCompile Include="Engine\World\Scene\Scene.cpp" />
     <ClCompile Include="Engine\World\Scene\SceneManager.cpp" />
     <ClCompile Include="Engine\World\Scene\SceneNode.cpp" />
-    <ClCompile Include="Engine\World\Scene\SceneNodeBase.cpp" />
+    <ClCompile Include="Engine\World\Scene\SceneBase.cpp" />
     <ClCompile Include="Engine\World\World.cpp" />
     <ClCompile Include="Engine\World\WorldRenderer\WorldRenderer.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -102,7 +102,7 @@
     <ClInclude Include="Engine\World\Scene\Scene.h" />
     <ClInclude Include="Engine\World\Scene\SceneManager.h" />
     <ClInclude Include="Engine\World\Scene\SceneNode.h" />
-    <ClInclude Include="Engine\World\Scene\SceneNodeBase.h" />
+    <ClInclude Include="Engine\World\Scene\SceneBase.h" />
     <ClInclude Include="Engine\World\World.h" />
     <ClInclude Include="Engine\World\WorldRenderer\WorldRenderer.h" />
   </ItemGroup>

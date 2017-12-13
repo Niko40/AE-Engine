@@ -43,7 +43,7 @@ namespace AE
 {
 
 SceneNode_::SceneNode_( Engine * engine, SceneManager * scene_manager, DescriptorPoolManager * descriptor_pool_manager, Path & scene_node_path )
-	: SceneNode_Object( engine, scene_manager, descriptor_pool_manager, scene_node_path, SceneNodeBase::Type::CAMERA )
+	: SceneNode_Object( engine, scene_manager, descriptor_pool_manager, scene_node_path, SceneBase::Type::CAMERA )
 {
 }
 
@@ -72,11 +72,11 @@ bool SceneNode_::ParseConfigFile()
 	} );
 }
 
-SceneNodeBase::ResourcesLoadState SceneNode_::CheckResourcesLoaded()
+SceneBase::ResourcesLoadState SceneNode_::CheckResourcesLoaded()
 {
 	return CheckResourcesLoadedHelper( CheckResourcesLoaded_<Parent>Level(), [ this ]() {
 		// check requested resources on shape level
-		return SceneNodeBase::ResourcesLoadState::READY;
+		return SceneBase::ResourcesLoadState::READY;
 	} );
 }
 

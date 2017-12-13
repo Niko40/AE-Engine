@@ -11,7 +11,7 @@ namespace AE
 {
 
 SceneNode_Shape::SceneNode_Shape( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path )
-	: SceneNode_Object( engine, scene_manager, scene_node_path, SceneNodeBase::Type::SHAPE )
+	: SceneNode_Object( engine, scene_manager, scene_node_path, SceneBase::Type::SHAPE )
 {
 }
 
@@ -29,11 +29,11 @@ bool SceneNode_Shape::ParseConfigFile()
 	} );
 }
 
-SceneNodeBase::ResourcesLoadState SceneNode_Shape::CheckResourcesLoaded()
+SceneBase::ResourcesLoadState SceneNode_Shape::CheckResourcesLoaded()
 {
 	return CheckResourcesLoadedHelper( CheckResourcesLoaded_ObjectLevel(), [ this ]() {
 		// check requested resources on shape level
-		return SceneNodeBase::ResourcesLoadState::READY;
+		return SceneBase::ResourcesLoadState::READY;
 	} );
 }
 

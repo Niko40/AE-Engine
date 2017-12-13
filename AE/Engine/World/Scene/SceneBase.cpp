@@ -1,5 +1,5 @@
 
-#include "SceneNodeBase.h"
+#include "SceneBase.h"
 
 #include "../../Engine.h"
 #include "../../Logger/Logger.h"
@@ -8,6 +8,7 @@
 #include "../../Renderer/DeviceResource/DeviceResourceManager.h"
 #include "../../FileResource/FileResourceManager.h"
 #include "../../FileResource/XML/FileResource_XML.h"
+#include "SceneManager.h"
 
 #include <assert.h>
 
@@ -22,7 +23,7 @@
 namespace AE
 {
 
-SceneNodeBase::SceneNodeBase( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type )
+SceneBase::SceneBase( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneBase::Type scene_node_type )
 {
 	p_engine					= engine;
 	p_scene_manager				= scene_manager;
@@ -36,19 +37,23 @@ SceneNodeBase::SceneNodeBase( Engine * engine, SceneManager * scene_manager, con
 	ref_vk_device				= p_renderer->GetVulkanDevice();
 	assert( p_device_resource_manager );
 	assert( ref_vk_device.object );
+	render_thread_id			= p_scene_manager->GetRenderingThreadForSceneBase( this );
+	p_descriptor_pool_manager	= p_renderer->GetDescriptorPoolManagerForSpecificThread( render_thread_id );
+	assert( p_descriptor_pool_manager );
 
-	type					= scene_node_type;
+	type						= scene_node_type;
 	assert( type != Type::UNDEFINED );
 
-	config_file_path		= scene_node_path;
-	config_file				= p_engine->GetFileResourceManager()->RequestResource( scene_node_path );
+	config_file_path			= scene_node_path;
+	config_file					= p_engine->GetFileResourceManager()->RequestResource( scene_node_path );
 }
 
-SceneNodeBase::~SceneNodeBase()
+SceneBase::~SceneBase()
 {
+	p_scene_manager->FreeRenderingThreadForSceneBase( this );
 }
 
-SceneNode * SceneNodeBase::CreateChild( SceneNodeBase::Type scene_node_type, const Path & scene_node_path )
+SceneNode * SceneBase::CreateChild( SceneBase::Type scene_node_type, const Path & scene_node_path )
 {
 	UniquePointer<SceneNode> unique_ptr = nullptr;
 
@@ -82,7 +87,7 @@ SceneNode * SceneNodeBase::CreateChild( SceneNodeBase::Type scene_node_type, con
 	return nullptr;
 }
 
-void SceneNodeBase::UpdateResourcesFromManager()
+void SceneBase::UpdateResourcesFromManager()
 {
 	if( is_scene_node_ok ) {
 		if( !is_scene_node_use_ready ) {
@@ -125,22 +130,22 @@ void SceneNodeBase::UpdateResourcesFromManager()
 	}
 }
 
-bool SceneNodeBase::IsConfigFileParsed()
+bool SceneBase::IsConfigFileParsed()
 {
 	return is_config_file_parsed;
 }
 
-bool SceneNodeBase::IsConfigFileLoaded()
+bool SceneBase::IsConfigFileLoaded()
 {
 	return config_file->IsResourceReadyForUse();
 }
 
-bool SceneNodeBase::IsSceneNodeUseReady()
+bool SceneBase::IsSceneNodeUseReady()
 {
 	return is_scene_node_use_ready && is_scene_node_ok;
 }
 
-const Path & SceneNodeBase::GetConfigFilePath()
+const Path & SceneBase::GetConfigFilePath()
 {
 	return config_file_path;
 }
@@ -157,9 +162,9 @@ bool ParseConfigFileHelper( tinyxml2::XMLElement * previous_level, String child_
 	return false;
 }
 
-SceneNodeBase::ResourcesLoadState CheckResourcesLoadedHelper( SceneNodeBase::ResourcesLoadState previous_level, std::function<SceneNodeBase::ResourcesLoadState( void )> child_element_parser )
+SceneBase::ResourcesLoadState CheckResourcesLoadedHelper( SceneBase::ResourcesLoadState previous_level, std::function<SceneBase::ResourcesLoadState( void )> child_element_parser )
 {
-	if( previous_level == SceneNodeBase::ResourcesLoadState::READY ) {
+	if( previous_level == SceneBase::ResourcesLoadState::READY ) {
 		return child_element_parser();
 	}
 	return previous_level;

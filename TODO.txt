@@ -25,6 +25,6 @@ TODO:
 	- Pass final image to swapchain
 
 - Modify scene hierarchy
-	- A scene depends on SceneNodeBase, it shouldn't depend on all of it
-	- Create a SceneCommon base instead and move most of the SceneNodeBase functionality into SceneNode
-	( SceneNodeBase.h/cpp, SceneNode.h/cpp, <create file for SceneNodeHierarchy class> )
+	- A scene depends on SceneBase, it shouldn't depend on all of it
+	- Create a SceneCommon base instead and move most of the SceneBase functionality into SceneNode
+	( SceneBase.h/cpp, SceneNode.h/cpp, <create file for SceneNodeHierarchy class> )

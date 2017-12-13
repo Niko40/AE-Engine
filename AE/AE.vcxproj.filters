@@ -197,9 +197,6 @@
     <ClCompile Include="Engine\World\Scene\Scene.cpp">
       <Filter>Engine\World\Scene</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\World\Scene\SceneNodeBase.cpp">
-      <Filter>Engine\World\Scene</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\Renderer\DeviceResource\GraphicsPipeline\DeviceResource_GraphicsPipeline.cpp">
       <Filter>Engine\Renderer\DeviceResource\GraphicsPipeline</Filter>
     </ClCompile>
@@ -223,6 +220,9 @@
     </ClCompile>
     <ClCompile Include="Engine\World\World.cpp">
       <Filter>Engine\World</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\World\Scene\SceneBase.cpp">
+      <Filter>Engine\World\Scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -346,9 +346,6 @@
     <ClInclude Include="Engine\World\Scene\Scene.h">
       <Filter>Engine\World\Scene</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\World\Scene\SceneNodeBase.h">
-      <Filter>Engine\World\Scene</Filter>
-    </ClInclude>
     <ClInclude Include="Engine\Renderer\DeviceResource\GraphicsPipeline\DeviceResource_GraphicsPipeline.h">
       <Filter>Engine\Renderer\DeviceResource\GraphicsPipeline</Filter>
     </ClInclude>
@@ -378,6 +375,9 @@
     </ClInclude>
     <ClInclude Include="Engine\World\Scene\Object\ObjectTemplate.h">
       <Filter>Engine\World\Scene\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\World\Scene\SceneBase.h">
+      <Filter>Engine\World\Scene</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

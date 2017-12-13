@@ -3,7 +3,7 @@
 #include "../../BUILD_OPTIONS.h"
 #include "../../Platform.h"
 
-#include "SceneNodeBase.h"
+#include "SceneBase.h"
 
 namespace AE
 {
@@ -11,7 +11,7 @@ namespace AE
 class Engine;
 class SceneManager;
 
-class Scene : public SceneNodeBase
+class Scene : public SceneBase
 {
 public:
 	Scene( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path );

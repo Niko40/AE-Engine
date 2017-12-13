@@ -16,8 +16,8 @@
 namespace AE
 {
 
-SceneNode::SceneNode( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type )
-	: SceneNodeBase( engine, scene_manager, scene_node_path, scene_node_type )
+SceneNode::SceneNode( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneBase::Type scene_node_type )
+	: SceneBase( engine, scene_manager, scene_node_path, scene_node_type )
 {
 }
 
@@ -104,7 +104,7 @@ tinyxml2::XMLElement * SceneNode::ParseConfigFile_SceneNodeLevel()
 	return xml_root;
 }
 
-SceneNodeBase::ResourcesLoadState SceneNode::CheckResourcesLoaded_SceneNodeLevel()
+SceneBase::ResourcesLoadState SceneNode::CheckResourcesLoaded_SceneNodeLevel()
 {
 	for( auto & m : mesh_info_list ) {
 		if( !m->mesh_resource->IsResourceOK() ) return ResourcesLoadState::UNABLE_TO_LOAD;
