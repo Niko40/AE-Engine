@@ -34,26 +34,23 @@ SceneBase::SceneBase( Engine * engine, SceneManager * scene_manager, const Path 
 	assert( p_renderer );
 	assert( p_file_resource_manager );
 	p_device_resource_manager	= p_renderer->GetDeviceResourceManager();
+	p_descriptor_pool_manager	= p_renderer->GetDescriptorPoolManager();
 	ref_vk_device				= p_renderer->GetVulkanDevice();
 	assert( p_device_resource_manager );
 	assert( ref_vk_device.object );
-	render_thread_id			= p_scene_manager->GetRenderingThreadForSceneBase( this );
-	p_descriptor_pool_manager	= p_renderer->GetDescriptorPoolManagerForSpecificThread( render_thread_id );
-	assert( p_descriptor_pool_manager );
 
 	type						= scene_node_type;
 	assert( type != Type::UNDEFINED );
 
 	config_file_path			= scene_node_path;
-	config_file					= p_engine->GetFileResourceManager()->RequestResource( scene_node_path );
+	config_file					= p_engine->GetFileResourceManager()->RequestResource( config_file_path );
 }
 
 SceneBase::~SceneBase()
 {
-	p_scene_manager->FreeRenderingThreadForSceneBase( this );
 }
 
-SceneNode * SceneBase::CreateChild( SceneBase::Type scene_node_type, const Path & scene_node_path )
+SceneNode * SceneBase::CreateChild( SceneBase::Type scene_node_type, Path scene_node_path )
 {
 	UniquePointer<SceneNode> unique_ptr = nullptr;
 
@@ -87,42 +84,58 @@ SceneNode * SceneBase::CreateChild( SceneBase::Type scene_node_type, const Path 
 	return nullptr;
 }
 
+void ConfigResourceCheckerAndLoader( SceneBase * sb )
+{
+	auto lambda_check_config_is_loaded_and_finalize	= []( SceneBase * sb ) {
+		auto result = sb->CheckResourcesLoaded();
+		switch( result ) {
+		case SceneBase::ResourcesLoadState::READY:
+		{
+			if( sb->FinalizeResources() ) {
+				sb->is_scene_node_use_ready	= true;
+			} else {
+				sb->is_scene_node_use_ready	= false;
+				sb->is_scene_node_ok		= false;
+			}
+			break;
+		}
+		case SceneBase::ResourcesLoadState::NOT_READY:
+			break;
+		case SceneBase::ResourcesLoadState::UNABLE_TO_LOAD:
+			sb->is_scene_node_ok			= false;
+			break;
+		default:
+			assert( !"Illegal value, check if the value is set?" );
+			break;
+		}
+	};
+
+	if( sb->config_file ) {
+		if( !sb->IsConfigFileParsed() ) {
+			if( sb->IsConfigFileLoaded() ) {
+				if( !sb->ParseConfigFile() ) {
+					sb->is_scene_node_ok		= false;
+					sb->p_engine->GetLogger()->LogError( "Parsing scene node XML file failed" );
+				}
+				sb->is_config_file_parsed		= true;
+			}
+		}
+		if( sb->IsConfigFileParsed() && sb->is_scene_node_ok ) {
+			lambda_check_config_is_loaded_and_finalize( sb );
+		}
+	} else {
+		// Config file doesn't exist for this resource
+		if( sb->is_scene_node_ok ) {
+			lambda_check_config_is_loaded_and_finalize( sb );
+		}
+	}
+}
+
 void SceneBase::UpdateResourcesFromManager()
 {
 	if( is_scene_node_ok ) {
 		if( !is_scene_node_use_ready ) {
-			if( !IsConfigFileParsed() ) {
-				if( IsConfigFileLoaded() ) {
-					if( !ParseConfigFile() ) {
-						is_scene_node_ok		= false;
-						p_engine->GetLogger()->LogError( "Parsing scene node XML file failed" );
-					}
-					is_config_file_parsed		= true;
-				}
-			}
-			if( IsConfigFileParsed() && is_scene_node_ok ) {
-				auto result = CheckResourcesLoaded();
-				switch( result ) {
-				case ResourcesLoadState::READY:
-				{
-					if( FinalizeResources() ) {
-						is_scene_node_use_ready	= true;
-					} else {
-						is_scene_node_use_ready	= false;
-						is_scene_node_ok		= false;
-					}
-					break;
-				}
-				case ResourcesLoadState::NOT_READY:
-					break;
-				case ResourcesLoadState::UNABLE_TO_LOAD:
-					is_scene_node_ok			= false;
-					break;
-				default:
-					assert( !"Illegal value, check if the value is set?" );
-					break;
-				}
-			}
+			ConfigResourceCheckerAndLoader( this );
 		}
 	}
 	for( auto & c : child_list ) {

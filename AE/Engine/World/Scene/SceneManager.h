@@ -32,9 +32,6 @@ public:
 	Scene								*	GetActiveScene() const;
 	Scene								*	GetGridScene( Vec3 world_coords ) const;
 
-	std::thread::id							GetRenderingThreadForSceneBase( SceneBase * node );
-	void									FreeRenderingThreadForSceneBase( SceneBase * node );
-
 private:
 	Engine								*	p_engine					= nullptr;
 	Logger								*	p_logger					= nullptr;
@@ -42,7 +39,7 @@ private:
 	World								*	p_world						= nullptr;
 
 	UniquePointer<Scene>					active_scene;
-	DynamicGrid2D<SharedPointer<Scene>>		grid_nodes;
+//	DynamicGrid2D<SharedPointer<Scene>>		grid_nodes;
 };
 
 }

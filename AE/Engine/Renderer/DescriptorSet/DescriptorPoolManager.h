@@ -7,6 +7,7 @@
 
 #include "DescriptorPoolInfo.h"
 #include "../../Memory/MemoryTypes.h"
+#include "../../Threading/Threading.h"
 
 namespace AE
 {
@@ -37,6 +38,8 @@ private:
 	Renderer						*	p_renderer					= nullptr;
 
 	VulkanDevice						ref_vk_device				= {};
+
+	Mutex								allocator_mutex;
 
 	List<DescriptorSubPoolInfo>			uniform_pool_list;
 	List<DescriptorSubPoolInfo>			image_pool_list;

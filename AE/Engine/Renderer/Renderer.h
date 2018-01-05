@@ -20,6 +20,7 @@ class WindowManager;
 class DeviceMemoryManager;
 class DeviceResourceManager;
 class DescriptorPoolManager;
+class SceneBase;
 
 class Renderer : public SubSystem
 {
@@ -60,8 +61,13 @@ public:
 	vk::DescriptorSetLayout					GetVulkanDescriptorSetLayoutForPipeline() const;
 	vk::DescriptorSetLayout					GetVulkanDescriptorSetLayoutForImageBindingCount( uint32_t image_binding_count ) const;
 
-	DescriptorPoolManager				*	GetDescriptorPoolManagerForThisThread();
-	DescriptorPoolManager				*	GetDescriptorPoolManagerForSpecificThread( std::thread::id thread_id );
+	/*
+	TODO( "Rendering threads, figure out if rendering threads should be allocated at runtime or creation time" );
+	std::thread::id							GetRenderingThreadForSceneBase( SceneBase * node );
+	void									FreeRenderingThreadForSceneBase( SceneBase * node );
+	*/
+
+	DescriptorPoolManager				*	GetDescriptorPoolManager();
 
 	bool									IsFormatSupported( vk::ImageTiling tiling, vk::Format format, vk::FormatFeatureFlags feature_flags );
 
@@ -191,7 +197,7 @@ private:
 	// the amount of layouts matches BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT
 	Vector<vk::PipelineLayout>				vk_graphics_pipeline_layouts;
 
-	Map<std::thread::id, UniquePointer<DescriptorPoolManager>>						descriptor_pools;
+	UniquePointer<DescriptorPoolManager>	descriptor_pool_manager;
 
 	VkDebugReportCallbackEXT				debug_report_callback					= VK_NULL_HANDLE;
 	VkDebugReportCallbackCreateInfoEXT		debug_report_callback_create_info		= {};

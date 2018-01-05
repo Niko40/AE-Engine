@@ -73,6 +73,7 @@ void FileWorkerThread( Engine * engine, FileResourceManager * file_resource_mana
 							load_operation_ran			= true;
 						} else {
 							resource->SetResourceState( FileResource::State::UNABLE_TO_LOAD_FILE_NOT_FOUND );
+							p_logger->LogWarning( String( "File resource not found: " ) + path.string().c_str() );
 						}
 					}
 				}
@@ -107,6 +108,7 @@ void FileWorkerThread( Engine * engine, FileResourceManager * file_resource_mana
 						resource->SetResourceState( FileResource::State::UNLOADED );
 					} else {
 						resource->SetResourceState( FileResource::State::UNABLE_TO_UNLOAD );
+						p_logger->LogWarning( String( "Unable to unload file resource: " ) + resource->GetPath().string().c_str() );
 						assert( 0 && "Unable to unload resource, we'll try and delete it anyways" );
 					}
 				}
@@ -166,6 +168,7 @@ FileResourceManager::~FileResourceManager()
 FileResourceHandle<FileResource> FileResourceManager::RequestResource( const Path & resource_path )
 {
 	if( !allow_resource_requests ) return nullptr;
+	if( resource_path == "" ) return nullptr;
 
 	std::lock_guard<std::mutex> lock_guard( mutex_resources_list );
 

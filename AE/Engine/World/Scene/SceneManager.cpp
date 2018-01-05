@@ -35,11 +35,14 @@ SceneManager::~SceneManager()
 void SceneManager::Update()
 {
 	active_scene->UpdateResourcesFromManager();
+	TODO( "Grid nodes not enabled at this point." );
+	/*
 	for( auto & s : grid_nodes ) {
 		if( nullptr != s.Get() ) {
 			s->UpdateResourcesFromManager();
 		}
 	}
+	*/
 }
 
 Scene * SceneManager::GetActiveScene() const

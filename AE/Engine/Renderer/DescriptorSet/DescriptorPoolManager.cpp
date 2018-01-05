@@ -26,10 +26,10 @@ DescriptorPoolManager::DescriptorPoolManager( Engine * engine, Renderer * render
 DescriptorPoolManager::~DescriptorPoolManager()
 {
 	if( uniform_pool_list.size() ) {
-		p_logger->LogWarning( "destroying descriptor pool manager with existing uniform sub pools, this might cause a errors later" );
+		p_logger->LogWarning( "destroying descriptor pool manager with existing uniform sub pools, this might cause errors later" );
 	}
 	if( image_pool_list.size() ) {
-		p_logger->LogWarning( "destroying descriptor pool manager with existing image sub pools, this might cause a errors later" );
+		p_logger->LogWarning( "destroying descriptor pool manager with existing image sub pools, this might cause errors later" );
 	}
 
 	LOCK_GUARD( *ref_vk_device.mutex );
@@ -88,6 +88,7 @@ void DescriptorPoolManager::FreeDescriptorSet( DescriptorSubPoolInfo * pool_info
 		} else {
 			// users not yet 0, free only the descriptor set
 			TODO( "This could be optimized so that it frees descriptor sets in batches instead of individually" );
+			LOCK_GUARD( allocator_mutex );
 			ref_vk_device.object.freeDescriptorSets( pool_info->pool, set );
 		}
 	}
@@ -103,9 +104,13 @@ DescriptorSetHandle DescriptorPoolManager::AllocateDescriptorSet( vk::Descriptor
 	AI.descriptorSetCount		= 1;
 	AI.pSetLayouts				= &layout;
 
-	auto lambda_allocate_set	= []( Logger * logger, VulkanDevice & vk_device, VkDescriptorSetAllocateInfo & allocate_info ) {
+	auto lambda_allocate_set	= [ this ]( Logger * logger, VulkanDevice & vk_device, VkDescriptorSetAllocateInfo & allocate_info ) {
 		VkDescriptorSet	set		= VK_NULL_HANDLE;
-		VkResult result			= vkAllocateDescriptorSets( vk_device.object, &allocate_info, &set );
+		VkResult result			= VK_RESULT_MAX_ENUM;
+		{
+			LOCK_GUARD( allocator_mutex );
+			result				= vkAllocateDescriptorSets( vk_device.object, &allocate_info, &set );
+		}
 		if( result == VK_SUCCESS ) {
 			// all good, return the set
 			return set;

@@ -138,6 +138,7 @@ Renderer::Renderer( Engine * engine, std::string application_name, uint32_t appl
 	CreateDescriptorSetLayouts();
 	CreateGraphicsPipelineLayouts();
 
+	descriptor_pool_manager		= MakeUniquePointer<DescriptorPoolManager>( p_engine, this );
 	device_memory_manager		= MakeUniquePointer<DeviceMemoryManager>( p_engine, this );
 	device_resource_manager		= MakeUniquePointer<DeviceResourceManager>( p_engine, this, device_memory_manager.Get() );
 
@@ -157,6 +158,7 @@ Renderer::~Renderer()
 
 	device_resource_manager		= nullptr;
 	device_memory_manager		= nullptr;
+	descriptor_pool_manager		= nullptr;
 
 	DestroyGraphicsPipelineLayouts();
 	DestroyDescriptorSetLayouts();
@@ -325,13 +327,13 @@ vk::DescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForImageBindingCou
 	return vk_descriptor_set_layouts_for_images[ image_binding_count ];
 }
 
-DescriptorPoolManager * Renderer::GetDescriptorPoolManagerForThisThread()
+DescriptorPoolManager * Renderer::GetDescriptorPoolManager()
 {
-	return GetDescriptorPoolManagerForSpecificThread( std::this_thread::get_id() );
-}
+	return descriptor_pool_manager.Get();
 
-DescriptorPoolManager * Renderer::GetDescriptorPoolManagerForSpecificThread( std::thread::id thread_id )
-{
+	// Descriptor pool manager per thread approach was cancelled for now because of unnecessary
+	// complexity at this point, might consider this in the future though
+	/*
 	auto p_iter		= descriptor_pools.find( thread_id );
 	if( p_iter != descriptor_pools.end() ) {
 		// found, return this pool
@@ -341,16 +343,17 @@ DescriptorPoolManager * Renderer::GetDescriptorPoolManagerForSpecificThread( std
 		auto unique	= MakeUniquePointer<DescriptorPoolManager>( p_engine, this );
 		if( unique ) {
 			auto ptr = unique.Get();
-			descriptor_pools.insert( std::pair<std::thread::id, UniquePointer<DescriptorPoolManager>>( std::this_thread::get_id(), std::move( unique ) ) );
+			descriptor_pools.insert( std::pair<std::thread::id, UniquePointer<DescriptorPoolManager>>( thread_id, std::move( unique ) ) );
 			return ptr;
 		} else {
 			std::stringstream ss;
 			ss << "Can't create new descriptor pool manager for thread: "
-				<< std::this_thread::get_id();
+				<< thread_id;
 			p_logger->LogCritical( ss.str().c_str() );
 		}
 	}
 	return nullptr;
+	*/
 }
 
 bool Renderer::IsFormatSupported( vk::ImageTiling tiling, vk::Format format, vk::FormatFeatureFlags feature_flags )
