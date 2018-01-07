@@ -12,13 +12,13 @@ namespace AE
 
 struct ImageData
 {
-	vk::Format				format				= vk::Format::eUndefined;
+	VkFormat				format				= VK_FORMAT_UNDEFINED;
 	uint32_t				used_channels		= 0;
 	uint32_t				bits_per_channel	= 0;
 	uint32_t				bytes_per_pixel		= 0;
 	uint32_t				width				= 0;
 	uint32_t				height				= 0;
-	vk::Bool32				has_alpha			= VK_FALSE;
+	VkBool32				has_alpha			= VK_FALSE;
 	Vector<uint8_t>			image_bytes;
 };
 

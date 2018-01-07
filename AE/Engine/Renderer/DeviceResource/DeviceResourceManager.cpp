@@ -279,19 +279,23 @@ DeviceResourceManager::DeviceResourceManager( Engine * engine, Renderer * render
 			worker_threads_sleeping[ i ]		= false;
 			{
 				// create primary render command pool
-				vk::CommandPoolCreateInfo command_pool_CI {};
-				command_pool_CI.flags							= vk::CommandPoolCreateFlagBits::eTransient | vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+				VkCommandPoolCreateInfo command_pool_CI {};
+				command_pool_CI.sType							= VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+				command_pool_CI.pNext							= nullptr;
+				command_pool_CI.flags							= VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 				command_pool_CI.queueFamilyIndex				= primary_render_queue_family_index;
-				vk_thread_command_pools_primary_render[ i ]		= ref_vk_device.object.createCommandPool( command_pool_CI );
+				VulkanResultCheck( vkCreateCommandPool( ref_vk_device.object, &command_pool_CI, VULKAN_ALLOC, &vk_thread_command_pools_primary_render[ i ] ) );
 			}
 			if( secondary_render_queue_family_index == primary_render_queue_family_index ) {
 				vk_thread_command_pools_secondary_render[ i ]	= vk_thread_command_pools_primary_render[ i ];
 			} else {
 				// create secondary render command pool
-				vk::CommandPoolCreateInfo command_pool_CI {};
-				command_pool_CI.flags							= vk::CommandPoolCreateFlagBits::eTransient | vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+				VkCommandPoolCreateInfo command_pool_CI {};
+				command_pool_CI.sType							= VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+				command_pool_CI.pNext							= nullptr;
+				command_pool_CI.flags							= VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 				command_pool_CI.queueFamilyIndex				= secondary_render_queue_family_index;
-				vk_thread_command_pools_secondary_render[ i ]	= ref_vk_device.object.createCommandPool( command_pool_CI );
+				VulkanResultCheck( vkCreateCommandPool( ref_vk_device.object, &command_pool_CI, VULKAN_ALLOC, &vk_thread_command_pools_secondary_render[ i ] ) );
 			}
 			if( primary_transfer_queue_family_index == primary_render_queue_family_index ) {
 				vk_thread_command_pools_primary_transfer[ i ]	= vk_thread_command_pools_primary_render[ i ];
@@ -299,10 +303,12 @@ DeviceResourceManager::DeviceResourceManager( Engine * engine, Renderer * render
 				vk_thread_command_pools_primary_transfer[ i ]	= vk_thread_command_pools_secondary_render[ i ];
 			} else {
 				// create primary transfer command pool
-				vk::CommandPoolCreateInfo command_pool_CI {};
-				command_pool_CI.flags							= vk::CommandPoolCreateFlagBits::eTransient | vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+				VkCommandPoolCreateInfo command_pool_CI {};
+				command_pool_CI.sType							= VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+				command_pool_CI.pNext							= nullptr;
+				command_pool_CI.flags							= VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 				command_pool_CI.queueFamilyIndex				= primary_transfer_queue_family_index;
-				vk_thread_command_pools_primary_transfer[ i ]	= ref_vk_device.object.createCommandPool( command_pool_CI );
+				VulkanResultCheck( vkCreateCommandPool( ref_vk_device.object, &command_pool_CI, VULKAN_ALLOC, &vk_thread_command_pools_primary_transfer[ i ] ) );
 			}
 
 			auto thread				= std::thread( DeviceWorkerThread, p_engine, this, &worker_threads_sleeping[ i ] );
@@ -323,7 +329,7 @@ DeviceResourceManager::~DeviceResourceManager()
 	// sync device and CPU
 	{
 		LOCK_GUARD( *ref_vk_device.mutex );
-		ref_vk_device.object.waitIdle();
+		VulkanResultCheck( vkDeviceWaitIdle( ref_vk_device.object ) );
 	}
 	// notify all threads they should close
 	worker_threads_should_exit				= true;
@@ -350,38 +356,38 @@ DeviceResourceManager::~DeviceResourceManager()
 	{
 		LOCK_GUARD( *ref_vk_device.mutex );
 
-		// sync device and CPU
-		ref_vk_device.object.waitIdle();
+		// sync device and CPU again because worker threads might have made some calls to the device
+		VulkanResultCheck( vkDeviceWaitIdle( ref_vk_device.object ) );
 
 		// destroy all command pools
 		for( uint32_t i=0; i < BUILD_DEVICE_RESOURCE_MANAGER_WORKER_THREAD_COUNT; ++i ) {
 			if( primary_render_queue_family_index == secondary_render_queue_family_index &&
 				primary_render_queue_family_index == primary_transfer_queue_family_index ) {
-				ref_vk_device.object.destroyCommandPool( vk_thread_command_pools_primary_render[ i ] );
+				vkDestroyCommandPool( ref_vk_device.object, vk_thread_command_pools_primary_render[ i ], VULKAN_ALLOC );
 
 			} else if( primary_render_queue_family_index == secondary_render_queue_family_index &&
 				primary_render_queue_family_index != primary_transfer_queue_family_index ) {
-				ref_vk_device.object.destroyCommandPool( vk_thread_command_pools_primary_render[ i ] );
-				ref_vk_device.object.destroyCommandPool( vk_thread_command_pools_primary_transfer[ i ] );
+				vkDestroyCommandPool( ref_vk_device.object, vk_thread_command_pools_primary_render[ i ], VULKAN_ALLOC );
+				vkDestroyCommandPool( ref_vk_device.object, vk_thread_command_pools_primary_transfer[ i ], VULKAN_ALLOC );
 
 			} else if( primary_transfer_queue_family_index == primary_render_queue_family_index &&
 				primary_transfer_queue_family_index != secondary_render_queue_family_index ) {
-				ref_vk_device.object.destroyCommandPool( vk_thread_command_pools_primary_transfer[ i ] );
-				ref_vk_device.object.destroyCommandPool( vk_thread_command_pools_secondary_render[ i ] );
+				vkDestroyCommandPool( ref_vk_device.object, vk_thread_command_pools_primary_render[ i ], VULKAN_ALLOC );
+				vkDestroyCommandPool( ref_vk_device.object, vk_thread_command_pools_secondary_render[ i ], VULKAN_ALLOC );
 
 			} else if( secondary_render_queue_family_index == primary_transfer_queue_family_index &&
 				secondary_render_queue_family_index != primary_render_queue_family_index ) {
-				ref_vk_device.object.destroyCommandPool( vk_thread_command_pools_secondary_render[ i ] );
-				ref_vk_device.object.destroyCommandPool( vk_thread_command_pools_primary_render[ i ] );
+				vkDestroyCommandPool( ref_vk_device.object, vk_thread_command_pools_secondary_render[ i ], VULKAN_ALLOC );
+				vkDestroyCommandPool( ref_vk_device.object, vk_thread_command_pools_primary_render[ i ], VULKAN_ALLOC );
 			} else {
-				ref_vk_device.object.destroyCommandPool( vk_thread_command_pools_primary_render[ i ] );
-				ref_vk_device.object.destroyCommandPool( vk_thread_command_pools_secondary_render[ i ] );
-				ref_vk_device.object.destroyCommandPool( vk_thread_command_pools_primary_transfer[ i ] );
+				vkDestroyCommandPool( ref_vk_device.object, vk_thread_command_pools_primary_render[ i ], VULKAN_ALLOC );
+				vkDestroyCommandPool( ref_vk_device.object, vk_thread_command_pools_secondary_render[ i ], VULKAN_ALLOC );
+				vkDestroyCommandPool( ref_vk_device.object, vk_thread_command_pools_primary_transfer[ i ], VULKAN_ALLOC );
 			}
 
-			vk_thread_command_pools_primary_render[ i ]		= nullptr;
-			vk_thread_command_pools_secondary_render[ i ]	= nullptr;
-			vk_thread_command_pools_primary_transfer[ i ]	= nullptr;
+			vk_thread_command_pools_primary_render[ i ]		= VK_NULL_HANDLE;
+			vk_thread_command_pools_secondary_render[ i ]	= VK_NULL_HANDLE;
+			vk_thread_command_pools_primary_transfer[ i ]	= VK_NULL_HANDLE;
 		}
 	}
 }
@@ -622,7 +628,7 @@ void DeviceResourceManager::AllowResourceUnloading( bool allow )
 	}
 }
 
-vk::CommandPool DeviceResourceManager::GetPrimaryRenderCommandPoolForThisThread( uint32_t thread_index )
+VkCommandPool DeviceResourceManager::GetPrimaryRenderCommandPoolForThisThread( uint32_t thread_index )
 {
 	// Get slot number from thread id
 	uint32_t slot	= thread_index;
@@ -637,7 +643,7 @@ vk::CommandPool DeviceResourceManager::GetPrimaryRenderCommandPoolForThisThread(
 	}
 }
 
-vk::CommandPool DeviceResourceManager::GetSecondaryRenderCommandPoolForThisThread( uint32_t thread_index )
+VkCommandPool DeviceResourceManager::GetSecondaryRenderCommandPoolForThisThread( uint32_t thread_index )
 {
 	// Get slot number from thread id
 	uint32_t slot	= thread_index;
@@ -652,7 +658,7 @@ vk::CommandPool DeviceResourceManager::GetSecondaryRenderCommandPoolForThisThrea
 	}
 }
 
-vk::CommandPool DeviceResourceManager::GetPrimaryTransferCommandPoolForThisThread( uint32_t thread_index )
+VkCommandPool DeviceResourceManager::GetPrimaryTransferCommandPoolForThisThread( uint32_t thread_index )
 {
 	// Get slot number from thread id
 	uint32_t slot	= thread_index;

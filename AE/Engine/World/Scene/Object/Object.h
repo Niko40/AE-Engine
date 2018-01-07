@@ -11,7 +11,7 @@ namespace AE
 class SceneNode_Object : public SceneNode
 {
 public:
-					SceneNode_Object( Engine * engine, SceneManager * scene_manager, DescriptorPoolManager * descriptor_pool_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type );
+					SceneNode_Object( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneBase::Type scene_node_type );
 	virtual			~SceneNode_Object();
 
 protected:
@@ -21,7 +21,7 @@ protected:
 	// returns new parent xml element for the next stage or nullptr if error
 	tinyxml2::XMLElement	*	ParseConfigFile_ObjectLevel();
 	ResourcesLoadState			CheckResourcesLoaded_ObjectLevel();
-	bool						Finalize_ObjectLevel();
+	bool						FinalizeResources_ObjectLevel();
 
 private:
 

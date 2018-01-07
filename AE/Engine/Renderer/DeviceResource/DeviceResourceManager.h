@@ -64,9 +64,9 @@ public:
 	void										AllowResourceLoading( bool allow );
 	void										AllowResourceUnloading( bool allow );
 
-	vk::CommandPool								GetPrimaryRenderCommandPoolForThisThread( uint32_t thread_index = UINT32_MAX );
-	vk::CommandPool								GetSecondaryRenderCommandPoolForThisThread( uint32_t thread_index = UINT32_MAX );
-	vk::CommandPool								GetPrimaryTransferCommandPoolForThisThread( uint32_t thread_index = UINT32_MAX );
+	VkCommandPool								GetPrimaryRenderCommandPoolForThisThread( uint32_t thread_index = UINT32_MAX );
+	VkCommandPool								GetSecondaryRenderCommandPoolForThisThread( uint32_t thread_index = UINT32_MAX );
+	VkCommandPool								GetPrimaryTransferCommandPoolForThisThread( uint32_t thread_index = UINT32_MAX );
 
 private:
 	void										ScrapDeviceResources();
@@ -82,28 +82,28 @@ private:
 	DeviceMemoryManager						*	p_device_memory_manager		= nullptr;
 	FileResourceManager						*	p_file_resource_manager		= nullptr;
 
-	vk::Instance								ref_vk_instance;
-	vk::PhysicalDevice							ref_vk_physical_device;
-	VulkanDevice								ref_vk_device;
+	VkInstance									ref_vk_instance				= VK_NULL_HANDLE;
+	VkPhysicalDevice							ref_vk_physical_device		= VK_NULL_HANDLE;
+	VulkanDevice								ref_vk_device				= {};
 
-	uint32_t									primary_render_queue_family_index			= UINT32_MAX;
-	uint32_t									secondary_render_queue_family_index			= UINT32_MAX;
-	uint32_t									primary_transfer_queue_family_index			= UINT32_MAX;
-	vk::Bool32									queue_families_are_same						= VK_FALSE;
+	uint32_t									primary_render_queue_family_index		= UINT32_MAX;
+	uint32_t									secondary_render_queue_family_index		= UINT32_MAX;
+	uint32_t									primary_transfer_queue_family_index		= UINT32_MAX;
+	VkBool32									queue_families_are_same					= VK_FALSE;
 
 	std::condition_variable						worker_threads_wakeup;
-	std::mutex									worker_threads_wakeup_mutex;
+	Mutex										worker_threads_wakeup_mutex;
 	std::atomic_bool							worker_threads_should_exit;
-	std::array<vk::CommandPool, BUILD_DEVICE_RESOURCE_MANAGER_WORKER_THREAD_COUNT>			vk_thread_command_pools_primary_render;
-	std::array<vk::CommandPool, BUILD_DEVICE_RESOURCE_MANAGER_WORKER_THREAD_COUNT>			vk_thread_command_pools_secondary_render;
-	std::array<vk::CommandPool, BUILD_DEVICE_RESOURCE_MANAGER_WORKER_THREAD_COUNT>			vk_thread_command_pools_primary_transfer;
-	std::array<std::atomic_bool, BUILD_DEVICE_RESOURCE_MANAGER_WORKER_THREAD_COUNT>			worker_threads_sleeping;
-	std::array<std::thread, BUILD_DEVICE_RESOURCE_MANAGER_WORKER_THREAD_COUNT>				worker_threads;
+	Array<VkCommandPool, BUILD_DEVICE_RESOURCE_MANAGER_WORKER_THREAD_COUNT>				vk_thread_command_pools_primary_render;
+	Array<VkCommandPool, BUILD_DEVICE_RESOURCE_MANAGER_WORKER_THREAD_COUNT>				vk_thread_command_pools_secondary_render;
+	Array<VkCommandPool, BUILD_DEVICE_RESOURCE_MANAGER_WORKER_THREAD_COUNT>				vk_thread_command_pools_primary_transfer;
+	Array<std::atomic_bool, BUILD_DEVICE_RESOURCE_MANAGER_WORKER_THREAD_COUNT>			worker_threads_sleeping;
+	Array<std::thread, BUILD_DEVICE_RESOURCE_MANAGER_WORKER_THREAD_COUNT>				worker_threads;
 
-	std::mutex									mutex_resources_list;
-	std::mutex									mutex_preload_list;
-	std::mutex									mutex_load_and_continue_load_list;
-	std::mutex									mutex_continue_unload_list;
+	Mutex										mutex_resources_list;
+	Mutex										mutex_preload_list;
+	Mutex										mutex_load_and_continue_load_list;
+	Mutex										mutex_continue_unload_list;
 
 	List<UniquePointer<DeviceResource>>			resources_list;
 	List<DeviceResource*>						preload_list;

@@ -38,16 +38,16 @@ public:
 	size_t								GetPolygonsByteSize() const;
 
 private:
-	vk::CommandPool						ref_vk_primary_render_command_pool			= nullptr;
-	vk::CommandPool						ref_vk_primary_transfer_command_pool		= nullptr;
-	vk::CommandBuffer					vk_primary_render_command_buffer			= nullptr;
-	vk::CommandBuffer					vk_primary_transfer_command_buffer			= nullptr;
+	VkCommandPool						ref_vk_primary_render_command_pool			= VK_NULL_HANDLE;
+	VkCommandPool						ref_vk_primary_transfer_command_pool		= VK_NULL_HANDLE;
+	VkCommandBuffer						vk_primary_render_command_buffer			= VK_NULL_HANDLE;
+	VkCommandBuffer						vk_primary_transfer_command_buffer			= VK_NULL_HANDLE;
 
-	vk::Semaphore						vk_semaphore_stage_1						= nullptr;
-	vk::Fence							vk_fence_command_buffers_done				= nullptr;
+	VkSemaphore							vk_semaphore_stage_1						= VK_NULL_HANDLE;
+	VkFence								vk_fence_command_buffers_done				= VK_NULL_HANDLE;
 
-	vk::Buffer							vk_buffer									= nullptr;
-	vk::Buffer							vk_staging_buffer							= nullptr;
+	VkBuffer							vk_buffer									= VK_NULL_HANDLE;
+	VkBuffer							vk_staging_buffer							= VK_NULL_HANDLE;
 	DeviceMemoryInfo					buffer_memory								= {};
 	DeviceMemoryInfo					staging_buffer_memory						= {};
 

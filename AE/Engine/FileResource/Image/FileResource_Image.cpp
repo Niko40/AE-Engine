@@ -259,7 +259,7 @@ bool FileResource_Image::Load( FileStream * stream, const Path & path )
 			image_data					= {};
 			return false;
 		}
-		image_data.format				= vk::Format::eUndefined;	// determine this
+		image_data.format				= VK_FORMAT_UNDEFINED;		// determine this
 		image_data.used_channels		= uint32_t( comp );
 		image_data.bits_per_channel		= 8;
 		image_data.bytes_per_pixel		= uint32_t( comp * sizeof( stbi_uc ) );
@@ -275,25 +275,25 @@ bool FileResource_Image::Load( FileStream * stream, const Path & path )
 		switch( image_data.used_channels ) {
 		case 1:
 		{
-			image_data.format			= vk::Format::eR8Unorm;
+			image_data.format			= VK_FORMAT_R8_UNORM;
 			image_data.has_alpha		= 0;
 			break;
 		}
 		case 2:
 		{
-			image_data.format			= vk::Format::eR8G8Unorm;
+			image_data.format			= VK_FORMAT_R8G8_UNORM;
 			image_data.has_alpha		= 1;
 			break;
 		}
 		case 3:
 		{
-			image_data.format			= vk::Format::eR8G8B8Unorm;
+			image_data.format			= VK_FORMAT_R8G8B8_UNORM;
 			image_data.has_alpha		= 0;
 			break;
 		}
 		case 4:
 		{
-			image_data.format			= vk::Format::eR8G8B8A8Unorm;
+			image_data.format			= VK_FORMAT_R8G8B8A8_UNORM;
 			image_data.has_alpha		= 1;
 			break;
 		}
@@ -329,7 +329,7 @@ uint32_t FileResource_Image::GetHeight() const
 	return image_data.height;
 }
 
-vk::Format FileResource_Image::GetFormat() const
+VkFormat FileResource_Image::GetFormat() const
 {
 	return image_data.format;
 }
@@ -349,7 +349,7 @@ uint32_t FileResource_Image::GetBytesPerRow() const
 	return image_data.bytes_per_pixel;
 }
 
-vk::Bool32 FileResource_Image::GetHasAlpha() const
+VkBool32 FileResource_Image::GetHasAlpha() const
 {
 	return image_data.has_alpha;
 }

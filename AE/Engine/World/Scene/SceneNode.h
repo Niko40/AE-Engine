@@ -9,7 +9,7 @@
 #include "../../Math/Math.h"
 #include "../../Renderer/DescriptorSet/DescriptorSetHandle.h"
 
-#include "SceneNodeBase.h"
+#include "SceneBase.h"
 
 #include "../../Renderer/DeviceResource/DeviceResource.h"
 
@@ -22,7 +22,7 @@ class DeviceResource_GraphicsPipeline;
 class DeviceResource_Mesh;
 class DeviceResource_Image;
 
-class SceneNode : public SceneNodeBase
+class SceneNode : public SceneBase
 {
 public:
 	struct ImageInfo
@@ -52,7 +52,7 @@ public:
 		RenderInfo							render_info						= {};
 	};
 
-											SceneNode( Engine * engine, SceneManager * scene_manager, DescriptorPoolManager * descriptor_pool_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type );
+											SceneNode( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneBase::Type scene_node_type );
 	virtual									~SceneNode();
 
 	// Calculates a new transformation matrix from position, scale and rotation
@@ -90,10 +90,10 @@ protected:
 	ResourcesLoadState						CheckResourcesLoaded_SceneNodeLevel();
 
 	// because it's easier to call parent functions than branching child object's functions
-	// I have inverted the finalizing into levels, Finalize() is responsible for calling it's immediate
+	// I have inverted the finalizing into levels, FinalizeResources() is responsible for calling it's immediate
 	// parent class'es finalize function and the function will finalize that level of resources defined by the XML file as well as any below
 	// returns true if everything is OK, false if there was an error in which case this scene node will not participate in updates or rendering operations
-	bool									Finalize_SceneNodeLevel();
+	bool									FinalizeResources_SceneNodeLevel();
 
 private:
 	Vector<SharedPointer<MeshInfo>>			mesh_info_list;

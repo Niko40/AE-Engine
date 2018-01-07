@@ -26,50 +26,42 @@ DescriptorPoolManager::DescriptorPoolManager( Engine * engine, Renderer * render
 DescriptorPoolManager::~DescriptorPoolManager()
 {
 	if( uniform_pool_list.size() ) {
-		p_logger->LogWarning( "destroying descriptor pool manager with existing uniform sub pools, this might cause a errors later" );
+		p_logger->LogWarning( "destroying descriptor pool manager with existing uniform sub pools, this might cause errors later" );
 	}
 	if( image_pool_list.size() ) {
-		p_logger->LogWarning( "destroying descriptor pool manager with existing image sub pools, this might cause a errors later" );
+		p_logger->LogWarning( "destroying descriptor pool manager with existing image sub pools, this might cause errors later" );
 	}
 
 	LOCK_GUARD( *ref_vk_device.mutex );
 	for( auto & p : uniform_pool_list ) {
-		ref_vk_device.object.destroyDescriptorPool( p.pool );
+		vkDestroyDescriptorPool( ref_vk_device.object, p.pool, VULKAN_ALLOC );
 	}
 	for( auto & p : image_pool_list ) {
-		ref_vk_device.object.destroyDescriptorPool( p.pool );
+		vkDestroyDescriptorPool( ref_vk_device.object, p.pool, VULKAN_ALLOC );
 	}
 }
 
 DescriptorSetHandle DescriptorPoolManager::AllocateDescriptorSetForCamera()
 {
-	vk::DescriptorSetAllocateInfo descriptor_set_AI {};
-	descriptor_set_AI.pSetLayouts			= &p_renderer->GetVulkanDescriptorSetLayoutForCamera();
-	return AllocateDescriptorSet( descriptor_set_AI, false );
+	return AllocateDescriptorSet( p_renderer->GetVulkanDescriptorSetLayoutForCamera(), false );
 }
 
 DescriptorSetHandle DescriptorPoolManager::AllocateDescriptorSetForMesh()
 {
-	vk::DescriptorSetAllocateInfo descriptor_set_AI {};
-	descriptor_set_AI.pSetLayouts			= &p_renderer->GetVulkanDescriptorSetLayoutForMesh();
-	return AllocateDescriptorSet( descriptor_set_AI, false );
+	return AllocateDescriptorSet( p_renderer->GetVulkanDescriptorSetLayoutForMesh(), false );
 }
 
 DescriptorSetHandle DescriptorPoolManager::AllocateDescriptorSetForPipeline()
 {
-	vk::DescriptorSetAllocateInfo descriptor_set_AI {};
-	descriptor_set_AI.pSetLayouts			= &p_renderer->GetVulkanDescriptorSetLayoutForPipeline();
-	return AllocateDescriptorSet( descriptor_set_AI, false );
+	return AllocateDescriptorSet( p_renderer->GetVulkanDescriptorSetLayoutForPipeline(), false );
 }
 
 DescriptorSetHandle DescriptorPoolManager::AllocateDescriptorSetForImages( uint32_t shader_image_count )
 {
-	vk::DescriptorSetAllocateInfo descriptor_set_AI {};
-	descriptor_set_AI.pSetLayouts			= &p_renderer->GetVulkanDescriptorSetLayoutForImageBindingCount( shader_image_count );
-	return AllocateDescriptorSet( descriptor_set_AI, true );
+	return AllocateDescriptorSet( p_renderer->GetVulkanDescriptorSetLayoutForImageBindingCount( shader_image_count ), true );
 }
 
-void DescriptorPoolManager::FreeDescriptorSet( DescriptorSubPoolInfo * pool_info, vk::DescriptorSet set )
+void DescriptorPoolManager::FreeDescriptorSet( DescriptorSubPoolInfo * pool_info, VkDescriptorSet set )
 {
 	if( pool_info && set ) {
 		assert( pool_info->users > 0 );
@@ -78,7 +70,7 @@ void DescriptorPoolManager::FreeDescriptorSet( DescriptorSubPoolInfo * pool_info
 			// free entire vulkan pool, no need to free the descriptor set
 			{
 				LOCK_GUARD( *ref_vk_device.mutex );
-				ref_vk_device.object.destroyDescriptorPool( pool_info->pool );
+				vkDestroyDescriptorPool( ref_vk_device.object, pool_info->pool, VULKAN_ALLOC );
 			}
 			if( pool_info->is_image_pool ) {
 				image_pool_list.remove( *pool_info );
@@ -88,24 +80,28 @@ void DescriptorPoolManager::FreeDescriptorSet( DescriptorSubPoolInfo * pool_info
 		} else {
 			// users not yet 0, free only the descriptor set
 			TODO( "This could be optimized so that it frees descriptor sets in batches instead of individually" );
-			ref_vk_device.object.freeDescriptorSets( pool_info->pool, set );
+			LOCK_GUARD( allocator_mutex );
+			vkFreeDescriptorSets( ref_vk_device.object, pool_info->pool, 1, &set );
 		}
 	}
 }
 
-DescriptorSetHandle DescriptorPoolManager::AllocateDescriptorSet( vk::DescriptorSetAllocateInfo & allocate_info, bool is_image_pool )
+DescriptorSetHandle DescriptorPoolManager::AllocateDescriptorSet( VkDescriptorSetLayout layout, bool is_image_pool )
 {
-	VkDescriptorSetLayout		layout		= allocate_info.pSetLayouts[ 0 ];
-
 	VkDescriptorSetAllocateInfo AI {};
 	AI.sType					= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	AI.pNext					= nullptr;
+	AI.descriptorPool			= VK_NULL_HANDLE;	// Determined later in this function
 	AI.descriptorSetCount		= 1;
 	AI.pSetLayouts				= &layout;
 
-	auto lambda_allocate_set	= []( Logger * logger, VulkanDevice & vk_device, VkDescriptorSetAllocateInfo & allocate_info ) {
+	auto lambda_allocate_set	= [ this ]( Logger * logger, VulkanDevice & vk_device, VkDescriptorSetAllocateInfo & allocate_info ) {
 		VkDescriptorSet	set		= VK_NULL_HANDLE;
-		VkResult result			= vkAllocateDescriptorSets( vk_device.object, &allocate_info, &set );
+		VkResult result			= VK_RESULT_MAX_ENUM;
+		{
+			LOCK_GUARD( allocator_mutex );
+			result				= vkAllocateDescriptorSets( vk_device.object, &allocate_info, &set );
+		}
 		if( result == VK_SUCCESS ) {
 			// all good, return the set
 			return set;
@@ -113,6 +109,7 @@ DescriptorSetHandle DescriptorPoolManager::AllocateDescriptorSet( vk::Descriptor
 			// ran out of memory in this pool, try another
 		} else {
 			// ran out of memory, terminate
+			VulkanResultCheck( result );
 			logger->LogCritical( "Ran out of memory" );
 		}
 		return set;
@@ -143,19 +140,25 @@ DescriptorSetHandle DescriptorPoolManager::AllocateDescriptorSet( vk::Descriptor
 	}
 
 	// if we got here, all current pools are full, create a new
-	vk::DescriptorPoolCreateInfo pool_CI {};
-	pool_CI.flags				= vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
+	VkDescriptorPoolCreateInfo pool_CI {};
+	pool_CI.sType				= VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	pool_CI.pNext				= nullptr;
+	pool_CI.flags				= VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 	pool_CI.maxSets				= BUILD_MAX_DESCRIPTOR_SETS_IN_POOL;
+	pool_CI.poolSizeCount		= 0;		// Determined later in this function
+	pool_CI.pPoolSizes			= nullptr;	// Determined later in this function
 	if( is_image_pool ) {
-		vk::DescriptorPoolSize pool_size {};
-		pool_size.type				= vk::DescriptorType::eCombinedImageSampler;
+		VkDescriptorPoolSize pool_size {};
+		pool_size.type				= VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		pool_size.descriptorCount	= BUILD_MAX_DESCRIPTOR_SETS_IN_POOL * ( BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT / 2 );
 
 		pool_CI.poolSizeCount		= 1;
 		pool_CI.pPoolSizes			= &pool_size;
 
 		LOCK_GUARD( *ref_vk_device.mutex );
-		vk::DescriptorPool new_pool	= ref_vk_device.object.createDescriptorPool( pool_CI );
+		VkDescriptorPool new_pool	= VK_NULL_HANDLE;
+		VulkanResultCheck( vkCreateDescriptorPool( ref_vk_device.object, &pool_CI, VULKAN_ALLOC, &new_pool ) );
+
 		if( new_pool ) {
 			image_pool_list.push_back( { 0, new_pool, true } );
 			AI.descriptorPool		= new_pool;
@@ -170,15 +173,17 @@ DescriptorSetHandle DescriptorPoolManager::AllocateDescriptorSet( vk::Descriptor
 			p_logger->LogCritical( "Couldn't create a new descriptor pool" );
 		}
 	} else {
-		vk::DescriptorPoolSize pool_size {};
-		pool_size.type				= vk::DescriptorType::eUniformBuffer;
+		VkDescriptorPoolSize pool_size {};
+		pool_size.type				= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		pool_size.descriptorCount	= BUILD_MAX_DESCRIPTOR_SETS_IN_POOL;
 
 		pool_CI.poolSizeCount		= 1;
 		pool_CI.pPoolSizes			= &pool_size;
-
+		
 		LOCK_GUARD( *ref_vk_device.mutex );
-		vk::DescriptorPool new_pool	= ref_vk_device.object.createDescriptorPool( pool_CI );
+		VkDescriptorPool new_pool	= VK_NULL_HANDLE;
+		VulkanResultCheck( vkCreateDescriptorPool( ref_vk_device.object, &pool_CI, VULKAN_ALLOC, &new_pool ) );
+
 		if( new_pool ) {
 			uniform_pool_list.push_back( { 0, new_pool, false } );
 			AI.descriptorPool		= new_pool;

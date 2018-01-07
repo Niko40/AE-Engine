@@ -512,7 +512,10 @@ using String			= std::basic_string<char, std::char_traits<char>, engine_internal
 using WString			= std::basic_string<wchar_t, std::char_traits<wchar_t>, engine_internal::MemoryAllocator<wchar_t>>;
 
 template<typename T1, typename T2>
-using Map				= std::map<T1, T2, std::less<T1>, engine_internal::MemoryAllocator<std::pair<T1, T2>>>;
+using Pair				= std::pair<T1, T2>;
+
+template<typename T1, typename T2>
+using Map				= std::map<T1, T2, std::less<T1>, engine_internal::MemoryAllocator<Pair<T1, T2>>>;
 
 using Path				= std::tr2::sys::path;
 

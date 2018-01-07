@@ -8,7 +8,7 @@
 namespace AE
 {
 
-DescriptorSetHandle::DescriptorSetHandle( Engine * engine, DescriptorPoolManager * descriptor_pool, DescriptorSubPoolInfo * descriptor_pool_info, vk::DescriptorSet descriptor_set )
+DescriptorSetHandle::DescriptorSetHandle( Engine * engine, DescriptorPoolManager * descriptor_pool, DescriptorSubPoolInfo * descriptor_pool_info, VkDescriptorSet descriptor_set )
 {
 	p_engine				= engine;
 	pool					= descriptor_pool;
@@ -52,7 +52,7 @@ DescriptorSetHandle::operator bool()
 	return set;
 }
 
-DescriptorSetHandle::operator vk::DescriptorSet()
+DescriptorSetHandle::operator VkDescriptorSet()
 {
 	return set;
 }

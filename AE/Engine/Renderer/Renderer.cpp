@@ -3,6 +3,7 @@
 #include <sstream>
 #include <assert.h>
 
+#include "../Memory/MemoryTypes.h"
 #include "../Memory/Memory.h"
 #include "Renderer.h"
 #include "DeviceMemory/DeviceMemoryManager.h"
@@ -119,13 +120,14 @@ void Renderer::DestroyDebugReporting() {};
 Renderer::Renderer( Engine * engine, std::string application_name, uint32_t application_version )
 	: SubSystem( engine, "Renderer" )
 {
-	application_info = vk::ApplicationInfo(
-		application_name.c_str(),
-		application_version,
-		BUILD_ENGINE_NAME,
-		BUILD_ENGINE_VERSION,
-		BUILD_VULKAN_VERSION
-	);
+	VkApplicationInfo application_info {};
+	application_info.sType				= VK_STRUCTURE_TYPE_APPLICATION_INFO;
+	application_info.pNext				= nullptr;
+	application_info.pApplicationName	= application_name.c_str();
+	application_info.applicationVersion	= application_version;
+	application_info.pEngineName		= BUILD_ENGINE_NAME;
+	application_info.engineVersion		= BUILD_ENGINE_VERSION;
+	application_info.apiVersion			= BUILD_VULKAN_VERSION;
 
 	SetupRequiredLayersAndExtensions();
 	SetupDebugReporting();
@@ -138,6 +140,7 @@ Renderer::Renderer( Engine * engine, std::string application_name, uint32_t appl
 	CreateDescriptorSetLayouts();
 	CreateGraphicsPipelineLayouts();
 
+	descriptor_pool_manager		= MakeUniquePointer<DescriptorPoolManager>( p_engine, this );
 	device_memory_manager		= MakeUniquePointer<DeviceMemoryManager>( p_engine, this );
 	device_resource_manager		= MakeUniquePointer<DeviceResourceManager>( p_engine, this, device_memory_manager.Get() );
 
@@ -157,6 +160,7 @@ Renderer::~Renderer()
 
 	device_resource_manager		= nullptr;
 	device_memory_manager		= nullptr;
+	descriptor_pool_manager		= nullptr;
 
 	DestroyGraphicsPipelineLayouts();
 	DestroyDescriptorSetLayouts();
@@ -202,12 +206,12 @@ void Renderer::DeInitializeRenderToWindow()
 	DestroyWindowSurface();
 }
 
-vk::Instance Renderer::GetVulkanInstance() const
+VkInstance Renderer::GetVulkanInstance() const
 {
 	return vk_instance;
 }
 
-vk::PhysicalDevice Renderer::GetVulkanPhysicalDevice() const
+VkPhysicalDevice Renderer::GetVulkanPhysicalDevice() const
 {
 	return vk_physical_device;
 }
@@ -217,7 +221,7 @@ VulkanDevice Renderer::GetVulkanDevice() const
 	return vk_device;
 }
 
-vk::RenderPass Renderer::GetVulkanRenderPass() const
+VkRenderPass Renderer::GetVulkanRenderPass() const
 {
 	return vk_render_pass;
 }
@@ -277,57 +281,62 @@ SharingModeInfo Renderer::GetSharingModeInfo( UsedQueuesFlags used_queues )
 	// remove doubles
 	ret.shared_queue_family_indices.erase( std::unique( ret.shared_queue_family_indices.begin(), ret.shared_queue_family_indices.end() ), ret.shared_queue_family_indices.end() );
 	if( ret.shared_queue_family_indices.size() > 1 ) {
-		ret.sharing_mode	= vk::SharingMode::eConcurrent;
+		ret.sharing_mode	= VK_SHARING_MODE_CONCURRENT;
 	} else {
-		ret.sharing_mode	= vk::SharingMode::eExclusive;
+		ret.sharing_mode	= VK_SHARING_MODE_EXCLUSIVE;
 	}
 	return ret;
 }
 
-const vk::PhysicalDeviceProperties & Renderer::GetPhysicalDeviceProperties() const
+const VkPhysicalDeviceProperties & Renderer::GetPhysicalDeviceProperties() const
 {
 	return physical_device_properties;
 }
 
-const vk::PhysicalDeviceFeatures & Renderer::GetPhysicalDeviceFeatures() const
+const VkPhysicalDeviceFeatures & Renderer::GetPhysicalDeviceFeatures() const
 {
 	return physical_device_features;
 }
 
-const vk::PhysicalDeviceLimits & Renderer::GetPhysicalDeviceLimits() const
+const VkPhysicalDeviceLimits & Renderer::GetPhysicalDeviceLimits() const
 {
 	return physical_device_limits;
 }
 
-vk::PipelineLayout Renderer::GetVulkanGraphicsPipelineLayout( uint32_t supported_image_count ) const
+VkPipelineLayout Renderer::GetVulkanGraphicsPipelineLayout( uint32_t supported_image_count ) const
 {
 	assert( supported_image_count <= BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT );
 	return vk_graphics_pipeline_layouts[ supported_image_count ];
 }
 
-vk::DescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForCamera() const
+VkDescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForCamera() const
 {
 	return vk_descriptor_set_layout_for_camera;
 }
 
-vk::DescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForMesh() const
+VkDescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForMesh() const
 {
 	return vk_descriptor_set_layout_for_mesh;
 }
 
-vk::DescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForPipeline() const
+VkDescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForPipeline() const
 {
 	return vk_descriptor_set_layout_for_pipeline;
 }
 
-vk::DescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForImageBindingCount( uint32_t image_binding_count ) const
+VkDescriptorSetLayout Renderer::GetVulkanDescriptorSetLayoutForImageBindingCount( uint32_t image_binding_count ) const
 {
 	return vk_descriptor_set_layouts_for_images[ image_binding_count ];
 }
 
-DescriptorPoolManager * Renderer::GetDescriptorPoolManagerForThisThread()
+DescriptorPoolManager * Renderer::GetDescriptorPoolManager()
 {
-	auto p_iter		= descriptor_pools.find( std::this_thread::get_id() );
+	return descriptor_pool_manager.Get();
+
+	// Descriptor pool manager per thread approach was cancelled for now because of unnecessary
+	// complexity at this point, might consider this in the future though
+	/*
+	auto p_iter		= descriptor_pools.find( thread_id );
 	if( p_iter != descriptor_pools.end() ) {
 		// found, return this pool
 		return p_iter->second.Get();
@@ -336,25 +345,27 @@ DescriptorPoolManager * Renderer::GetDescriptorPoolManagerForThisThread()
 		auto unique	= MakeUniquePointer<DescriptorPoolManager>( p_engine, this );
 		if( unique ) {
 			auto ptr = unique.Get();
-			descriptor_pools.insert( std::pair<std::thread::id, UniquePointer<DescriptorPoolManager>>( std::this_thread::get_id(), std::move( unique ) ) );
+			descriptor_pools.insert( std::pair<std::thread::id, UniquePointer<DescriptorPoolManager>>( thread_id, std::move( unique ) ) );
 			return ptr;
 		} else {
 			std::stringstream ss;
 			ss << "Can't create new descriptor pool manager for thread: "
-				<< std::this_thread::get_id();
+				<< thread_id;
 			p_logger->LogCritical( ss.str().c_str() );
 		}
 	}
 	return nullptr;
+	*/
 }
 
-bool Renderer::IsFormatSupported( vk::ImageTiling tiling, vk::Format format, vk::FormatFeatureFlags feature_flags )
+bool Renderer::IsFormatSupported( VkImageTiling tiling, VkFormat format, VkFormatFeatureFlags feature_flags )
 {
-	auto fp = vk_physical_device.getFormatProperties( format );
+	VkFormatProperties fp {};
+	vkGetPhysicalDeviceFormatProperties( vk_physical_device, format, &fp );
 	switch( tiling ) {
-	case vk::ImageTiling::eOptimal:
+	case VK_IMAGE_TILING_OPTIMAL:
 		return ( ( fp.optimalTilingFeatures & feature_flags ) == feature_flags );
-	case vk::ImageTiling::eLinear:
+	case VK_IMAGE_TILING_LINEAR:
 		return ( ( fp.linearTilingFeatures & feature_flags ) == feature_flags );
 	default:
 		p_logger->LogWarning( "Enum error: FileResource_Image tiling can only be vk::ImageTiling::eOptimal or vk::ImageTiling::eLinear" );
@@ -383,34 +394,40 @@ void Renderer::SetupRequiredLayersAndExtensions()
 
 void Renderer::CreateInstance()
 {
-	vk::InstanceCreateInfo instance_CI {};
+	VkInstanceCreateInfo instance_CI {};
+	instance_CI.sType					= VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+	instance_CI.pNext					= &debug_report_callback_create_info;
+	instance_CI.flags					= 0;
 	instance_CI.pApplicationInfo		= &application_info;
 	instance_CI.enabledLayerCount		= uint32_t( instance_layer_names.size() );
 	instance_CI.ppEnabledLayerNames		= instance_layer_names.data();
 	instance_CI.enabledExtensionCount	= uint32_t( instance_extension_names.size() );
 	instance_CI.ppEnabledExtensionNames	= instance_extension_names.data();
 
-	instance_CI.pNext	= &debug_report_callback_create_info;
-	vk_instance			= vk::createInstance( instance_CI );
+	VulkanResultCheck( vkCreateInstance( &instance_CI, VULKAN_ALLOC, &vk_instance ) );
+	assert( vk_instance );
 }
 
 void Renderer::DestroyInstance()
 {
-	vk_instance.destroy();
+	vkDestroyInstance( vk_instance, VULKAN_ALLOC );
+	vk_instance = VK_NULL_HANDLE;
 }
 
-uint32_t RatePhysicalDeviceSuitability( vk::PhysicalDevice physical_device )
+uint32_t RatePhysicalDeviceSuitability( VkPhysicalDevice physical_device )
 {
 	uint32_t score						= 0;
 
-	auto properties						= physical_device.getProperties();
-	auto memory_properties				= physical_device.getMemoryProperties();
+	VkPhysicalDeviceProperties properties {};
+//	VkPhysicalDeviceMemoryProperties memory_properties {};
+	vkGetPhysicalDeviceProperties( physical_device, &properties );
+//	vkGetPhysicalDeviceMemoryProperties( physical_device, &memory_properties );
 
 	// rate by type
-	if( properties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu ) {
+	if( properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU ) {
 		score += 4000;
 	}
-	if( properties.deviceType == vk::PhysicalDeviceType::eIntegratedGpu ) {
+	if( properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU ) {
 		score += 1000;
 	}
 
@@ -425,11 +442,14 @@ void Renderer::SelectPhysicalDevices()
 	// TODO: Multi GPU support
 	TODO( "Add multi GPU support" );
 
-	auto physical_devices				= vk_instance.enumeratePhysicalDevices();
-	std::vector<uint32_t>		physical_device_scores( physical_devices.size() );
+	uint32_t physical_device_count		= 0;
+	VulkanResultCheck( vkEnumeratePhysicalDevices( vk_instance, &physical_device_count, nullptr ) );
+	Vector<VkPhysicalDevice> physical_devices( physical_device_count );
+	VulkanResultCheck( vkEnumeratePhysicalDevices( vk_instance, &physical_device_count, physical_devices.data() ) );
+
+	Vector<uint32_t>		physical_device_scores( physical_devices.size() );
 	for( size_t i=0; i < physical_devices.size(); ++i ) {
-		auto pd							= physical_devices[ i ];
-		physical_device_scores[ i ]		= RatePhysicalDeviceSuitability( pd );
+		physical_device_scores[ i ]		= RatePhysicalDeviceSuitability( physical_devices[ i ] );
 	}
 
 	uint32_t highest_score = 0;
@@ -443,12 +463,12 @@ void Renderer::SelectPhysicalDevices()
 		p_logger->LogCritical( "Physical device supporting Vulkan not found" );
 	}
 
-	physical_device_properties					= vk_physical_device.getProperties();
-	physical_device_features					= vk_physical_device.getFeatures();
+	vkGetPhysicalDeviceProperties( vk_physical_device, &physical_device_properties );
+	vkGetPhysicalDeviceFeatures( vk_physical_device, &physical_device_features );
 	physical_device_limits						= physical_device_properties.limits;
 }
 
-uint32_t CountQueueFamilyFlags( vk::QueueFamilyProperties & fp )
+uint32_t CountQueueFamilyFlags( VkQueueFamilyProperties & fp )
 {
 	uint32_t ret = 0;
 	for( uint32_t i=0; i < 8; ++i ) {
@@ -475,19 +495,22 @@ void Renderer::FindQueueFamilies()
 	// non-visible graphics like image scaling, and one to load stuff on the GPU
 	// we prefer to use dedicated queue families for all queues if available
 
-	auto queue_family_properties									= vk_physical_device.getQueueFamilyProperties();
+	uint32_t queue_family_property_count = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties( vk_physical_device, &queue_family_property_count, nullptr );
+	Vector<VkQueueFamilyProperties> queue_family_properties( queue_family_property_count );
+	vkGetPhysicalDeviceQueueFamilyProperties( vk_physical_device, &queue_family_property_count, queue_family_properties.data() );
 
-	std::vector<std::pair<uint32_t, vk::QueueFamilyProperties*>>	render_families;
-	std::vector<std::pair<uint32_t, vk::QueueFamilyProperties*>>	transfer_families;
+	Vector<Pair<uint32_t, VkQueueFamilyProperties*>>	render_families;
+	Vector<Pair<uint32_t, VkQueueFamilyProperties*>>	transfer_families;
 
-	auto primary_render_family		= std::pair<uint32_t, vk::QueueFamilyProperties*>( UINT32_MAX, nullptr );
-	auto secondary_render_family	= std::pair<uint32_t, vk::QueueFamilyProperties*>( UINT32_MAX, nullptr );
-	auto primary_transfer_family	= std::pair<uint32_t, vk::QueueFamilyProperties*>( UINT32_MAX, nullptr );
+	auto primary_render_family		= Pair<uint32_t, VkQueueFamilyProperties*>( UINT32_MAX, nullptr );
+	auto secondary_render_family	= Pair<uint32_t, VkQueueFamilyProperties*>( UINT32_MAX, nullptr );
+	auto primary_transfer_family	= Pair<uint32_t, VkQueueFamilyProperties*>( UINT32_MAX, nullptr );
 
 	for( size_t i=0; i < queue_family_properties.size(); ++i ) {
 		auto & f = queue_family_properties[ i ];
-		if( f.queueFlags & vk::QueueFlagBits::eGraphics )	render_families.push_back( std::pair<uint32_t, vk::QueueFamilyProperties*>( uint32_t( i ), &f ) );
-		if( f.queueFlags & vk::QueueFlagBits::eTransfer )	transfer_families.push_back( std::pair<uint32_t, vk::QueueFamilyProperties*>( uint32_t( i ), &f ) );
+		if( f.queueFlags & VK_QUEUE_GRAPHICS_BIT )	render_families.push_back( Pair<uint32_t, VkQueueFamilyProperties*>( uint32_t( i ), &f ) );
+		if( f.queueFlags & VK_QUEUE_TRANSFER_BIT )	transfer_families.push_back( Pair<uint32_t, VkQueueFamilyProperties*>( uint32_t( i ), &f ) );
 	}
 	{
 		// Find all queue families that we can use for primary render ops
@@ -670,105 +693,118 @@ void Renderer::FindQueueFamilies()
 		p_logger->LogCritical( "Couldn't resolve the queue allocation scheme" );
 		break;
 	}
+
+	// fill in common fields
+	for( auto & i : device_queue_create_infos ) {
+		i.sType		= VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		i.pNext		= nullptr;
+		i.flags		= 0;
+	}
 }
 
 void Renderer::CreateDevice()
 {
-	vk::PhysicalDeviceFeatures features;
+	VkPhysicalDeviceFeatures features {};
 
-	vk::DeviceCreateInfo device_CI {};
+	VkDeviceCreateInfo device_CI {};
+	device_CI.sType						= VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	device_CI.pNext						= nullptr;
+	device_CI.flags						= 0;
 	device_CI.queueCreateInfoCount		= uint32_t( device_queue_create_infos.size() );
 	device_CI.pQueueCreateInfos			= device_queue_create_infos.data();
+	device_CI.enabledLayerCount			= 0;		// Depricated
+	device_CI.ppEnabledLayerNames		= nullptr;	// Depricated
 	device_CI.enabledExtensionCount		= uint32_t( device_extension_names.size() );
 	device_CI.ppEnabledExtensionNames	= device_extension_names.data();
 	device_CI.pEnabledFeatures			= &features;
 
-	vk_device.object					= vk_physical_device.createDevice( device_CI );
+	VulkanResultCheck( vkCreateDevice( vk_physical_device, &device_CI, VULKAN_ALLOC, &vk_device.object ) );
 	vk_device.mutex						= &device_mutex;
 }
 
 void Renderer::DestroyDevice()
 {
-	vk_device.object.destroy();
+	vkDestroyDevice( vk_device.object, VULKAN_ALLOC );
+	vk_device.object = VK_NULL_HANDLE;
 }
 
 void Renderer::GetQueueHandles()
 {
 	switch( queue_availability ) {
 	case QueueAvailability::F3_PR1_SR2_PT3:
-		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
-		vk_secondary_render_queue.object	= vk_device.object.getQueue( secondary_render_queue_family_index, 0 );
-		vk_primary_transfer_queue.object	= vk_device.object.getQueue( primary_transfer_queue_family_index, 0 );
+		vkGetDeviceQueue( vk_device.object, primary_render_queue_family_index, 0, &vk_primary_render_queue.object );
+		vkGetDeviceQueue( vk_device.object, secondary_render_queue_family_index, 0, &vk_secondary_render_queue.object );
+		vkGetDeviceQueue( vk_device.object, primary_transfer_queue_family_index, 0, &vk_primary_transfer_queue.object );
 		vk_primary_render_queue.mutex		= &primary_render_queue_mutex;
 		vk_secondary_render_queue.mutex		= &secondary_render_queue_mutex;
 		vk_primary_transfer_queue.mutex		= &primary_transfer_queue_mutex;
 		break;
 	case QueueAvailability::F2_PR1_SR1_PT2:
-		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
-		vk_secondary_render_queue.object	= vk_device.object.getQueue( secondary_render_queue_family_index, 1 );
-		vk_primary_transfer_queue.object	= vk_device.object.getQueue( primary_transfer_queue_family_index, 0 );
+		vkGetDeviceQueue( vk_device.object, primary_render_queue_family_index, 0, &vk_primary_render_queue.object );
+		vkGetDeviceQueue( vk_device.object, secondary_render_queue_family_index, 1, &vk_secondary_render_queue.object );
+		vkGetDeviceQueue( vk_device.object, primary_transfer_queue_family_index, 0, &vk_primary_transfer_queue.object );
 		vk_primary_render_queue.mutex		= &primary_render_queue_mutex;
 		vk_secondary_render_queue.mutex		= &secondary_render_queue_mutex;
 		vk_primary_transfer_queue.mutex		= &primary_transfer_queue_mutex;
 		break;
 	case QueueAvailability::F2_PR1_SR2_PT2:
-		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
-		vk_secondary_render_queue.object	= vk_device.object.getQueue( secondary_render_queue_family_index, 0 );
-		vk_primary_transfer_queue.object	= vk_device.object.getQueue( primary_transfer_queue_family_index, 1 );
+		vkGetDeviceQueue( vk_device.object, primary_render_queue_family_index, 0, &vk_primary_render_queue.object );
+		vkGetDeviceQueue( vk_device.object, secondary_render_queue_family_index, 0, &vk_secondary_render_queue.object );
+		vkGetDeviceQueue( vk_device.object, primary_transfer_queue_family_index, 1, &vk_primary_transfer_queue.object );
 		vk_primary_render_queue.mutex		= &primary_render_queue_mutex;
 		vk_secondary_render_queue.mutex		= &secondary_render_queue_mutex;
 		vk_primary_transfer_queue.mutex		= &primary_transfer_queue_mutex;
 		break;
 	case QueueAvailability::F2_PR1_SR2_PT1:
-		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
-		vk_secondary_render_queue.object	= vk_device.object.getQueue( secondary_render_queue_family_index, 0 );
-		vk_primary_transfer_queue.object	= vk_device.object.getQueue( primary_transfer_queue_family_index, 1 );
+		vkGetDeviceQueue( vk_device.object, primary_render_queue_family_index, 0, &vk_primary_render_queue.object );
+		vkGetDeviceQueue( vk_device.object, secondary_render_queue_family_index, 0, &vk_secondary_render_queue.object );
+		vkGetDeviceQueue( vk_device.object, primary_transfer_queue_family_index, 1, &vk_primary_transfer_queue.object );
 		vk_primary_render_queue.mutex		= &primary_render_queue_mutex;
 		vk_secondary_render_queue.mutex		= &secondary_render_queue_mutex;
 		vk_primary_transfer_queue.mutex		= &primary_transfer_queue_mutex;
 		break;
 	case QueueAvailability::F2_PR1_SR2:
-		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
-		vk_secondary_render_queue.object	= vk_device.object.getQueue( secondary_render_queue_family_index, 0 );
+		vkGetDeviceQueue( vk_device.object, primary_render_queue_family_index, 0, &vk_primary_render_queue.object );
+		vkGetDeviceQueue( vk_device.object, secondary_render_queue_family_index, 0, &vk_secondary_render_queue.object );
 		vk_primary_transfer_queue.object	= vk_secondary_render_queue.object;
 		vk_primary_render_queue.mutex		= &primary_render_queue_mutex;
 		vk_secondary_render_queue.mutex		= &secondary_render_queue_mutex;
 		vk_primary_transfer_queue.mutex		= &secondary_render_queue_mutex;
 		break;
 	case QueueAvailability::F2_PR1_PT2:
-		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
+		vkGetDeviceQueue( vk_device.object, primary_render_queue_family_index, 0, &vk_primary_render_queue.object );
 		vk_secondary_render_queue.object	= vk_primary_render_queue.object;
-		vk_primary_transfer_queue.object	= vk_device.object.getQueue( primary_transfer_queue_family_index, 0 );
+		vkGetDeviceQueue( vk_device.object, primary_transfer_queue_family_index, 0, &vk_primary_transfer_queue.object );
 		vk_primary_render_queue.mutex		= &primary_render_queue_mutex;
 		vk_secondary_render_queue.mutex		= &primary_render_queue_mutex;
 		vk_primary_transfer_queue.mutex		= &primary_transfer_queue_mutex;
 		break;
 	case QueueAvailability::F1_PR1_SR1_PT1:
-		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
-		vk_secondary_render_queue.object	= vk_device.object.getQueue( secondary_render_queue_family_index, 1 );
-		vk_primary_transfer_queue.object	= vk_device.object.getQueue( primary_transfer_queue_family_index, 2 );
+		vkGetDeviceQueue( vk_device.object, primary_render_queue_family_index, 0, &vk_primary_render_queue.object );
+		vkGetDeviceQueue( vk_device.object, secondary_render_queue_family_index, 1, &vk_secondary_render_queue.object );
+		vkGetDeviceQueue( vk_device.object, primary_transfer_queue_family_index, 2, &vk_primary_transfer_queue.object );
 		vk_primary_render_queue.mutex		= &primary_render_queue_mutex;
 		vk_secondary_render_queue.mutex		= &secondary_render_queue_mutex;
 		vk_primary_transfer_queue.mutex		= &primary_transfer_queue_mutex;
 		break;
 	case QueueAvailability::F1_PR1_PT1:
-		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
+		vkGetDeviceQueue( vk_device.object, primary_render_queue_family_index, 0, &vk_primary_render_queue.object );
 		vk_secondary_render_queue.object	= vk_primary_render_queue.object;
-		vk_primary_transfer_queue.object	= vk_device.object.getQueue( primary_transfer_queue_family_index, 1 );
+		vkGetDeviceQueue( vk_device.object, primary_transfer_queue_family_index, 1, &vk_primary_transfer_queue.object );
 		vk_primary_render_queue.mutex		= &primary_render_queue_mutex;
 		vk_secondary_render_queue.mutex		= &primary_render_queue_mutex;
 		vk_primary_transfer_queue.mutex		= &primary_transfer_queue_mutex;
 		break;
 	case QueueAvailability::F1_PR1_SR1:
-		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
-		vk_secondary_render_queue.object	= vk_device.object.getQueue( secondary_render_queue_family_index, 1 );
+		vkGetDeviceQueue( vk_device.object, primary_render_queue_family_index, 0, &vk_primary_render_queue.object );
+		vkGetDeviceQueue( vk_device.object, secondary_render_queue_family_index, 1, &vk_secondary_render_queue.object );
 		vk_primary_transfer_queue.object	= vk_secondary_render_queue.object;
 		vk_primary_render_queue.mutex		= &primary_render_queue_mutex;
 		vk_secondary_render_queue.mutex		= &secondary_render_queue_mutex;
 		vk_primary_transfer_queue.mutex		= &secondary_render_queue_mutex;
 		break;
 	case QueueAvailability::F1_PR1:
-		vk_primary_render_queue.object		= vk_device.object.getQueue( primary_render_queue_family_index, 0 );
+		vkGetDeviceQueue( vk_device.object, primary_render_queue_family_index, 0, &vk_primary_render_queue.object );
 		vk_secondary_render_queue.object	= vk_primary_render_queue.object;
 		vk_primary_transfer_queue.object	= vk_primary_render_queue.object;
 		vk_primary_render_queue.mutex		= &primary_render_queue_mutex;
@@ -788,7 +824,9 @@ void Renderer::CreateWindowSurface()
 		p_logger->LogCritical( "Couldn't create Vulkan surface" );
 	}
 
-	auto WSI_supported			= vk_physical_device.getSurfaceSupportKHR( primary_render_queue_family_index, vk_surface );
+	VkBool32 WSI_supported		= VK_FALSE;
+	VulkanResultCheck( vkGetPhysicalDeviceSurfaceSupportKHR( vk_physical_device, primary_render_queue_family_index, vk_surface, &WSI_supported ) );
+
 	if( !WSI_supported ) {
 		std::stringstream ss;
 		ss << "Vulkan surface is not supported on current physical device->'";
@@ -798,7 +836,7 @@ void Renderer::CreateWindowSurface()
 		p_logger->LogCritical( ss.str() );
 	}
 
-	surface_capabilities		= vk_physical_device.getSurfaceCapabilitiesKHR( vk_surface );
+	VulkanResultCheck( vkGetPhysicalDeviceSurfaceCapabilitiesKHR( vk_physical_device, vk_surface, &surface_capabilities ) );
 
 	if( surface_capabilities.currentExtent.width == UINT32_MAX ) {
 		int x = 0, y = 0;
@@ -807,22 +845,27 @@ void Renderer::CreateWindowSurface()
 		surface_capabilities.currentExtent.height	= uint32_t( y );
 	}
 
-	auto formats				= vk_physical_device.getSurfaceFormatsKHR( vk_surface );
-	if( formats.size() <= 0 ) {
+	uint32_t surface_count		= 0;
+	VulkanResultCheck( vkGetPhysicalDeviceSurfaceFormatsKHR( vk_physical_device, vk_surface, &surface_count, nullptr ) );
+	Vector<VkSurfaceFormatKHR> surface_formats( surface_count );
+	VulkanResultCheck( vkGetPhysicalDeviceSurfaceFormatsKHR( vk_physical_device, vk_surface, &surface_count, surface_formats.data() ) );
+
+	if( surface_formats.size() <= 0 ) {
 		p_logger->LogCritical( "Vulkan surface formats missing" );
 	}
 
-	if( formats[ 0 ].format			== vk::Format::eUndefined ) {
-		surface_format.format		= vk::Format::eB8G8R8A8Unorm;
-		surface_format.colorSpace	= vk::ColorSpaceKHR::eSrgbNonlinear;
+	if( surface_formats[ 0 ].format	== VK_FORMAT_UNDEFINED ) {
+		surface_format.format		= VK_FORMAT_B8G8R8A8_UNORM;
+		surface_format.colorSpace	= VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 	} else {
-		surface_format				= formats[ 0 ];
+		surface_format				= surface_formats[ 0 ];
 	}
 }
 
 void Renderer::DestroyWindowSurface()
 {
-	vk_instance.destroySurfaceKHR( vk_surface );
+	vkDestroySurfaceKHR( vk_instance, vk_surface, VULKAN_ALLOC );
+	vk_surface = VK_NULL_HANDLE;
 }
 
 void Renderer::CreateSwapchain()
@@ -838,38 +881,47 @@ void Renderer::CreateSwapchain()
 		if( swapchain_image_count > surface_capabilities.maxImageCount )	swapchain_image_count	= surface_capabilities.maxImageCount;
 	}
 
-	swapchain_present_mode				= vk::PresentModeKHR::eFifo;
+	swapchain_present_mode				= VK_PRESENT_MODE_FIFO_KHR;
 	if( !swapchain_vsync ) {
-		auto present_modes				= vk_physical_device.getSurfacePresentModesKHR( vk_surface );
+		uint32_t present_mode_count		= 0;
+		VulkanResultCheck( vkGetPhysicalDeviceSurfacePresentModesKHR( vk_physical_device, vk_surface, &present_mode_count, nullptr ) );
+		Vector<VkPresentModeKHR> present_modes( present_mode_count );
+		VulkanResultCheck( vkGetPhysicalDeviceSurfacePresentModesKHR( vk_physical_device, vk_surface, &present_mode_count, present_modes.data() ) );
+
+		TODO( "Add more options to the user to select present modes" );
 		for( auto m : present_modes ) {
-			if( m == vk::PresentModeKHR::eMailbox ) {
+			if( m == VK_PRESENT_MODE_MAILBOX_KHR ) {
 				swapchain_present_mode	= m;
 				break;
 			}
 		}
 	}
 
-	vk::SwapchainCreateInfoKHR swapchain_CI {};
+	VkSwapchainCreateInfoKHR swapchain_CI {};
+	swapchain_CI.sType					= VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	swapchain_CI.pNext					= nullptr;
+	swapchain_CI.flags					= 0;
 	swapchain_CI.surface				= vk_surface;
 	swapchain_CI.minImageCount			= swapchain_image_count;
 	swapchain_CI.imageFormat			= surface_format.format;
 	swapchain_CI.imageColorSpace		= surface_format.colorSpace;
 	swapchain_CI.imageExtent			= surface_capabilities.currentExtent;
 	swapchain_CI.imageArrayLayers		= 1;
-	swapchain_CI.imageUsage				= vk::ImageUsageFlagBits::eColorAttachment;
-	swapchain_CI.imageSharingMode		= vk::SharingMode::eExclusive;
+	swapchain_CI.imageUsage				= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	swapchain_CI.imageSharingMode		= VK_SHARING_MODE_EXCLUSIVE;
 	swapchain_CI.queueFamilyIndexCount	= 1;
 	swapchain_CI.pQueueFamilyIndices	= &primary_render_queue_family_index;
-	swapchain_CI.preTransform			= vk::SurfaceTransformFlagBitsKHR::eIdentity;
-	swapchain_CI.compositeAlpha			= vk::CompositeAlphaFlagBitsKHR::eOpaque;
+	swapchain_CI.preTransform			= VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+	swapchain_CI.compositeAlpha			= VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 	swapchain_CI.presentMode			= swapchain_present_mode;
 	swapchain_CI.clipped				= VK_TRUE;
 	swapchain_CI.oldSwapchain			= nullptr;
 
 	{
-		// We don't have device resource threads at this points but better to be sure
+		// We don't have device resource threads at this points but better
+		// to be sure and start locking the mutex for the vulkan device at this point
 		LOCK_GUARD( *vk_device.mutex );
-		vk_swapchain	= vk_device.object.createSwapchainKHR( swapchain_CI );
+		VulkanResultCheck( vkCreateSwapchainKHR( vk_device.object, &swapchain_CI, VULKAN_ALLOC, &vk_swapchain ) );
 	}
 	if( !vk_swapchain ) {
 		p_logger->LogCritical( "Swapchain creation failed" );
@@ -880,7 +932,8 @@ void Renderer::DestroySwapchain()
 {
 	// We don't have device resource threads at this points but better to be sure
 	LOCK_GUARD( *vk_device.mutex );
-	vk_device.object.destroySwapchainKHR( vk_swapchain );
+	vkDestroySwapchainKHR( vk_device.object, vk_swapchain, VULKAN_ALLOC );
+	vk_swapchain = VK_NULL_HANDLE;
 }
 
 void Renderer::CreateSwapchainImageViews()
@@ -888,26 +941,31 @@ void Renderer::CreateSwapchainImageViews()
 	// We don't have device resource threads at this points but better to be sure
 	LOCK_GUARD( *vk_device.mutex );
 
-	// getting the images is easy one-liner so we'll just do it in here
-	swapchain_images		= vk_device.object.getSwapchainImagesKHR( vk_swapchain );
-
-	// also make sure we got the proper amount of images
-	swapchain_image_count	= uint32_t( swapchain_images.size() );
+	// getting the images is easy so we'll just do it in here
+	VulkanResultCheck( vkGetSwapchainImagesKHR( vk_device.object, vk_swapchain, &swapchain_image_count, nullptr ) );
+	swapchain_images.resize( swapchain_image_count );
+	VulkanResultCheck( vkGetSwapchainImagesKHR( vk_device.object, vk_swapchain, &swapchain_image_count, swapchain_images.data() ) );
 
 	swapchain_image_views.resize( swapchain_image_count );
 	for( uint32_t i=0; i < swapchain_image_count; ++i ) {
-		vk::ImageViewCreateInfo image_view_CI {};
+		VkImageViewCreateInfo image_view_CI {};
+		image_view_CI.sType				= VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		image_view_CI.pNext				= nullptr;
+		image_view_CI.flags				= 0;
 		image_view_CI.image				= swapchain_images[ i ];
-		image_view_CI.viewType			= vk::ImageViewType::e2D;
+		image_view_CI.viewType			= VK_IMAGE_VIEW_TYPE_2D;
 		image_view_CI.format			= surface_format.format;
-		image_view_CI.components		= vk::ComponentMapping();
-		image_view_CI.subresourceRange.aspectMask		= vk::ImageAspectFlagBits::eColor;
+		image_view_CI.components.r		= VK_COMPONENT_SWIZZLE_IDENTITY;
+		image_view_CI.components.g		= VK_COMPONENT_SWIZZLE_IDENTITY;
+		image_view_CI.components.b		= VK_COMPONENT_SWIZZLE_IDENTITY;
+		image_view_CI.components.a		= VK_COMPONENT_SWIZZLE_IDENTITY;
+		image_view_CI.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
 		image_view_CI.subresourceRange.baseMipLevel		= 0;
 		image_view_CI.subresourceRange.levelCount		= 1;
 		image_view_CI.subresourceRange.baseArrayLayer	= 0;
 		image_view_CI.subresourceRange.layerCount		= 1;
 
-		swapchain_image_views[ i ]	= vk_device.object.createImageView( image_view_CI );
+		VulkanResultCheck( vkCreateImageView( vk_device.object, &image_view_CI, VULKAN_ALLOC, &swapchain_image_views[ i ] ) );
 		if( !swapchain_image_views[ i ] ) {
 			p_logger->LogCritical( "Swapchain image view creation failed" );
 		}
@@ -920,7 +978,7 @@ void Renderer::DestroySwapchainImageViews()
 	LOCK_GUARD( *vk_device.mutex );
 
 	for( auto iv : swapchain_image_views ) {
-		vk_device.object.destroyImageView( iv );
+		vkDestroyImageView( vk_device.object, iv, VULKAN_ALLOC );
 	}
 
 	swapchain_images.clear();
@@ -930,67 +988,77 @@ void Renderer::DestroySwapchainImageViews()
 void Renderer::CreateDepthStencilImageAndView()
 {
 	{
-		std::vector<vk::Format> try_formats {
-			vk::Format::eD32SfloatS8Uint,
-			vk::Format::eD24UnormS8Uint,
-			vk::Format::eD16UnormS8Uint,
-			vk::Format::eD32Sfloat,
-			vk::Format::eD16Unorm,
+		Vector<VkFormat> try_formats {
+			VK_FORMAT_D32_SFLOAT_S8_UINT,
+			VK_FORMAT_D24_UNORM_S8_UINT,
+			VK_FORMAT_D16_UNORM_S8_UINT,
+			VK_FORMAT_D32_SFLOAT,
+			VK_FORMAT_D16_UNORM,
 		};
 
 		for( auto f : try_formats ) {
-			auto format_properties		= vk_physical_device.getFormatProperties( f );
-			if( format_properties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment ) {
+			VkFormatProperties format_properties {};
+			vkGetPhysicalDeviceFormatProperties( vk_physical_device, f, &format_properties );
+			if( format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) {
 				depth_stencil_format = f;
 				break;
 			}
 		}
-		if( depth_stencil_format == vk::Format::eUndefined ) {
+		if( depth_stencil_format == VK_FORMAT_UNDEFINED ) {
 			p_logger->LogCritical( "Depth stencil format not selected." );
 		}
-		if( ( depth_stencil_format == vk::Format::eD32SfloatS8Uint ) ||
-			( depth_stencil_format == vk::Format::eD24UnormS8Uint ) ||
-			( depth_stencil_format == vk::Format::eD16UnormS8Uint ) ||
-			( depth_stencil_format == vk::Format::eS8Uint ) ) {
+		if( ( depth_stencil_format == VK_FORMAT_D32_SFLOAT_S8_UINT ) ||
+			( depth_stencil_format == VK_FORMAT_D24_UNORM_S8_UINT ) ||
+			( depth_stencil_format == VK_FORMAT_D16_UNORM_S8_UINT ) ||
+			( depth_stencil_format == VK_FORMAT_S8_UINT ) ) {
 			stencil_available				= true;
 		}
 	}
 
-	vk::ImageCreateInfo image_CI {};
-	image_CI.imageType				= vk::ImageType::e2D;
+	VkImageCreateInfo image_CI {};
+	image_CI.sType					= VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	image_CI.pNext					= nullptr;
+	image_CI.flags					= 0;
+	image_CI.imageType				= VK_IMAGE_TYPE_2D;
 	image_CI.format					= depth_stencil_format;
 	image_CI.extent.width			= surface_capabilities.currentExtent.width;
 	image_CI.extent.height			= surface_capabilities.currentExtent.height;
 	image_CI.extent.depth			= 1;
 	image_CI.mipLevels				= 1;
 	image_CI.arrayLayers			= 1;
-	image_CI.samples				= vk::SampleCountFlagBits::e1;
-	image_CI.tiling					= vk::ImageTiling::eOptimal;
-	image_CI.usage					= vk::ImageUsageFlagBits::eDepthStencilAttachment;
-	image_CI.sharingMode			= vk::SharingMode::eExclusive;
+	image_CI.samples				= VK_SAMPLE_COUNT_1_BIT;
+	image_CI.tiling					= VK_IMAGE_TILING_OPTIMAL;
+	image_CI.usage					= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+	image_CI.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
 	image_CI.queueFamilyIndexCount	= 1;
 	image_CI.pQueueFamilyIndices	= &primary_render_queue_family_index;
-	image_CI.initialLayout			= vk::ImageLayout::eUndefined;
+	image_CI.initialLayout			= VK_IMAGE_LAYOUT_UNDEFINED;
 
 	{
 		// We don't have device resource threads at this points but better to be sure
 		LOCK_GUARD( *vk_device.mutex );
-		depth_stencil_image				= vk_device.object.createImage( image_CI );
+		VulkanResultCheck( vkCreateImage( vk_device.object, &image_CI, VULKAN_ALLOC, &depth_stencil_image ) );
 	}
 	if( !depth_stencil_image ) {
 		p_logger->LogCritical( "Depth stencil image creation failed" );
 	}
-	depth_stencil_image_memory		= device_memory_manager->AllocateAndBindImageMemory( depth_stencil_image, vk::MemoryPropertyFlagBits::eDeviceLocal );
+	depth_stencil_image_memory		= device_memory_manager->AllocateAndBindImageMemory( depth_stencil_image, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
 	if( !depth_stencil_image_memory.memory ) {
 		p_logger->LogCritical( "Depth stencil image memory allocation failed" );
 	}
 
-	vk::ImageViewCreateInfo image_view_CI {};
+	VkImageViewCreateInfo image_view_CI {};
+	image_view_CI.sType			= VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	image_view_CI.pNext			= nullptr;
+	image_view_CI.flags			= 0;
 	image_view_CI.image			= depth_stencil_image;
-	image_view_CI.viewType		= vk::ImageViewType::e2D;
+	image_view_CI.viewType		= VK_IMAGE_VIEW_TYPE_2D;
 	image_view_CI.format		= depth_stencil_format;
-	image_view_CI.components	= vk::ComponentMapping();
-	image_view_CI.subresourceRange.aspectMask		= vk::ImageAspectFlagBits::eDepth | ( stencil_available ? vk::ImageAspectFlagBits::eStencil : vk::ImageAspectFlagBits( 0 ) );
+	image_view_CI.components.r	= VK_COMPONENT_SWIZZLE_IDENTITY;
+	image_view_CI.components.g	= VK_COMPONENT_SWIZZLE_IDENTITY;
+	image_view_CI.components.b	= VK_COMPONENT_SWIZZLE_IDENTITY;
+	image_view_CI.components.a	= VK_COMPONENT_SWIZZLE_IDENTITY;
+	image_view_CI.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_DEPTH_BIT | ( stencil_available ? VK_IMAGE_ASPECT_STENCIL_BIT : 0 );
 	image_view_CI.subresourceRange.baseMipLevel		= 0;
 	image_view_CI.subresourceRange.levelCount		= 1;
 	image_view_CI.subresourceRange.baseArrayLayer	= 0;
@@ -999,7 +1067,7 @@ void Renderer::CreateDepthStencilImageAndView()
 	{
 		// We don't have device resource threads at this points but better to be sure
 		LOCK_GUARD( *vk_device.mutex );
-		depth_stencil_image_view	= vk_device.object.createImageView( image_view_CI );
+		VulkanResultCheck( vkCreateImageView( vk_device.object, &image_view_CI, VULKAN_ALLOC, &depth_stencil_image_view ) );
 	}
 	if( !depth_stencil_image_view ) {
 		p_logger->LogCritical( "Depth stencil image view creation failed" );
@@ -1011,8 +1079,8 @@ void Renderer::DestroyDepthStencilImageAndView()
 	{
 		// We don't have device resource threads at this points but better to be sure
 		LOCK_GUARD( *vk_device.mutex );
-		vk_device.object.destroyImageView( depth_stencil_image_view );
-		vk_device.object.destroyImage( depth_stencil_image );
+		vkDestroyImageView( vk_device.object, depth_stencil_image_view, VULKAN_ALLOC );
+		vkDestroyImage( vk_device.object, depth_stencil_image, VULKAN_ALLOC );
 	}
 	device_memory_manager->FreeMemory( depth_stencil_image_memory );
 	depth_stencil_image_memory = {};
@@ -1020,34 +1088,36 @@ void Renderer::DestroyDepthStencilImageAndView()
 
 void Renderer::CreateRenderPass()
 {
-	std::vector<vk::AttachmentDescription> attachments( 2 );
+	Vector<VkAttachmentDescription> attachments( 2 );
+	attachments[ 0 ].flags				= 0;
 	attachments[ 0 ].format				= depth_stencil_format;
-	attachments[ 0 ].samples			= vk::SampleCountFlagBits::e1;
-	attachments[ 0 ].loadOp				= vk::AttachmentLoadOp::eClear;
-	attachments[ 0 ].storeOp			= vk::AttachmentStoreOp::eDontCare;
-	attachments[ 0 ].stencilLoadOp		= vk::AttachmentLoadOp::eDontCare;		// Change if we ever use stencils
-	attachments[ 0 ].stencilStoreOp		= vk::AttachmentStoreOp::eDontCare;
-	attachments[ 0 ].initialLayout		= vk::ImageLayout::eUndefined;			// Change if we ever use stencils
-	attachments[ 0 ].finalLayout		= vk::ImageLayout::eDepthStencilAttachmentOptimal;
+	attachments[ 0 ].samples			= VK_SAMPLE_COUNT_1_BIT;
+	attachments[ 0 ].loadOp				= VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[ 0 ].storeOp			= VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[ 0 ].stencilLoadOp		= VK_ATTACHMENT_LOAD_OP_DONT_CARE;		// Change if we ever use stencils
+	attachments[ 0 ].stencilStoreOp		= VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[ 0 ].initialLayout		= VK_IMAGE_LAYOUT_UNDEFINED;			// Change if we ever use stencils
+	attachments[ 0 ].finalLayout		= VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
+	attachments[ 1 ].flags				= 0;
 	attachments[ 1 ].format				= surface_format.format;
-	attachments[ 1 ].samples			= vk::SampleCountFlagBits::e1;
-	attachments[ 1 ].loadOp				= vk::AttachmentLoadOp::eClear;
-	attachments[ 1 ].storeOp			= vk::AttachmentStoreOp::eStore;
-	attachments[ 1 ].initialLayout		= vk::ImageLayout::eUndefined;
-	attachments[ 1 ].finalLayout		= vk::ImageLayout::ePresentSrcKHR;
+	attachments[ 1 ].samples			= VK_SAMPLE_COUNT_1_BIT;
+	attachments[ 1 ].loadOp				= VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[ 1 ].storeOp			= VK_ATTACHMENT_STORE_OP_STORE;
+	attachments[ 1 ].initialLayout		= VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[ 1 ].finalLayout		= VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-	vk::AttachmentReference subpass_0_depth_stencil_image_reference {};
+	VkAttachmentReference subpass_0_depth_stencil_image_reference {};
 	subpass_0_depth_stencil_image_reference.attachment		= 0;
-	subpass_0_depth_stencil_image_reference.layout			= vk::ImageLayout::eDepthStencilAttachmentOptimal;
+	subpass_0_depth_stencil_image_reference.layout			= VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-	std::vector<vk::AttachmentReference> subpass_0_color_image_references( 1 );
+	Vector<VkAttachmentReference> subpass_0_color_image_references( 1 );
 	subpass_0_color_image_references[ 0 ].attachment		= 1;
-	subpass_0_color_image_references[ 0 ].layout			= vk::ImageLayout::eColorAttachmentOptimal;
+	subpass_0_color_image_references[ 0 ].layout			= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-	std::vector<vk::SubpassDescription>	subpasses( 1 );
-	subpasses[ 0 ].flags					= vk::SubpassDescriptionFlags();
-	subpasses[ 0 ].pipelineBindPoint		= vk::PipelineBindPoint::eGraphics;
+	Vector<VkSubpassDescription>	subpasses( 1 );
+	subpasses[ 0 ].flags					= 0;
+	subpasses[ 0 ].pipelineBindPoint		= VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpasses[ 0 ].inputAttachmentCount		= 0;
 	subpasses[ 0 ].pInputAttachments		= nullptr;
 	subpasses[ 0 ].colorAttachmentCount		= uint32_t( subpass_0_color_image_references.size() );
@@ -1057,7 +1127,10 @@ void Renderer::CreateRenderPass()
 	subpasses[ 0 ].preserveAttachmentCount	= 0;
 	subpasses[ 0 ].pPreserveAttachments		= nullptr;
 
-	vk::RenderPassCreateInfo render_pass_CI {};
+	VkRenderPassCreateInfo render_pass_CI {};
+	render_pass_CI.sType				= VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	render_pass_CI.pNext				= nullptr;
+	render_pass_CI.flags				= 0;
 	render_pass_CI.attachmentCount		= uint32_t( attachments.size() );
 	render_pass_CI.pAttachments			= attachments.data();
 	render_pass_CI.subpassCount			= uint32_t( subpasses.size() );
@@ -1068,7 +1141,7 @@ void Renderer::CreateRenderPass()
 	{
 		// We don't have device resource threads at this points but better to be sure
 		LOCK_GUARD( *vk_device.mutex );
-		vk_render_pass					= vk_device.object.createRenderPass( render_pass_CI );
+		VulkanResultCheck( vkCreateRenderPass( vk_device.object, &render_pass_CI, VULKAN_ALLOC, &vk_render_pass ) );
 	}
 	if( !vk_render_pass ) {
 		p_logger->LogCritical( "Render pass creation failed" );
@@ -1079,7 +1152,7 @@ void Renderer::DestroyRenderPass()
 {
 	// We don't have device resource threads at this points but better to be sure
 	LOCK_GUARD( *vk_device.mutex );
-	vk_device.object.destroyRenderPass( vk_render_pass );
+	vkDestroyRenderPass( vk_device.object, vk_render_pass, VULKAN_ALLOC );
 }
 
 void Renderer::CreateWindowFramebuffers()
@@ -1089,11 +1162,14 @@ void Renderer::CreateWindowFramebuffers()
 
 	vk_framebuffers.resize( swapchain_image_count );
 	for( uint32_t i=0; i < swapchain_image_count; ++i ) {
-		std::vector<vk::ImageView> attachments( 2 );
+		Vector<VkImageView> attachments( 2 );
 		attachments[ 0 ]	= depth_stencil_image_view;
 		attachments[ 1 ]	= swapchain_image_views[ i ];
 
-		vk::FramebufferCreateInfo framebuffer_CI {};
+		VkFramebufferCreateInfo framebuffer_CI {};
+		framebuffer_CI.sType				= VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebuffer_CI.pNext				= nullptr;
+		framebuffer_CI.flags				= 0;
 		framebuffer_CI.renderPass			= vk_render_pass;
 		framebuffer_CI.attachmentCount		= uint32_t( attachments.size() );
 		framebuffer_CI.pAttachments			= attachments.data();
@@ -1101,7 +1177,7 @@ void Renderer::CreateWindowFramebuffers()
 		framebuffer_CI.height				= surface_capabilities.currentExtent.height;
 		framebuffer_CI.layers				= 1;
 
-		vk_framebuffers[ i ] = vk_device.object.createFramebuffer( framebuffer_CI );
+		VulkanResultCheck( vkCreateFramebuffer( vk_device.object, &framebuffer_CI, VULKAN_ALLOC, &vk_framebuffers[ i ] ) );
 		if( !vk_framebuffers[ i ] ) {
 			p_logger->LogCritical( "Framebuffer creation failed" );
 		}
@@ -1114,7 +1190,7 @@ void Renderer::DestroyWindowFramebuffers()
 	LOCK_GUARD( *vk_device.mutex );
 
 	for( auto fb : vk_framebuffers ) {
-		vk_device.object.destroyFramebuffer( fb );
+		vkDestroyFramebuffer( vk_device.object, fb, VULKAN_ALLOC );
 	}
 	vk_framebuffers.clear();
 }
@@ -1127,18 +1203,20 @@ void Renderer::CreateDescriptorSetLayouts()
 	// Create camera descriptor set
 	{
 		// camera descriptor set only has one uniform buffer to send data to the vertex shader
-		vk::DescriptorSetLayoutBinding descriptor_set_bindings {};
+		VkDescriptorSetLayoutBinding descriptor_set_bindings {};
 		descriptor_set_bindings.binding				= 0;
-		descriptor_set_bindings.descriptorType		= vk::DescriptorType::eUniformBuffer;
+		descriptor_set_bindings.descriptorType		= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		descriptor_set_bindings.descriptorCount		= 1;
-		descriptor_set_bindings.stageFlags			= vk::ShaderStageFlagBits::eVertex;
+		descriptor_set_bindings.stageFlags			= VK_SHADER_STAGE_VERTEX_BIT;
 		descriptor_set_bindings.pImmutableSamplers	= nullptr;
 
-		vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_CI {};
-		descriptor_set_layout_CI.flags				= vk::DescriptorSetLayoutCreateFlagBits( 0 );
+		VkDescriptorSetLayoutCreateInfo descriptor_set_layout_CI {};
+		descriptor_set_layout_CI.sType				= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		descriptor_set_layout_CI.pNext				= nullptr;
+		descriptor_set_layout_CI.flags				= 0;
 		descriptor_set_layout_CI.bindingCount		= 1;
 		descriptor_set_layout_CI.pBindings			= &descriptor_set_bindings;
-		vk_descriptor_set_layout_for_camera			= vk_device.object.createDescriptorSetLayout( descriptor_set_layout_CI );
+		VulkanResultCheck( vkCreateDescriptorSetLayout( vk_device.object, &descriptor_set_layout_CI, VULKAN_ALLOC, &vk_descriptor_set_layout_for_camera ) );
 
 		if( !vk_descriptor_set_layout_for_camera ) {
 			p_logger->LogCritical( "Unable to create descriptor set layout for camera" );
@@ -1148,18 +1226,21 @@ void Renderer::CreateDescriptorSetLayouts()
 	// Create object descriptor set
 	{
 		// object descriptor set only has one uniform buffer to send data to the vertex shader
-		vk::DescriptorSetLayoutBinding descriptor_set_bindings {};
+		VkDescriptorSetLayoutBinding descriptor_set_bindings {};
 		descriptor_set_bindings.binding				= 0;
-		descriptor_set_bindings.descriptorType		= vk::DescriptorType::eUniformBuffer;
+		descriptor_set_bindings.descriptorType		= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		descriptor_set_bindings.descriptorCount		= 1;
-		descriptor_set_bindings.stageFlags			= vk::ShaderStageFlagBits::eVertex;
+		descriptor_set_bindings.stageFlags			= VK_SHADER_STAGE_VERTEX_BIT;
 		descriptor_set_bindings.pImmutableSamplers	= nullptr;
 
-		vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_CI {};
-		descriptor_set_layout_CI.flags				= vk::DescriptorSetLayoutCreateFlagBits( 0 );
+		VkDescriptorSetLayoutCreateInfo descriptor_set_layout_CI {};
+		descriptor_set_layout_CI.sType				= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		descriptor_set_layout_CI.pNext				= nullptr;
+		descriptor_set_layout_CI.flags				= 0;
 		descriptor_set_layout_CI.bindingCount		= 1;
 		descriptor_set_layout_CI.pBindings			= &descriptor_set_bindings;
-		vk_descriptor_set_layout_for_mesh			= vk_device.object.createDescriptorSetLayout( descriptor_set_layout_CI );
+		VulkanResultCheck( vkCreateDescriptorSetLayout( vk_device.object, &descriptor_set_layout_CI, VULKAN_ALLOC, &vk_descriptor_set_layout_for_mesh ) );
+
 
 		if( !vk_descriptor_set_layout_for_mesh ) {
 			p_logger->LogCritical( "Unable to create descriptor set layout for object" );
@@ -1169,18 +1250,20 @@ void Renderer::CreateDescriptorSetLayouts()
 	// Create pipeline descriptor set
 	{
 		// pipeline descriptor set only has one uniform buffer to send data to the fragment shader
-		vk::DescriptorSetLayoutBinding descriptor_set_bindings {};
+		VkDescriptorSetLayoutBinding descriptor_set_bindings {};
 		descriptor_set_bindings.binding				= 0;
-		descriptor_set_bindings.descriptorType		= vk::DescriptorType::eUniformBuffer;
+		descriptor_set_bindings.descriptorType		= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		descriptor_set_bindings.descriptorCount		= 1;
-		descriptor_set_bindings.stageFlags			= vk::ShaderStageFlagBits::eFragment;
+		descriptor_set_bindings.stageFlags			= VK_SHADER_STAGE_FRAGMENT_BIT;
 		descriptor_set_bindings.pImmutableSamplers	= nullptr;
 
-		vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_CI {};
-		descriptor_set_layout_CI.flags				= vk::DescriptorSetLayoutCreateFlagBits( 0 );
+		VkDescriptorSetLayoutCreateInfo descriptor_set_layout_CI {};
+		descriptor_set_layout_CI.sType				= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		descriptor_set_layout_CI.pNext				= nullptr;
+		descriptor_set_layout_CI.flags				= 0;
 		descriptor_set_layout_CI.bindingCount		= 1;
 		descriptor_set_layout_CI.pBindings			= &descriptor_set_bindings;
-		vk_descriptor_set_layout_for_pipeline		= vk_device.object.createDescriptorSetLayout( descriptor_set_layout_CI );
+		VulkanResultCheck( vkCreateDescriptorSetLayout( vk_device.object, &descriptor_set_layout_CI, VULKAN_ALLOC, &vk_descriptor_set_layout_for_pipeline ) );
 
 		if( !vk_descriptor_set_layout_for_pipeline ) {
 			p_logger->LogCritical( "Unable to create descriptor set layout for pipeline" );
@@ -1192,20 +1275,22 @@ void Renderer::CreateDescriptorSetLayouts()
 	for( uint32_t set=0; set <= BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT; ++set ) {
 		// image descriptor sets can have multiple bindings
 		// could also do this with as image arrays...
-		Vector<vk::DescriptorSetLayoutBinding> descriptor_set_bindings( set );
+		Vector<VkDescriptorSetLayoutBinding> descriptor_set_bindings( set );
 		for( uint32_t binding=0; binding < set; ++binding ) {
 			descriptor_set_bindings[ binding ].binding				= binding;
-			descriptor_set_bindings[ binding ].descriptorType		= vk::DescriptorType::eCombinedImageSampler;
+			descriptor_set_bindings[ binding ].descriptorType		= VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			descriptor_set_bindings[ binding ].descriptorCount		= 1;
-			descriptor_set_bindings[ binding ].stageFlags			= vk::ShaderStageFlagBits::eFragment;
+			descriptor_set_bindings[ binding ].stageFlags			= VK_SHADER_STAGE_FRAGMENT_BIT;
 			descriptor_set_bindings[ binding ].pImmutableSamplers	= nullptr;
 		}
 
-		vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_CI {};
-		descriptor_set_layout_CI.flags				= vk::DescriptorSetLayoutCreateFlagBits( 0 );
+		VkDescriptorSetLayoutCreateInfo descriptor_set_layout_CI {};
+		descriptor_set_layout_CI.sType				= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		descriptor_set_layout_CI.pNext				= nullptr;
+		descriptor_set_layout_CI.flags				= 0;
 		descriptor_set_layout_CI.bindingCount		= uint32_t( descriptor_set_bindings.size() );
 		descriptor_set_layout_CI.pBindings			= descriptor_set_bindings.data();
-		vk_descriptor_set_layouts_for_images[ set ]	= vk_device.object.createDescriptorSetLayout( descriptor_set_layout_CI );
+		VulkanResultCheck( vkCreateDescriptorSetLayout( vk_device.object, &descriptor_set_layout_CI, VULKAN_ALLOC, &vk_descriptor_set_layouts_for_images[ set ] ) );
 
 		if( !vk_descriptor_set_layouts_for_images[ set ] ) {
 			p_logger->LogCritical( "Unable to create descriptor set layout for image" );
@@ -1218,11 +1303,12 @@ void Renderer::DestroyDescriptorSetLayouts()
 	// We don't have device resource threads at this points but better to be sure
 	LOCK_GUARD( *vk_device.mutex );
 
-	vk_device.object.destroyDescriptorSetLayout( vk_descriptor_set_layout_for_camera );
-	vk_device.object.destroyDescriptorSetLayout( vk_descriptor_set_layout_for_mesh );
-	vk_device.object.destroyDescriptorSetLayout( vk_descriptor_set_layout_for_pipeline );
+	vkDestroyDescriptorSetLayout( vk_device.object, vk_descriptor_set_layout_for_camera, VULKAN_ALLOC );
+	vkDestroyDescriptorSetLayout( vk_device.object, vk_descriptor_set_layout_for_mesh, VULKAN_ALLOC );
+	vkDestroyDescriptorSetLayout( vk_device.object, vk_descriptor_set_layout_for_pipeline, VULKAN_ALLOC );
+
 	for( auto & d : vk_descriptor_set_layouts_for_images ) {
-		vk_device.object.destroyDescriptorSetLayout( d );
+		vkDestroyDescriptorSetLayout( vk_device.object, d, VULKAN_ALLOC );
 	}
 	vk_descriptor_set_layouts_for_images.clear();
 }
@@ -1234,20 +1320,23 @@ void Renderer::CreateGraphicsPipelineLayouts()
 
 	vk_graphics_pipeline_layouts.resize( BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT + 1 );
 	for( uint32_t pl=0; pl <= BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT; ++pl ) {
-		Vector<vk::DescriptorSetLayout>		layouts;
+		Vector<VkDescriptorSetLayout>		layouts;
 		layouts.reserve( 4 );
 		layouts.push_back( vk_descriptor_set_layout_for_camera );
 		layouts.push_back( vk_descriptor_set_layout_for_mesh );
 		layouts.push_back( vk_descriptor_set_layout_for_pipeline );
 		layouts.push_back( vk_descriptor_set_layouts_for_images[ pl ] );
 
-		vk::PipelineLayoutCreateInfo layout_CI {};
+		VkPipelineLayoutCreateInfo layout_CI {};
+		layout_CI.sType						= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		layout_CI.pNext						= nullptr;
+		layout_CI.flags						= 0;
 		layout_CI.setLayoutCount			= uint32_t( layouts.size() );
 		layout_CI.pSetLayouts				= layouts.data();
 		layout_CI.pushConstantRangeCount	= 0;			// push constants not used by this engine at this time
 		layout_CI.pPushConstantRanges		= nullptr;
 
-		vk_graphics_pipeline_layouts[ pl ]	= vk_device.object.createPipelineLayout( layout_CI );
+		VulkanResultCheck( vkCreatePipelineLayout( vk_device.object, &layout_CI, VULKAN_ALLOC, &vk_graphics_pipeline_layouts[ pl ] ) );
 		if( !vk_graphics_pipeline_layouts[ pl ] ) {
 			p_logger->LogCritical( "Unable to create graphics pipeline layout" );
 		}
@@ -1259,10 +1348,10 @@ void Renderer::DestroyGraphicsPipelineLayouts()
 	// We don't have device resource threads at this points but better to be sure
 	LOCK_GUARD( *vk_device.mutex );
 
-	for( auto & l : vk_graphics_pipeline_layouts ) {
-		vk_device.object.destroyPipelineLayout( l );
-		l	= nullptr;
+	for( auto l : vk_graphics_pipeline_layouts ) {
+		vkDestroyPipelineLayout( vk_device.object, l, VULKAN_ALLOC );
 	}
+	vk_graphics_pipeline_layouts.clear();
 }
 
 }

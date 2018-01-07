@@ -21,8 +21,10 @@ class SceneNode;
 
 class FileResource_XML;
 
-class SceneNodeBase
+class SceneBase
 {
+	friend void ConfigResourceCheckerAndLoader( SceneBase * sb );
+
 public:
 	enum class Type
 	{
@@ -48,18 +50,18 @@ public:
 		UNABLE_TO_LOAD,
 	};
 
-											SceneNodeBase( Engine * engine, SceneManager * scene_manager, DescriptorPoolManager * descriptor_pool_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type );
-	virtual									~SceneNodeBase();
+											SceneBase( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneBase::Type scene_node_type );
+	virtual									~SceneBase();
 
-	SceneNode							*	CreateChild( SceneNodeBase::Type scene_node_type, const Path & scene_node_path );
+	SceneNode							*	CreateChild( SceneBase::Type scene_node_type, Path scene_node_path = "" );
 
-	// General update function, call once a frame
-	void									UpdateFromManager();
+	// Resource update function, call until all resources used by this scene node are fully loaded and ready to use
+	void									UpdateResourcesFromManager();
 
 	// check is the primary file resource parsed, this IS NOT recursive to childs
 	bool									IsConfigFileParsed();
 
-	// check is the primary file resource parsed, this IS NOT recursive to childs
+	// check is the primary file resource loaded, this IS NOT recursive to childs
 	bool									IsConfigFileLoaded();
 
 	// check is the scene node is ready to use in general updates and renders, this IS NOT recursive to childs
@@ -68,8 +70,15 @@ public:
 	const Path							&	GetConfigFilePath();
 
 protected:
-	// General update function, call once a frame
-	virtual void							Update()						= 0;
+	// Animation update function, call once a frame or as needed.
+	// This will update all animations on the object and push new data into
+	// Vulkan buffers residing in system RAM.
+	virtual void							Update_Animation()				= 0;
+
+	// Logic update function, call once a frame or as needed.
+	// This will update all logic attached to the scene node, animation changes,
+	// AI and scripts.
+	virtual void							Update_Logic()					= 0;
 
 	// Parse config file, this is called from UpdateFromManager()
 	virtual bool							ParseConfigFile()				= 0;
@@ -84,7 +93,7 @@ protected:
 	// able to use it when updating or rendering this scene node
 	// should return true on success and false if something went wrong in which case
 	// this scene node will not participate in updates or rendering operations
-	virtual bool							Finalize()						= 0;
+	virtual bool							FinalizeResources()				= 0;
 
 	Engine								*	p_engine						= nullptr;
 	SceneManager						*	p_scene_manager					= nullptr;
@@ -106,7 +115,14 @@ private:
 	bool									is_config_file_parsed			= false;
 	bool									is_scene_node_use_ready			= false;
 	bool									is_scene_node_ok				= true;
+
 	List<UniquePointer<SceneNode>>			child_list;
 };
+
+
+// Parser helper function to hide some boiler plate code
+bool										ParseConfigFileHelper( tinyxml2::XMLElement * previous_level, String child_element_name, std::function<bool()> child_element_parser );
+SceneBase::ResourcesLoadState				CheckResourcesLoadedHelper( SceneBase::ResourcesLoadState previous_level, std::function<SceneBase::ResourcesLoadState( void )> child_element_parser );
+bool										FinalizeResourcesHelper( bool previous_level, std::function<bool( void )> child_parser_function );
 
 }

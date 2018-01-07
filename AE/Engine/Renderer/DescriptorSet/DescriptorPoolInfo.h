@@ -11,7 +11,7 @@ namespace AE
 struct DescriptorSubPoolInfo
 {
 	int32_t							users						= 0;
-	vk::DescriptorPool				pool						= nullptr;
+	VkDescriptorPool				pool						= VK_NULL_HANDLE;
 	bool							is_image_pool				= false;
 
 	bool							operator==( DescriptorSubPoolInfo other );

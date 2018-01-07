@@ -25,13 +25,13 @@ private:
 	LoadingState								Load();
 	UnloadingState								Unload();
 
-	vk::Pipeline								vk_pipeline									= nullptr;
+	VkPipeline									vk_pipeline									= VK_NULL_HANDLE;
 
-	vk::ShaderModule							vk_vertex_shader_module						= nullptr;
-	vk::ShaderModule							vk_tessellation_control_shader_module		= nullptr;
-	vk::ShaderModule							vk_tessellation_evaluation_shader_module	= nullptr;
-	vk::ShaderModule							vk_geometry_shader_module					= nullptr;
-	vk::ShaderModule							vk_fragment_shader_module					= nullptr;
+	VkShaderModule								vk_vertex_shader_module						= VK_NULL_HANDLE;
+	VkShaderModule								vk_tessellation_control_shader_module		= VK_NULL_HANDLE;
+	VkShaderModule								vk_tessellation_evaluation_shader_module	= VK_NULL_HANDLE;
+	VkShaderModule								vk_geometry_shader_module					= VK_NULL_HANDLE;
+	VkShaderModule								vk_fragment_shader_module					= VK_NULL_HANDLE;
 
 	FileResourceHandle<FileResource_RawData>	vertex_shader_resource;
 	FileResourceHandle<FileResource_RawData>	tessellation_control_shader_resource;
@@ -42,7 +42,7 @@ private:
 	// this is the amount of images the pipeline uses in the shaders
 	uint32_t									image_count									= 0;
 
-	Vector<vk::DynamicState>					dynamic_states;
+	Vector<VkDynamicState>						dynamic_states;
 };
 
 }

@@ -10,8 +10,8 @@
 namespace AE
 {
 
-SceneNode_Shape::SceneNode_Shape( Engine * engine, SceneManager * scene_manager, DescriptorPoolManager * descriptor_pool_manager, const Path & scene_node_path )
-	: SceneNode_Object( engine, scene_manager, descriptor_pool_manager, scene_node_path, SceneNodeBase::Type::SHAPE )
+SceneNode_Shape::SceneNode_Shape( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path )
+	: SceneNode_Object( engine, scene_manager, scene_node_path, SceneBase::Type::SHAPE )
 {
 }
 
@@ -19,43 +19,38 @@ SceneNode_Shape::~SceneNode_Shape()
 {
 }
 
-void SceneNode_Shape::Update()
-{
-}
-
 bool SceneNode_Shape::ParseConfigFile()
 {
 	assert( config_file->IsResourceReadyForUse() );		// config file resource should have been loaded before this function is called
 
-	auto object_level	= ParseConfigFile_ObjectLevel();
-	if( nullptr != object_level ) {
-		auto shape_level	= object_level->FirstChildElement( "SHAPE" );
-		if( nullptr != shape_level ) {
-			// Parse shape level stuff
-
-			return true;
-		}
-	}
-	return false;
+	return ParseConfigFileHelper( ParseConfigFile_ObjectLevel(), "SHAPE", [ this ]() {
+		// Parse shape level stuff here
+		return true;
+	} );
 }
 
-SceneNodeBase::ResourcesLoadState SceneNode_Shape::CheckResourcesLoaded()
+SceneBase::ResourcesLoadState SceneNode_Shape::CheckResourcesLoaded()
 {
-	auto object_level	= CheckResourcesLoaded_ObjectLevel();
-	if( object_level == ResourcesLoadState::READY ) {
+	return CheckResourcesLoadedHelper( CheckResourcesLoaded_ObjectLevel(), [ this ]() {
 		// check requested resources on shape level
-		return ResourcesLoadState::READY;
-	}
-	return object_level;
+		return SceneBase::ResourcesLoadState::READY;
+	} );
 }
 
-bool SceneNode_Shape::Finalize()
+bool SceneNode_Shape::FinalizeResources()
 {
-	if( Finalize_ObjectLevel() ) {
+	return FinalizeResourcesHelper( FinalizeResources_ObjectLevel(), [ this ]() {
 		// finalize shape level stuff
 		return true;
-	}
-	return false;
+	} );
+}
+
+void SceneNode_Shape::Update_Animation()
+{
+}
+
+void SceneNode_Shape::Update_Logic()
+{
 }
 
 }

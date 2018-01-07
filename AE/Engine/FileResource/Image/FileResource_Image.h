@@ -24,11 +24,11 @@ public:
 
 	uint32_t				GetWidth() const;
 	uint32_t				GetHeight() const;
-	vk::Format				GetFormat() const;
+	VkFormat				GetFormat() const;
 	uint32_t				GetUsedChannels() const;
 	uint32_t				GetBitsPerChannel() const;
 	uint32_t				GetBytesPerRow() const;
-	vk::Bool32				GetHasAlpha() const;
+	VkBool32				GetHasAlpha() const;
 
 private:
 	ImageData				image_data;

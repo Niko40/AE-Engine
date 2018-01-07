@@ -16,8 +16,8 @@
 namespace AE
 {
 
-SceneNode::SceneNode( Engine * engine, SceneManager * scene_manager, DescriptorPoolManager * descriptor_pool_manager, const Path & scene_node_path, SceneNodeBase::Type scene_node_type )
-	: SceneNodeBase( engine, scene_manager, descriptor_pool_manager, scene_node_path, scene_node_type )
+SceneNode::SceneNode( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneBase::Type scene_node_type )
+	: SceneBase( engine, scene_manager, scene_node_path, scene_node_type )
 {
 }
 
@@ -104,7 +104,7 @@ tinyxml2::XMLElement * SceneNode::ParseConfigFile_SceneNodeLevel()
 	return xml_root;
 }
 
-SceneNodeBase::ResourcesLoadState SceneNode::CheckResourcesLoaded_SceneNodeLevel()
+SceneBase::ResourcesLoadState SceneNode::CheckResourcesLoaded_SceneNodeLevel()
 {
 	for( auto & m : mesh_info_list ) {
 		if( !m->mesh_resource->IsResourceOK() ) return ResourcesLoadState::UNABLE_TO_LOAD;
@@ -123,7 +123,7 @@ SceneNodeBase::ResourcesLoadState SceneNode::CheckResourcesLoaded_SceneNodeLevel
 	return ResourcesLoadState::READY;
 }
 
-bool SceneNode::Finalize_SceneNodeLevel()
+bool SceneNode::FinalizeResources_SceneNodeLevel()
 {
 	for( auto & i : mesh_info_list ) {
 		i->uniform_buffer	= MakeUniquePointer<UniformBuffer>( p_engine, p_renderer );
@@ -133,22 +133,26 @@ bool SceneNode::Finalize_SceneNodeLevel()
 		i->uniform_buffer_descriptor_set		= p_descriptor_pool_manager->AllocateDescriptorSetForMesh();
 		assert( i->uniform_buffer_descriptor_set );
 
-		vk::DescriptorBufferInfo buffer_writes {};
+		VkDescriptorBufferInfo buffer_writes {};
 		buffer_writes.buffer	= i->uniform_buffer->GetDeviceBuffer();
 		buffer_writes.offset	= 0;
 		buffer_writes.range		= sizeof( UniformBufferData_Mesh );
-		vk::WriteDescriptorSet descriptor_set_writes {};
+		VkWriteDescriptorSet descriptor_set_writes {};
+		descriptor_set_writes.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptor_set_writes.pNext				= nullptr;
 		descriptor_set_writes.dstSet			= i->uniform_buffer_descriptor_set;
 		descriptor_set_writes.dstBinding		= 0;
 		descriptor_set_writes.dstArrayElement	= 0;
 		descriptor_set_writes.descriptorCount	= 1;
-		descriptor_set_writes.descriptorType	= vk::DescriptorType::eUniformBuffer;
+		descriptor_set_writes.descriptorType	= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		descriptor_set_writes.pImageInfo		= nullptr;
 		descriptor_set_writes.pBufferInfo		= &buffer_writes;
 		descriptor_set_writes.pTexelBufferView	= nullptr;
 
 		LOCK_GUARD( *ref_vk_device.mutex );
-		ref_vk_device.object.updateDescriptorSets( descriptor_set_writes, nullptr );
+		vkUpdateDescriptorSets( ref_vk_device.object,
+			1, &descriptor_set_writes,
+			0, nullptr );
 	}
 
 	return true;

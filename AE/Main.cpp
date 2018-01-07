@@ -19,16 +19,19 @@ int main( int argc, char ** argv )
 	AE::Engine engine;
 	auto world			= engine.CreateWorld( "data/worlds/test.world" );
 	auto scene_manager	= world->GetSceneManager();
-
+	
+	/*
 	auto file_resman	= engine.GetFileResourceManager();
 	auto renderer		= engine.GetRenderer();
 	auto device_resman	= renderer->GetDeviceResourceManager();
 
-	auto descriptor_pool	= renderer->GetDescriptorPoolManagerForThisThread();
+	auto descriptor_pool	= renderer->GetDescriptorPoolManager();
 	auto set				= descriptor_pool->AllocateDescriptorSetForCamera();
+	*/
 
 	{
-		auto scene_node		= scene_manager->GetActiveScene()->CreateChild( AE::SceneNodeBase::Type::SHAPE, "data/scene_nodes/objects/shapes/torus_knot.xml" );
+		auto scene_camera	= scene_manager->GetActiveScene()->CreateChild( AE::SceneBase::Type::CAMERA );
+		auto scene_node		= scene_manager->GetActiveScene()->CreateChild( AE::SceneBase::Type::SHAPE, "data/scene_nodes/objects/shapes/torus_knot.xml" );
 
 		while( engine.Run() ) {
 

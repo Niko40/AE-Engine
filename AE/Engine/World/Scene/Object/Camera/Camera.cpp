@@ -8,8 +8,8 @@
 namespace AE
 {
 
-SceneNode_Camera::SceneNode_Camera( Engine * engine, SceneManager * scene_manager, DescriptorPoolManager * descriptor_pool_manager, const Path & scene_node_path )
-	: SceneNode_Object( engine, scene_manager, descriptor_pool_manager, scene_node_path, SceneNodeBase::Type::CAMERA )
+SceneNode_Camera::SceneNode_Camera( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path )
+	: SceneNode_Object( engine, scene_manager, scene_node_path, SceneBase::Type::CAMERA )
 {
 }
 
@@ -29,7 +29,11 @@ Mat4 & SceneNode_Camera::CalculateProjectionMatrix( double fov_angle, VkExtent2D
 	return projection_matrix;
 }
 
-void SceneNode_Camera::Update()
+void SceneNode_Camera::Update_Animation()
+{
+}
+
+void SceneNode_Camera::Update_Logic()
 {
 }
 
@@ -37,31 +41,23 @@ bool SceneNode_Camera::ParseConfigFile()
 {
 	assert( config_file->IsResourceReadyForUse() );		// config file resource should have been loaded before this function is called
 
-	auto object_level	= ParseConfigFile_ObjectLevel();
-	if( object_level ) {
-		auto camera_level	= object_level->FirstChildElement( "CAMERA" );
-		if( camera_level ) {
-			// Parse camera level stuff
-
-			return true;
-		}
-	}
-	return false;
+	return ParseConfigFileHelper( ParseConfigFile_ObjectLevel(), "CAMERA", [ this ]() {
+		// Parse camera level stuff here
+		return true;
+	} );
 }
 
-SceneNodeBase::ResourcesLoadState SceneNode_Camera::CheckResourcesLoaded()
+SceneBase::ResourcesLoadState SceneNode_Camera::CheckResourcesLoaded()
 {
-	auto object_level	= CheckResourcesLoaded_ObjectLevel();
-	if( object_level == ResourcesLoadState::READY ) {
+	return CheckResourcesLoadedHelper( CheckResourcesLoaded_ObjectLevel(), [ this ]() {
 		// check requested resources on shape level
 		return ResourcesLoadState::READY;
-	}
-	return object_level;
+	} );
 }
 
-bool SceneNode_Camera::Finalize()
+bool SceneNode_Camera::FinalizeResources()
 {
-	if( Finalize_ObjectLevel() ) {
+	return FinalizeResourcesHelper( FinalizeResources_ObjectLevel(), [ this ]() {
 		// finalize camera level stuff
 
 		uniform_buffer					= MakeUniquePointer<UniformBuffer>( p_engine, p_renderer );
@@ -70,26 +66,27 @@ bool SceneNode_Camera::Finalize()
 		uniform_buffer_descriptor_set	= p_descriptor_pool_manager->AllocateDescriptorSetForCamera();
 		assert( uniform_buffer_descriptor_set );
 
-		vk::DescriptorBufferInfo buffer_writes {};
+		VkDescriptorBufferInfo buffer_writes {};
 		buffer_writes.buffer	= uniform_buffer->GetDeviceBuffer();
 		buffer_writes.offset	= 0;
 		buffer_writes.range		= sizeof( UniformBufferData_Camera );
-		vk::WriteDescriptorSet descriptor_set_write {};
+		VkWriteDescriptorSet descriptor_set_write {};
+		descriptor_set_write.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptor_set_write.pNext				= nullptr;
 		descriptor_set_write.dstSet				= uniform_buffer_descriptor_set;
 		descriptor_set_write.dstBinding			= 0;
 		descriptor_set_write.dstArrayElement	= 0;
 		descriptor_set_write.descriptorCount	= 1;
-		descriptor_set_write.descriptorType		= vk::DescriptorType::eUniformBuffer;
+		descriptor_set_write.descriptorType		= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		descriptor_set_write.pImageInfo			= nullptr;
 		descriptor_set_write.pBufferInfo		= &buffer_writes;
 		descriptor_set_write.pTexelBufferView	= nullptr;
 
 		LOCK_GUARD( *ref_vk_device.mutex );
-		ref_vk_device.object.updateDescriptorSets( descriptor_set_write, nullptr );
+		vkUpdateDescriptorSets( ref_vk_device.object, 1, &descriptor_set_write, 0, nullptr );
 
 		return true;
-	}
-	return false;
+	} );
 }
 
 }

@@ -21,10 +21,12 @@ public:
 	~SceneNode_();
 
 private:
-	void							Update();
+	void							Update_Animation();
+	void							Update_Logic();
+
 	bool							ParseConfigFile();
 	ResourcesLoadState				CheckResourcesLoaded();
-	bool							Finalize();
+	bool							FinalizeResources();
 };
 
 }
@@ -41,7 +43,7 @@ namespace AE
 {
 
 SceneNode_::SceneNode_( Engine * engine, SceneManager * scene_manager, DescriptorPoolManager * descriptor_pool_manager, Path & scene_node_path )
-	: SceneNode_Object( engine, scene_manager, descriptor_pool_manager, scene_node_path, SceneNodeBase::Type::CAMERA )
+	: SceneNode_Object( engine, scene_manager, descriptor_pool_manager, scene_node_path, SceneBase::Type::CAMERA )
 {
 }
 
@@ -49,39 +51,38 @@ SceneNode_::~SceneNode_()
 {
 }
 
-void SceneNode_::Update()
+void SceneNode_::Update_Animation()
 {
+	// Update all animation data
+	// Copy all animation data into Vulkan system RAM bound buffer objects
+}
+
+void SceneNode_::Update_Logic()
+{
+	// Update logic: AI, scripts, animation changes or loops
 }
 
 bool SceneNode_::ParseConfigFile()
 {
 	assert( config_file->IsResourceReadyForUse() );		// config file resource should have been loaded before this function is called
 
-	auto object_level	= ParseConfigFile_ObjectLevel();
-	if( object_level ) {
-		auto this_level	= object_level->FirstChildElement( "THIS_LEVEL_TYPE_HERE" );
-		if( nullptr != this_level ) {
-			// Parse this level stuff
-
-			return true;
-		}
-	}
-	return false;
+	return ParseConfigFileHelper( ParseConfigFile_<Parent>Level(), "THIS_LEVEL_TYPE_HERE", [ this ]() {
+		// Parse this level stuff here
+		return true;
+	} );
 }
 
-SceneNodeBase::ResourcesLoadState SceneNode_::CheckResourcesLoaded()
+SceneBase::ResourcesLoadState SceneNode_::CheckResourcesLoaded()
 {
-	auto object_level	= CheckResourcesLoaded_ObjectLevel();
-	if( object_level == ResourcesLoadState::READY ) {
-		// check requested resources on this level
-		return ResourcesLoadState::READY;
-	}
-	return object_level;
+	return CheckResourcesLoadedHelper( CheckResourcesLoaded_<Parent>Level(), [ this ]() {
+		// check requested resources on shape level
+		return SceneBase::ResourcesLoadState::READY;
+	} );
 }
 
-bool SceneNode_::Finalize()
+bool SceneNode_::FinalizeResources()
 {
-	if( Finalize_ObjectLevel() ) {
+	if( Finalize_<Parent>Level() ) {
 		// finalize this level stuff
 		return true;
 	}
