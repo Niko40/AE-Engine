@@ -28,23 +28,23 @@ private:
 	LoadingState						Load();
 	UnloadingState						Unload();
 
-	vk::CommandPool						ref_vk_primary_render_command_pool			= nullptr;
-	vk::CommandPool						ref_vk_secondary_render_command_pool		= nullptr;
-	vk::CommandPool						ref_vk_primary_transfer_command_pool		= nullptr;
-	vk::CommandBuffer					vk_primary_render_command_buffer			= nullptr;
-	vk::CommandBuffer					vk_secondary_render_command_buffer			= nullptr;
-	vk::CommandBuffer					vk_primary_transfer_command_buffer			= nullptr;
+	VkCommandPool						ref_vk_primary_render_command_pool			= VK_NULL_HANDLE;
+	VkCommandPool						ref_vk_secondary_render_command_pool		= VK_NULL_HANDLE;
+	VkCommandPool						ref_vk_primary_transfer_command_pool		= VK_NULL_HANDLE;
+	VkCommandBuffer						vk_primary_render_command_buffer			= VK_NULL_HANDLE;
+	VkCommandBuffer						vk_secondary_render_command_buffer			= VK_NULL_HANDLE;
+	VkCommandBuffer						vk_primary_transfer_command_buffer			= VK_NULL_HANDLE;
 
-	vk::Semaphore						vk_semaphore_stage_1						= nullptr;
-	vk::Semaphore						vk_semaphore_stage_2						= nullptr;
+	VkSemaphore							vk_semaphore_stage_1						= VK_NULL_HANDLE;
+	VkSemaphore							vk_semaphore_stage_2						= VK_NULL_HANDLE;
 
-	vk::Fence							vk_fence_command_buffers_done				= nullptr;
+	VkFence								vk_fence_command_buffers_done				= VK_NULL_HANDLE;
 
-	vk::Image							vk_image									= nullptr;
-	vk::ImageView						vk_image_view								= nullptr;
+	VkImage								vk_image									= VK_NULL_HANDLE;
+	VkImageView							vk_image_view								= VK_NULL_HANDLE;
 	DeviceMemoryInfo					image_memory								= {};
 
-	vk::Buffer							vk_staging_buffer							= nullptr;
+	VkBuffer							vk_staging_buffer							= VK_NULL_HANDLE;
 	DeviceMemoryInfo					staging_buffer_memory						= {};
 };
 

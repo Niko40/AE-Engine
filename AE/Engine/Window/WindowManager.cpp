@@ -75,10 +75,10 @@ bool WindowManager::Update()
 VkSurfaceKHR WindowManager::CreateVulkanSurface( VkInstance vk_instance )
 {
 	VkSurfaceKHR surface = VK_NULL_HANDLE;
-	vk::Result result = vk::Result( glfwCreateWindowSurface( vk_instance, window, nullptr, &surface ) );
-	if( result != vk::Result::eSuccess )
+	VkResult result = VkResult( glfwCreateWindowSurface( vk_instance, window, VULKAN_ALLOC, &surface ) );
+	if( result != VK_SUCCESS )
 	{
-		p_logger->LogError( "Vulkan surface creation failed with message: " + vk::to_string( result ) );
+		p_logger->LogError( "Vulkan surface creation failed with message: " + VulkanToString( result ) );
 	}
 	return surface;
 }

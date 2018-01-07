@@ -18,7 +18,7 @@ class DescriptorSetHandle
 {
 	friend class DescriptorPoolManager;
 
-	DescriptorSetHandle( Engine * engine, DescriptorPoolManager * descriptor_pool, DescriptorSubPoolInfo * descriptor_pool_info, vk::DescriptorSet descriptor_set );
+	DescriptorSetHandle( Engine * engine, DescriptorPoolManager * descriptor_pool, DescriptorSubPoolInfo * descriptor_pool_info, VkDescriptorSet descriptor_set );
 
 public:
 	DescriptorSetHandle();
@@ -33,7 +33,7 @@ public:
 
 	operator							bool();
 
-	operator							vk::DescriptorSet();
+	operator							VkDescriptorSet();
 
 private:
 	void								Swap( DescriptorSetHandle && other );
@@ -42,7 +42,7 @@ private:
 
 	DescriptorPoolManager			*	pool							= nullptr;
 	DescriptorSubPoolInfo			*	pool_info						= nullptr;
-	vk::DescriptorSet					set								= nullptr;
+	VkDescriptorSet						set								= VK_NULL_HANDLE;
 };
 
 }

@@ -133,22 +133,26 @@ bool SceneNode::FinalizeResources_SceneNodeLevel()
 		i->uniform_buffer_descriptor_set		= p_descriptor_pool_manager->AllocateDescriptorSetForMesh();
 		assert( i->uniform_buffer_descriptor_set );
 
-		vk::DescriptorBufferInfo buffer_writes {};
+		VkDescriptorBufferInfo buffer_writes {};
 		buffer_writes.buffer	= i->uniform_buffer->GetDeviceBuffer();
 		buffer_writes.offset	= 0;
 		buffer_writes.range		= sizeof( UniformBufferData_Mesh );
-		vk::WriteDescriptorSet descriptor_set_writes {};
+		VkWriteDescriptorSet descriptor_set_writes {};
+		descriptor_set_writes.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptor_set_writes.pNext				= nullptr;
 		descriptor_set_writes.dstSet			= i->uniform_buffer_descriptor_set;
 		descriptor_set_writes.dstBinding		= 0;
 		descriptor_set_writes.dstArrayElement	= 0;
 		descriptor_set_writes.descriptorCount	= 1;
-		descriptor_set_writes.descriptorType	= vk::DescriptorType::eUniformBuffer;
+		descriptor_set_writes.descriptorType	= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		descriptor_set_writes.pImageInfo		= nullptr;
 		descriptor_set_writes.pBufferInfo		= &buffer_writes;
 		descriptor_set_writes.pTexelBufferView	= nullptr;
 
 		LOCK_GUARD( *ref_vk_device.mutex );
-		ref_vk_device.object.updateDescriptorSets( descriptor_set_writes, nullptr );
+		vkUpdateDescriptorSets( ref_vk_device.object,
+			1, &descriptor_set_writes,
+			0, nullptr );
 	}
 
 	return true;

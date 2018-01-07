@@ -66,22 +66,24 @@ bool SceneNode_Camera::FinalizeResources()
 		uniform_buffer_descriptor_set	= p_descriptor_pool_manager->AllocateDescriptorSetForCamera();
 		assert( uniform_buffer_descriptor_set );
 
-		vk::DescriptorBufferInfo buffer_writes {};
+		VkDescriptorBufferInfo buffer_writes {};
 		buffer_writes.buffer	= uniform_buffer->GetDeviceBuffer();
 		buffer_writes.offset	= 0;
 		buffer_writes.range		= sizeof( UniformBufferData_Camera );
-		vk::WriteDescriptorSet descriptor_set_write {};
+		VkWriteDescriptorSet descriptor_set_write {};
+		descriptor_set_write.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptor_set_write.pNext				= nullptr;
 		descriptor_set_write.dstSet				= uniform_buffer_descriptor_set;
 		descriptor_set_write.dstBinding			= 0;
 		descriptor_set_write.dstArrayElement	= 0;
 		descriptor_set_write.descriptorCount	= 1;
-		descriptor_set_write.descriptorType		= vk::DescriptorType::eUniformBuffer;
+		descriptor_set_write.descriptorType		= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		descriptor_set_write.pImageInfo			= nullptr;
 		descriptor_set_write.pBufferInfo		= &buffer_writes;
 		descriptor_set_write.pTexelBufferView	= nullptr;
 
 		LOCK_GUARD( *ref_vk_device.mutex );
-		ref_vk_device.object.updateDescriptorSets( descriptor_set_write, nullptr );
+		vkUpdateDescriptorSets( ref_vk_device.object, 1, &descriptor_set_write, 0, nullptr );
 
 		return true;
 	} );

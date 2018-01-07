@@ -7,8 +7,8 @@
 
 struct DeviceMemoryInfo
 {
-	vk::DeviceMemory		memory			= nullptr;
-	vk::DeviceSize			offset			= 0;
-	vk::DeviceSize			size			= 0;
-	vk::DeviceSize			alignment		= 0;
+	VkDeviceMemory			memory			= VK_NULL_HANDLE;
+	VkDeviceSize			offset			= 0;
+	VkDeviceSize			size			= 0;
+	VkDeviceSize			alignment		= 0;
 };

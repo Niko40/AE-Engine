@@ -178,7 +178,7 @@ private:
 	// if NextUnloadOperationCanRun() returns true then this function is ran next to continue the unloading operation
 	std::function<UnloadingState( DeviceResource* )>			NextUnloadOperation				= nullptr;
 
-	std::mutex					mutex;
+	Mutex						mutex;
 	uint32_t					users							= 0;
 	State						state							= State::UNLOADED;
 	Flags						flags							= Flags( 0 );

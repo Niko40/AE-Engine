@@ -36,7 +36,7 @@ enum class UsedQueuesFlags : uint32_t
 
 struct SharingModeInfo
 {
-	vk::SharingMode		sharing_mode;
+	VkSharingMode		sharing_mode;
 	Vector<uint32_t>	shared_queue_family_indices;
 };
 

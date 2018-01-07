@@ -28,8 +28,8 @@ bool ContinueMeshLoadTest_1( DeviceResource * resource )
 	auto r		= dynamic_cast<DeviceResource_Mesh*>( resource );
 
 	LOCK_GUARD( *r->ref_vk_device.mutex );
-	if( r->ref_vk_device.object.getFenceStatus( r->vk_fence_command_buffers_done ) == vk::Result::eSuccess ) {
-		r->ref_vk_device.object.resetFences( r->vk_fence_command_buffers_done );
+	if( vkGetFenceStatus( r->ref_vk_device.object, r->vk_fence_command_buffers_done ) == VK_SUCCESS ) {
+		VulkanResultCheck( vkResetFences( r->ref_vk_device.object, 1, &r->vk_fence_command_buffers_done ) );
 		return true;
 	}
 	return false;
@@ -45,16 +45,16 @@ DeviceResource::LoadingState ContinueMeshLoad_1( DeviceResource * resource )
 	// Destroy synchronization objects, not needed anymore
 	{
 //		r->ref_vk_device.resetFences( r->vk_fence_command_buffers_done );
-		r->ref_vk_device.object.destroySemaphore( r->vk_semaphore_stage_1 );
-		r->ref_vk_device.object.destroyFence( r->vk_fence_command_buffers_done );
+		vkDestroySemaphore( r->ref_vk_device.object, r->vk_semaphore_stage_1, VULKAN_ALLOC );
+		vkDestroyFence( r->ref_vk_device.object, r->vk_fence_command_buffers_done, VULKAN_ALLOC );
 		r->vk_semaphore_stage_1					= nullptr;
 		r->vk_fence_command_buffers_done		= nullptr;
 	}
 
 	// Free command buffers, not needed anymore
 	{
-		r->ref_vk_device.object.freeCommandBuffers( r->ref_vk_primary_render_command_pool, r->vk_primary_render_command_buffer );
-		r->ref_vk_device.object.freeCommandBuffers( r->ref_vk_primary_transfer_command_pool, r->vk_primary_transfer_command_buffer );
+		vkFreeCommandBuffers( r->ref_vk_device.object, r->ref_vk_primary_render_command_pool, 1, &r->vk_primary_render_command_buffer );
+		vkFreeCommandBuffers( r->ref_vk_device.object, r->ref_vk_primary_transfer_command_pool, 1, &r->vk_primary_transfer_command_buffer );
 		r->vk_primary_render_command_buffer		= nullptr;
 		r->vk_primary_transfer_command_buffer	= nullptr;
 	}
@@ -92,25 +92,18 @@ DeviceResource::LoadingState DeviceResource_Mesh::Load()
 	// create all buffers, both indices and vertices are in one buffer
 	{
 		{
+			vk_staging_buffer	= p_device_memory_manager->CreateBuffer( 0, total_device_memory_reserve_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT );
+			vk_buffer			= p_device_memory_manager->CreateBuffer( 0, total_device_memory_reserve_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT );
+
 			LOCK_GUARD( *ref_vk_device.mutex );
+			VkMemoryRequirements buffer_memory_requirements {};
+			vkGetBufferMemoryRequirements( ref_vk_device.object, vk_buffer, &buffer_memory_requirements );
 
-			vk::BufferCreateInfo	buffer_CI {};
-			buffer_CI.flags					= vk::BufferCreateFlagBits( 0 );
-			buffer_CI.size					= total_device_memory_reserve_size;
-			buffer_CI.usage					= vk::BufferUsageFlagBits::eTransferSrc;
-			buffer_CI.sharingMode			= vk::SharingMode::eExclusive;
-			buffer_CI.queueFamilyIndexCount	= 0;
-			buffer_CI.pQueueFamilyIndices	= nullptr;
-			vk_staging_buffer				= ref_vk_device.object.createBuffer( buffer_CI );
-
-			buffer_CI.usage					= vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eVertexBuffer;
-			vk_buffer						= ref_vk_device.object.createBuffer( buffer_CI );
-
-			index_offset					= 0;
-			vertex_offset					= uint32_t( RoundToAlignment( mesh_resource->GetPolygonsByteSize(), ref_vk_device.object.getBufferMemoryRequirements( vk_buffer ).alignment ) );
+			index_offset		= 0;
+			vertex_offset		= uint32_t( RoundToAlignment( mesh_resource->GetPolygonsByteSize(), buffer_memory_requirements.alignment ) );
 		}
-		staging_buffer_memory				= p_device_memory_manager->AllocateAndBindBufferMemory( vk_staging_buffer, vk::MemoryPropertyFlagBits::eHostVisible );
-		buffer_memory						= p_device_memory_manager->AllocateAndBindBufferMemory( vk_buffer, vk::MemoryPropertyFlagBits::eDeviceLocal );
+		staging_buffer_memory	= p_device_memory_manager->AllocateAndBindBufferMemory( vk_staging_buffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT );
+		buffer_memory			= p_device_memory_manager->AllocateAndBindBufferMemory( vk_buffer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
 
 		if( !( staging_buffer_memory.memory && buffer_memory.memory ) ) {
 			assert( 0 && "Can't load mesh, can't allocate memory" );
@@ -125,7 +118,7 @@ DeviceResource::LoadingState DeviceResource_Mesh::Load()
 		char * data;
 		{
 			LOCK_GUARD( *ref_vk_device.mutex );
-			data		= reinterpret_cast<char*>( ref_vk_device.object.mapMemory( staging_buffer_memory.memory, staging_buffer_memory.offset, staging_buffer_memory.size ) );
+			vkMapMemory( ref_vk_device.object, staging_buffer_memory.memory, staging_buffer_memory.offset, staging_buffer_memory.size, 0, (void**)&data );
 		}
 		assert( nullptr != data );
 		if( nullptr != data ) {
@@ -133,7 +126,7 @@ DeviceResource::LoadingState DeviceResource_Mesh::Load()
 			std::memcpy( data + vertex_offset, vertices.data(), GetVerticesByteSize() );
 			{
 				LOCK_GUARD( *ref_vk_device.mutex );
-				ref_vk_device.object.unmapMemory( staging_buffer_memory.memory );
+				vkUnmapMemory( ref_vk_device.object, staging_buffer_memory.memory );
 			}
 		} else {
 			assert( 0 && "Can't load mesh, can't map staging buffer memory" );
@@ -148,20 +141,22 @@ DeviceResource::LoadingState DeviceResource_Mesh::Load()
 
 		LOCK_GUARD( *ref_vk_device.mutex );
 		{
-			vk::CommandBufferAllocateInfo command_buffer_AI {};
+			VkCommandBufferAllocateInfo command_buffer_AI {};
+			command_buffer_AI.sType					= VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			command_buffer_AI.pNext					= nullptr;
 			command_buffer_AI.commandPool			= ref_vk_primary_render_command_pool;
-			command_buffer_AI.level					= vk::CommandBufferLevel::ePrimary;
+			command_buffer_AI.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 			command_buffer_AI.commandBufferCount	= 1;
-			auto command_buffers					= ref_vk_device.object.allocateCommandBuffers( command_buffer_AI );
-			vk_primary_render_command_buffer		= command_buffers[ 0 ];
+			vkAllocateCommandBuffers( ref_vk_device.object, &command_buffer_AI, &vk_primary_render_command_buffer );
 		}
 		{
-			vk::CommandBufferAllocateInfo command_buffer_AI {};
+			VkCommandBufferAllocateInfo command_buffer_AI {};
+			command_buffer_AI.sType					= VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			command_buffer_AI.pNext					= nullptr;
 			command_buffer_AI.commandPool			= ref_vk_primary_transfer_command_pool;
-			command_buffer_AI.level					= vk::CommandBufferLevel::ePrimary;
+			command_buffer_AI.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 			command_buffer_AI.commandBufferCount	= 1;
-			auto command_buffers					= ref_vk_device.object.allocateCommandBuffers( command_buffer_AI );
-			vk_primary_transfer_command_buffer		= command_buffers[ 0 ];
+			vkAllocateCommandBuffers( ref_vk_device.object, &command_buffer_AI, &vk_primary_transfer_command_buffer );
 		}
 
 		if( !( vk_primary_render_command_buffer && vk_primary_transfer_command_buffer ) ) {
@@ -174,43 +169,50 @@ DeviceResource::LoadingState DeviceResource_Mesh::Load()
 	{
 		// Transfer command buffer
 		{
-			vk::CommandBufferBeginInfo command_buffer_BI {};
-			command_buffer_BI.flags			= vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
-			vk_primary_transfer_command_buffer.begin( command_buffer_BI );
+			VkCommandBufferBeginInfo command_buffer_BI {};
+			command_buffer_BI.sType			= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			command_buffer_BI.pNext			= nullptr;
+			command_buffer_BI.flags			= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+			VulkanResultCheck( vkBeginCommandBuffer( vk_primary_transfer_command_buffer, &command_buffer_BI ) );
 
 			TODO( "Figure out if we need an exclusive synchronization between host and buffer memory" );
 			// Record: Exclusive pipeline barrier between host and device, might not be needed, check implicit synchronization guarantees
 			{
-				vk::BufferMemoryBarrier staging_buffer_memory_barrier {};
-				staging_buffer_memory_barrier.srcAccessMask			= vk::AccessFlagBits( 0 );
-				staging_buffer_memory_barrier.dstAccessMask			= vk::AccessFlagBits::eTransferWrite;
-				staging_buffer_memory_barrier.srcQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
-				staging_buffer_memory_barrier.dstQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
-				staging_buffer_memory_barrier.buffer				= vk_buffer;
-				staging_buffer_memory_barrier.offset				= 0;
-				staging_buffer_memory_barrier.size					= buffer_memory.size;
+				Array<VkBufferMemoryBarrier, 2> buffer_memory_barriers;
+				// Staging buffer memory barrier
+				buffer_memory_barriers[ 0 ].sType					= VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+				buffer_memory_barriers[ 0 ].pNext					= nullptr;
+				buffer_memory_barriers[ 0 ].srcAccessMask			= VK_ACCESS_HOST_WRITE_BIT;
+				buffer_memory_barriers[ 0 ].dstAccessMask			= VK_ACCESS_TRANSFER_READ_BIT;
+				buffer_memory_barriers[ 0 ].srcQueueFamilyIndex		= VK_QUEUE_FAMILY_IGNORED;
+				buffer_memory_barriers[ 0 ].dstQueueFamilyIndex		= VK_QUEUE_FAMILY_IGNORED;
+				buffer_memory_barriers[ 0 ].buffer					= vk_staging_buffer;
+				buffer_memory_barriers[ 0 ].offset					= 0;
+				buffer_memory_barriers[ 0 ].size					= staging_buffer_memory.size;
 
-				vk::BufferMemoryBarrier buffer_memory_barrier {};
-				buffer_memory_barrier.srcAccessMask					= vk::AccessFlagBits::eHostWrite;
-				buffer_memory_barrier.dstAccessMask					= vk::AccessFlagBits::eTransferRead;
-				buffer_memory_barrier.srcQueueFamilyIndex			= VK_QUEUE_FAMILY_IGNORED;
-				buffer_memory_barrier.dstQueueFamilyIndex			= VK_QUEUE_FAMILY_IGNORED;
-				buffer_memory_barrier.buffer						= vk_staging_buffer;
-				buffer_memory_barrier.offset						= 0;
-				buffer_memory_barrier.size							= staging_buffer_memory.size;
+				// Main buffer memory barrier
+				buffer_memory_barriers[ 1 ].sType					= VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+				buffer_memory_barriers[ 1 ].pNext					= nullptr;
+				buffer_memory_barriers[ 1 ].srcAccessMask			= 0;
+				buffer_memory_barriers[ 1 ].dstAccessMask			= VK_ACCESS_TRANSFER_WRITE_BIT;
+				buffer_memory_barriers[ 1 ].srcQueueFamilyIndex		= VK_QUEUE_FAMILY_IGNORED;
+				buffer_memory_barriers[ 1 ].dstQueueFamilyIndex		= VK_QUEUE_FAMILY_IGNORED;
+				buffer_memory_barriers[ 1 ].buffer					= vk_buffer;
+				buffer_memory_barriers[ 1 ].offset					= 0;
+				buffer_memory_barriers[ 1 ].size					= buffer_memory.size;
 
-				vk_primary_transfer_command_buffer.pipelineBarrier(
-					vk::PipelineStageFlagBits::eHost,
-					vk::PipelineStageFlagBits::eTransfer,
-					vk::DependencyFlagBits( 0 ),
-					nullptr,
-					{ staging_buffer_memory_barrier, buffer_memory_barrier },
-					nullptr );
+				vkCmdPipelineBarrier( vk_primary_transfer_command_buffer,
+					VK_PIPELINE_STAGE_HOST_BIT,
+					VK_PIPELINE_STAGE_TRANSFER_BIT,
+					0,
+					0, nullptr,
+					uint32_t( buffer_memory_barriers.size() ), buffer_memory_barriers.data(),
+					0, nullptr );
 			}
 
 			// Record: Copy staging buffer to actual buffer
 			{
-				Array<vk::BufferCopy, 1> regions;
+				Array<VkBufferCopy, 1> regions;
 				/*
 				regions[ 0 ].srcOffset	= index_offset;
 				regions[ 0 ].dstOffset	= index_offset;
@@ -223,127 +225,150 @@ DeviceResource::LoadingState DeviceResource_Mesh::Load()
 				regions[ 0 ].srcOffset	= 0;
 				regions[ 0 ].dstOffset	= 0;
 				regions[ 0 ].size		= std::min( staging_buffer_memory.size, buffer_memory.size );
-				vk_primary_transfer_command_buffer.copyBuffer(
+
+				vkCmdCopyBuffer( vk_primary_transfer_command_buffer,
 					vk_staging_buffer,
 					vk_buffer,
-					regions );
+					uint32_t( regions.size() ), regions.data() );
 			}
 
 			TODO( "Figure out if we need this barrier after buffer copy, we don't need this buffer to be accessed in this queue submit" );
 			// Record: Pipeline barrier after the copy operation, might not be needed, check implicit synchronization guarantees
 			{
-				vk::BufferMemoryBarrier staging_buffer_memory_barrier {};
-				staging_buffer_memory_barrier.srcAccessMask			= vk::AccessFlagBits::eTransferRead;
-				staging_buffer_memory_barrier.dstAccessMask			= vk::AccessFlagBits::eHostWrite;
-				staging_buffer_memory_barrier.srcQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
-				staging_buffer_memory_barrier.dstQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
-				staging_buffer_memory_barrier.buffer				= vk_staging_buffer;
-				staging_buffer_memory_barrier.offset				= 0;
-				staging_buffer_memory_barrier.size					= staging_buffer_memory.size;
+				Array<VkBufferMemoryBarrier, 2> buffer_memory_barriers;
+				// Staging buffer memory barrier
+				buffer_memory_barriers[ 0 ].sType					= VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+				buffer_memory_barriers[ 0 ].pNext					= nullptr;
+				buffer_memory_barriers[ 0 ].srcAccessMask			= VK_ACCESS_TRANSFER_READ_BIT;
+				buffer_memory_barriers[ 0 ].dstAccessMask			= VK_ACCESS_HOST_WRITE_BIT;
+				buffer_memory_barriers[ 0 ].srcQueueFamilyIndex		= VK_QUEUE_FAMILY_IGNORED;
+				buffer_memory_barriers[ 0 ].dstQueueFamilyIndex		= VK_QUEUE_FAMILY_IGNORED;
+				buffer_memory_barriers[ 0 ].buffer					= vk_staging_buffer;
+				buffer_memory_barriers[ 0 ].offset					= 0;
+				buffer_memory_barriers[ 0 ].size					= staging_buffer_memory.size;
 
-				vk::BufferMemoryBarrier buffer_memory_barrier {};
-				buffer_memory_barrier.srcAccessMask					= vk::AccessFlagBits::eTransferWrite;
-				buffer_memory_barrier.dstAccessMask					= vk::AccessFlagBits::eIndexRead | vk::AccessFlagBits::eVertexAttributeRead;
-				buffer_memory_barrier.srcQueueFamilyIndex			= VK_QUEUE_FAMILY_IGNORED;
-				buffer_memory_barrier.dstQueueFamilyIndex			= VK_QUEUE_FAMILY_IGNORED;
-				buffer_memory_barrier.buffer						= vk_buffer;
-				buffer_memory_barrier.offset						= 0;
-				buffer_memory_barrier.size							= buffer_memory.size;
+				buffer_memory_barriers[ 1 ].sType					= VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+				buffer_memory_barriers[ 1 ].pNext					= nullptr;
+				buffer_memory_barriers[ 1 ].srcAccessMask			= VK_ACCESS_TRANSFER_WRITE_BIT;
+				buffer_memory_barriers[ 1 ].dstAccessMask			= VK_ACCESS_INDEX_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+				buffer_memory_barriers[ 1 ].srcQueueFamilyIndex		= VK_QUEUE_FAMILY_IGNORED;
+				buffer_memory_barriers[ 1 ].dstQueueFamilyIndex		= VK_QUEUE_FAMILY_IGNORED;
+				buffer_memory_barriers[ 1 ].buffer					= vk_buffer;
+				buffer_memory_barriers[ 1 ].offset					= 0;
+				buffer_memory_barriers[ 1 ].size					= buffer_memory.size;
 
-				vk_primary_transfer_command_buffer.pipelineBarrier(
-					vk::PipelineStageFlagBits::eTransfer,
-					vk::PipelineStageFlagBits::eAllCommands,
-					vk::DependencyFlagBits( 0 ),
-					nullptr,
-					{ staging_buffer_memory_barrier, buffer_memory_barrier },
-					nullptr );
+				vkCmdPipelineBarrier( vk_primary_transfer_command_buffer,
+					VK_PIPELINE_STAGE_TRANSFER_BIT,
+					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+					0,
+					0, nullptr,
+					uint32_t( buffer_memory_barriers.size() ), buffer_memory_barriers.data(),
+					0, nullptr );
 			}
 
 			TODO( "Add a check here to test if the primary transfer queue family index and primary render queue family index are the same, if they are we don't need to release and acquire exclusivity of this buffer" );
 			// Record: Release exclusive ownership of both buffers, from now on both buffers will be updated by the primary render queue
 			{
-				vk::BufferMemoryBarrier staging_buffer_memory_barrier {};
-				staging_buffer_memory_barrier.srcAccessMask			= vk::AccessFlagBits::eHostWrite;
-				staging_buffer_memory_barrier.dstAccessMask			= vk::AccessFlagBits::eHostWrite;
-				staging_buffer_memory_barrier.srcQueueFamilyIndex	= p_renderer->GetPrimaryTransferQueueFamilyIndex();
-				staging_buffer_memory_barrier.dstQueueFamilyIndex	= p_renderer->GetPrimaryRenderQueueFamilyIndex();
-				staging_buffer_memory_barrier.buffer				= vk_staging_buffer;
-				staging_buffer_memory_barrier.offset				= 0;
-				staging_buffer_memory_barrier.size					= staging_buffer_memory.size;
+				Array<VkBufferMemoryBarrier, 2> buffer_memory_barriers;
+				// Staging buffer memory barrier
+				buffer_memory_barriers[ 0 ].sType					= VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+				buffer_memory_barriers[ 0 ].pNext					= nullptr;
+				buffer_memory_barriers[ 0 ].srcAccessMask			= VK_ACCESS_HOST_WRITE_BIT;
+				buffer_memory_barriers[ 0 ].dstAccessMask			= VK_ACCESS_HOST_WRITE_BIT;
+				buffer_memory_barriers[ 0 ].srcQueueFamilyIndex		= p_renderer->GetPrimaryTransferQueueFamilyIndex();
+				buffer_memory_barriers[ 0 ].dstQueueFamilyIndex		= p_renderer->GetPrimaryRenderQueueFamilyIndex();
+				buffer_memory_barriers[ 0 ].buffer					= vk_staging_buffer;
+				buffer_memory_barriers[ 0 ].offset					= 0;
+				buffer_memory_barriers[ 0 ].size					= staging_buffer_memory.size;
 
-				vk::BufferMemoryBarrier buffer_memory_barrier {};
-				buffer_memory_barrier.srcAccessMask					= vk::AccessFlagBits::eIndexRead | vk::AccessFlagBits::eVertexAttributeRead;
-				buffer_memory_barrier.dstAccessMask					= vk::AccessFlagBits::eIndexRead | vk::AccessFlagBits::eVertexAttributeRead;
-				buffer_memory_barrier.srcQueueFamilyIndex			= p_renderer->GetPrimaryTransferQueueFamilyIndex();
-				buffer_memory_barrier.dstQueueFamilyIndex			= p_renderer->GetPrimaryRenderQueueFamilyIndex();
-				buffer_memory_barrier.buffer						= vk_buffer;
-				buffer_memory_barrier.offset						= 0;
-				buffer_memory_barrier.size							= buffer_memory.size;
+				buffer_memory_barriers[ 1 ].sType					= VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+				buffer_memory_barriers[ 1 ].pNext					= nullptr;
+				buffer_memory_barriers[ 1 ].srcAccessMask			= VK_ACCESS_INDEX_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+				buffer_memory_barriers[ 1 ].dstAccessMask			= VK_ACCESS_INDEX_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+				buffer_memory_barriers[ 1 ].srcQueueFamilyIndex		= p_renderer->GetPrimaryTransferQueueFamilyIndex();
+				buffer_memory_barriers[ 1 ].dstQueueFamilyIndex		= p_renderer->GetPrimaryRenderQueueFamilyIndex();
+				buffer_memory_barriers[ 1 ].buffer					= vk_buffer;
+				buffer_memory_barriers[ 1 ].offset					= 0;
+				buffer_memory_barriers[ 1 ].size					= buffer_memory.size;
 
-				vk_primary_transfer_command_buffer.pipelineBarrier(
-					vk::PipelineStageFlagBits::eAllCommands,
-					vk::PipelineStageFlagBits::eAllCommands,	// Ignored according to the specification, left here because validation layers complain
-					vk::DependencyFlagBits( 0 ),
-					nullptr,
-					{ staging_buffer_memory_barrier, buffer_memory_barrier },
-					nullptr );
+				vkCmdPipelineBarrier( vk_primary_transfer_command_buffer,
+					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,		// Ignored according to the specification, left here because validation layer complains
+					0,
+					0, nullptr,
+					uint32_t( buffer_memory_barriers.size() ), buffer_memory_barriers.data(),
+					0, nullptr );
 			}
-
-			vk_primary_transfer_command_buffer.end();
+			VulkanResultCheck( vkEndCommandBuffer( vk_primary_transfer_command_buffer ) );
 		}
 
 		TODO( "Add a check here to test if the primary transfer queue family index and primary render queue family index are the same, if they are we don't need to release and acquire exclusivity of this buffer and we don't need to submit anything to the primary render queue" );
 		// Primary render command buffer
 		{
-			vk::CommandBufferBeginInfo command_buffer_BI {};
-			command_buffer_BI.flags			= vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
-			vk_primary_render_command_buffer.begin( command_buffer_BI );
+			VkCommandBufferBeginInfo command_buffer_BI {};
+			command_buffer_BI.sType			= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			command_buffer_BI.pNext			= nullptr;
+			command_buffer_BI.flags			= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+			VulkanResultCheck( vkBeginCommandBuffer( vk_primary_render_command_buffer, &command_buffer_BI ) );
 
 			// Record: < CONTINUE > Acquire exclusive ownership of both buffers, from now on both buffers will be updated by the primary render queue
 			{
-				vk::BufferMemoryBarrier staging_buffer_memory_barrier {};
-				staging_buffer_memory_barrier.srcAccessMask			= vk::AccessFlagBits::eHostWrite;
-				staging_buffer_memory_barrier.dstAccessMask			= vk::AccessFlagBits::eHostWrite;
-				staging_buffer_memory_barrier.srcQueueFamilyIndex	= p_renderer->GetPrimaryTransferQueueFamilyIndex();
-				staging_buffer_memory_barrier.dstQueueFamilyIndex	= p_renderer->GetPrimaryRenderQueueFamilyIndex();
-				staging_buffer_memory_barrier.buffer				= vk_staging_buffer;
-				staging_buffer_memory_barrier.offset				= 0;
-				staging_buffer_memory_barrier.size					= staging_buffer_memory.size;
+				Array<VkBufferMemoryBarrier, 2> buffer_memory_barriers;
+				// Staging buffer memory barrier
+				buffer_memory_barriers[ 0 ].sType					= VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+				buffer_memory_barriers[ 0 ].pNext					= nullptr;
+				buffer_memory_barriers[ 0 ].srcAccessMask			= VK_ACCESS_HOST_WRITE_BIT;
+				buffer_memory_barriers[ 0 ].dstAccessMask			= VK_ACCESS_HOST_WRITE_BIT;
+				buffer_memory_barriers[ 0 ].srcQueueFamilyIndex		= p_renderer->GetPrimaryTransferQueueFamilyIndex();
+				buffer_memory_barriers[ 0 ].dstQueueFamilyIndex		= p_renderer->GetPrimaryRenderQueueFamilyIndex();
+				buffer_memory_barriers[ 0 ].buffer					= vk_staging_buffer;
+				buffer_memory_barriers[ 0 ].offset					= 0;
+				buffer_memory_barriers[ 0 ].size					= staging_buffer_memory.size;
 
-				vk::BufferMemoryBarrier buffer_memory_barrier {};
-				buffer_memory_barrier.srcAccessMask					= vk::AccessFlagBits::eIndexRead | vk::AccessFlagBits::eVertexAttributeRead;
-				buffer_memory_barrier.dstAccessMask					= vk::AccessFlagBits::eIndexRead | vk::AccessFlagBits::eVertexAttributeRead;
-				buffer_memory_barrier.srcQueueFamilyIndex			= p_renderer->GetPrimaryTransferQueueFamilyIndex();
-				buffer_memory_barrier.dstQueueFamilyIndex			= p_renderer->GetPrimaryRenderQueueFamilyIndex();
-				buffer_memory_barrier.buffer						= vk_buffer;
-				buffer_memory_barrier.offset						= 0;
-				buffer_memory_barrier.size							= buffer_memory.size;
+				buffer_memory_barriers[ 1 ].sType					= VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+				buffer_memory_barriers[ 1 ].pNext					= nullptr;
+				buffer_memory_barriers[ 1 ].srcAccessMask			= VK_ACCESS_INDEX_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+				buffer_memory_barriers[ 1 ].dstAccessMask			= VK_ACCESS_INDEX_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+				buffer_memory_barriers[ 1 ].srcQueueFamilyIndex		= p_renderer->GetPrimaryTransferQueueFamilyIndex();
+				buffer_memory_barriers[ 1 ].dstQueueFamilyIndex		= p_renderer->GetPrimaryRenderQueueFamilyIndex();
+				buffer_memory_barriers[ 1 ].buffer					= vk_buffer;
+				buffer_memory_barriers[ 1 ].offset					= 0;
+				buffer_memory_barriers[ 1 ].size					= buffer_memory.size;
 
-				vk_primary_render_command_buffer.pipelineBarrier(
-					vk::PipelineStageFlagBits::eAllCommands,	// Ignored according to the specification, left here because validation layers complain
-					vk::PipelineStageFlagBits::eAllCommands,
-					vk::DependencyFlagBits( 0 ),
-					nullptr,
-					{ staging_buffer_memory_barrier, buffer_memory_barrier },
-					nullptr );
+				vkCmdPipelineBarrier( vk_primary_render_command_buffer,
+					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,		// Ignored according to the specification, left here because validation layer complains
+					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+					0,
+					0, nullptr,
+					uint32_t( buffer_memory_barriers.size() ), buffer_memory_barriers.data(),
+					0, nullptr );
 			}
-
-			vk_primary_render_command_buffer.end();
+			VulkanResultCheck( vkEndCommandBuffer( vk_primary_render_command_buffer ) );
 		}
 
 		// Submit command buffers
 		{
 			// Create synchronization objects
 			{
+				VkSemaphoreCreateInfo semaphore_CI {};
+				semaphore_CI.sType	= VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+				semaphore_CI.pNext	= nullptr;
+				semaphore_CI.flags	= 0;
+				VkFenceCreateInfo fence_CI {};
+				fence_CI.sType		= VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+				fence_CI.pNext		= nullptr;
+				fence_CI.flags		= 0;
+
 				LOCK_GUARD( *ref_vk_device.mutex );
-				vk_semaphore_stage_1				= ref_vk_device.object.createSemaphore( vk::SemaphoreCreateInfo() );
-				vk_fence_command_buffers_done		= ref_vk_device.object.createFence( vk::FenceCreateInfo() );
+				VulkanResultCheck( vkCreateSemaphore( ref_vk_device.object, &semaphore_CI, VULKAN_ALLOC, &vk_semaphore_stage_1 ) );
+				VulkanResultCheck( vkCreateFence( ref_vk_device.object, &fence_CI, VULKAN_ALLOC, &vk_fence_command_buffers_done ) );
 			}
 
 			// Submit transfer command buffer
 			{
-				LOCK_GUARD( *p_renderer->GetPrimaryTransferQueue().mutex );
-				vk::SubmitInfo submit_info {};
+				VkSubmitInfo submit_info {};
+				submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
+				submit_info.pNext					= nullptr;
 				submit_info.waitSemaphoreCount		= 0;
 				submit_info.pWaitSemaphores			= nullptr;
 				submit_info.pWaitDstStageMask		= nullptr;
@@ -351,14 +376,19 @@ DeviceResource::LoadingState DeviceResource_Mesh::Load()
 				submit_info.pCommandBuffers			= &vk_primary_transfer_command_buffer;
 				submit_info.signalSemaphoreCount	= 1;
 				submit_info.pSignalSemaphores		= &vk_semaphore_stage_1;
-				p_renderer->GetPrimaryTransferQueue().object.submit( submit_info, nullptr );
+
+				auto queue = p_renderer->GetPrimaryTransferQueue();
+				LOCK_GUARD( *queue.mutex );
+				vkQueueSubmit( queue.object, 1, &submit_info, VK_NULL_HANDLE );
 			}
 
 			// Submit primary render command buffer
 			{
-				LOCK_GUARD( *p_renderer->GetPrimaryRenderQueue().mutex );
-				vk::SubmitInfo submit_info {};
-				vk::PipelineStageFlags dst_stages	= vk::PipelineStageFlagBits::eAllCommands;
+				VkPipelineStageFlags dst_stages		= VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+
+				VkSubmitInfo submit_info {};
+				submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
+				submit_info.pNext					= nullptr;
 				submit_info.waitSemaphoreCount		= 1;
 				submit_info.pWaitSemaphores			= &vk_semaphore_stage_1;
 				submit_info.pWaitDstStageMask		= &dst_stages;
@@ -366,7 +396,10 @@ DeviceResource::LoadingState DeviceResource_Mesh::Load()
 				submit_info.pCommandBuffers			= &vk_primary_render_command_buffer;
 				submit_info.signalSemaphoreCount	= 0;
 				submit_info.pSignalSemaphores		= nullptr;
-				p_renderer->GetPrimaryRenderQueue().object.submit( submit_info, vk_fence_command_buffers_done );
+
+				auto queue = p_renderer->GetPrimaryRenderQueue();
+				LOCK_GUARD( *queue.mutex );
+				vkQueueSubmit( queue.object, 1, &submit_info, vk_fence_command_buffers_done );
 			}
 		}
 	}
@@ -382,27 +415,26 @@ DeviceResource::UnloadingState DeviceResource_Mesh::Unload()
 
 		// Free command buffers
 		{
-			ref_vk_device.object.freeCommandBuffers( ref_vk_primary_render_command_pool, vk_primary_render_command_buffer );
-			ref_vk_device.object.freeCommandBuffers( ref_vk_primary_transfer_command_pool, vk_primary_transfer_command_buffer );
-			vk_primary_render_command_buffer	= nullptr;
-			vk_primary_transfer_command_buffer	= nullptr;
+			vkFreeCommandBuffers( ref_vk_device.object, ref_vk_primary_render_command_pool, 1, &vk_primary_render_command_buffer );
+			vkFreeCommandBuffers( ref_vk_device.object, ref_vk_primary_transfer_command_pool, 1, &vk_primary_transfer_command_buffer );
+			vk_primary_render_command_buffer	= VK_NULL_HANDLE;
+			vk_primary_transfer_command_buffer	= VK_NULL_HANDLE;
 		}
 
 		// Destroy synchronization objects
 		{
-			//		ref_vk_device.resetFences( vk_fence_command_buffers_done );
-			ref_vk_device.object.destroySemaphore( vk_semaphore_stage_1 );
-			ref_vk_device.object.destroyFence( vk_fence_command_buffers_done );
-			vk_semaphore_stage_1				= nullptr;
-			vk_fence_command_buffers_done		= nullptr;
+			vkDestroySemaphore( ref_vk_device.object, vk_semaphore_stage_1, VULKAN_ALLOC );
+			vkDestroyFence( ref_vk_device.object, vk_fence_command_buffers_done, VULKAN_ALLOC );
+			vk_semaphore_stage_1				= VK_NULL_HANDLE;
+			vk_fence_command_buffers_done		= VK_NULL_HANDLE;
 		}
 
 		// Destroy buffers
 		{
-			ref_vk_device.object.destroyBuffer( vk_staging_buffer );
-			ref_vk_device.object.destroyBuffer( vk_buffer );
-			vk_staging_buffer	= nullptr;
-			vk_buffer			= nullptr;
+			vkDestroyBuffer( ref_vk_device.object, vk_staging_buffer, VULKAN_ALLOC );
+			vkDestroyBuffer( ref_vk_device.object, vk_buffer, VULKAN_ALLOC );
+			vk_staging_buffer	= VK_NULL_HANDLE;
+			vk_buffer			= VK_NULL_HANDLE;
 		}
 	}
 

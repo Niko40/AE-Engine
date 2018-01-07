@@ -19,14 +19,14 @@ public:
 	UniformBuffer( Engine * engine, Renderer * renderer );
 	~UniformBuffer();
 
-	void						Initialize( vk::DeviceSize uniform_buffer_size );
+	void						Initialize( VkDeviceSize uniform_buffer_size );
 	void						DeInitialize();
 
-	void						CopyDataToHostBuffer( void * data, vk::DeviceSize byte_size );
-	void						RecordHostToDeviceBufferCopy( vk::CommandBuffer command_buffer );
+	void						CopyDataToHostBuffer( void * data, VkDeviceSize byte_size );
+	void						RecordHostToDeviceBufferCopy( VkCommandBuffer command_buffer );
 
-	vk::Buffer					GetHostBuffer() const;
-	vk::Buffer					GetDeviceBuffer() const;
+	VkBuffer					GetHostBuffer() const;
+	VkBuffer					GetDeviceBuffer() const;
 
 private:
 	Engine					*	p_engine						= nullptr;
@@ -34,12 +34,12 @@ private:
 	Renderer				*	p_renderer						= nullptr;
 	VulkanDevice				ref_vk_device					= {};
 
-	vk::Buffer					vk_buffer_host					= nullptr;
-	vk::Buffer					vk_buffer_device				= nullptr;
+	VkBuffer					vk_buffer_host					= VK_NULL_HANDLE;
+	VkBuffer					vk_buffer_device				= VK_NULL_HANDLE;
 	DeviceMemoryInfo			buffer_host_memory				= {};
 	DeviceMemoryInfo			buffer_device_memory			= {};
 
-	vk::DeviceSize				buffer_size						= 0;
+	VkDeviceSize				buffer_size						= 0;
 };
 
 }
