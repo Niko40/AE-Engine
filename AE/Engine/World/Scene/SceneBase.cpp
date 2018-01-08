@@ -84,6 +84,15 @@ SceneNode * SceneBase::CreateChild( SceneBase::Type scene_node_type, Path scene_
 	return nullptr;
 }
 
+Vector<SceneNode*> SceneBase::GetChildNodes()
+{
+	Vector<SceneNode*> ret;
+	for( auto & node : child_list ) {
+		ret.push_back( node.Get() );
+	}
+	return ret;
+}
+
 void ConfigResourceCheckerAndLoader( SceneBase * sb )
 {
 	auto lambda_check_config_is_loaded_and_finalize	= []( SceneBase * sb ) {
@@ -131,15 +140,12 @@ void ConfigResourceCheckerAndLoader( SceneBase * sb )
 	}
 }
 
-void SceneBase::UpdateResourcesFromManager()
+void SceneBase::Update_ResoureAvailability()
 {
 	if( is_scene_node_ok ) {
 		if( !is_scene_node_use_ready ) {
 			ConfigResourceCheckerAndLoader( this );
 		}
-	}
-	for( auto & c : child_list ) {
-		c->UpdateResourcesFromManager();
 	}
 }
 

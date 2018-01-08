@@ -19,6 +19,26 @@ SceneNode_Shape::~SceneNode_Shape()
 {
 }
 
+void SceneNode_Shape::Update_Logic()
+{
+}
+
+void SceneNode_Shape::Update_Animation()
+{
+}
+
+void SceneNode_Shape::Update_GPU()
+{
+}
+
+void SceneNode_Shape::RecordCommand_Transfer( VkCommandBuffer command_buffer )
+{
+}
+
+void SceneNode_Shape::RecordCommand_Render( VkCommandBuffer command_buffer )
+{
+}
+
 bool SceneNode_Shape::ParseConfigFile()
 {
 	assert( config_file->IsResourceReadyForUse() );		// config file resource should have been loaded before this function is called
@@ -43,14 +63,6 @@ bool SceneNode_Shape::FinalizeResources()
 		// finalize shape level stuff
 		return true;
 	} );
-}
-
-void SceneNode_Shape::Update_Animation()
-{
-}
-
-void SceneNode_Shape::Update_Logic()
-{
 }
 
 }

@@ -29,11 +29,23 @@ Mat4 & SceneNode_Camera::CalculateProjectionMatrix( double fov_angle, VkExtent2D
 	return projection_matrix;
 }
 
+void SceneNode_Camera::Update_Logic()
+{
+}
+
 void SceneNode_Camera::Update_Animation()
 {
 }
 
-void SceneNode_Camera::Update_Logic()
+void SceneNode_Camera::Update_GPU()
+{
+}
+
+void SceneNode_Camera::RecordCommand_Transfer( VkCommandBuffer command_buffer )
+{
+}
+
+void SceneNode_Camera::RecordCommand_Render( VkCommandBuffer command_buffer )
 {
 }
 

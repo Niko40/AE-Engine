@@ -13,11 +13,23 @@ Scene::~Scene()
 {
 }
 
+void Scene::Update_Logic()
+{
+}
+
 void Scene::Update_Animation()
 {
 }
 
-void Scene::Update_Logic()
+void Scene::Update_GPU()
+{
+}
+
+void Scene::RecordCommand_Transfer( VkCommandBuffer command_buffer )
+{
+}
+
+void Scene::RecordCommand_Render( VkCommandBuffer command_buffer )
 {
 }
 

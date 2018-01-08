@@ -17,10 +17,14 @@ public:
 	Scene( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path );
 	~Scene();
 
-private:
-	void							Update_Animation();
 	void							Update_Logic();
+	void							Update_Animation();
+	void							Update_GPU();
 
+	void							RecordCommand_Transfer( VkCommandBuffer command_buffer );
+	void							RecordCommand_Render( VkCommandBuffer command_buffer );
+
+private:
 	bool							ParseConfigFile();
 	ResourcesLoadState				CheckResourcesLoaded();
 	bool							FinalizeResources();
