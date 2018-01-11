@@ -11,6 +11,26 @@ This engine is licenced under MIT licence, this basically means you can freely u
 engine in your own projects for as long as you contribute me.
 Full licence can be found in Licence.txt file in the solution directory
 
+## Getting started
+This project serves as a starting point of a 3D game engine but at this time it does not produce any visible results, you can doodle around some though, especially if you're curious about Vulkan and how you could use it yourself.
+
+You will need to download some external libraries, check "External required libraries" section below for more info what you need, where you can get it and where you should unpack it in your system.
+
+Vulkan SDK can be installed anywhere but default installation path is highly recommended.
+
+GLFW version needs to be 3.2.1 or above. You also need to compile it yourself for Visual Studio 2017. You can download cmake here: https://cmake.org/
+Wherever you unpacked this project, go to it's parent folder and create a new folder "External libraries" in it, extract GLFW in that folder.
+To compile start with cmake, open a command prompt or power-shell and navigate to "...\External libraries\glfw-3.2.1" and type in these commands
+```
+mkdir VS2017_64
+cd VS2017_64
+cmake "Visual Studio 15 2017 Win64" ..
+```
+After this you should open the GLFW.sln file in "...\External libraries\glfw-3.2.1\VS2017_64" folder and compile both Debug and Release solution configurations as normal.
+
+After this you can open the AE.sln file in visual studio and compile.
+Have fun doodling around.
+
 ---
 #### Libraries
 ##### Embedded in solution:
@@ -52,8 +72,8 @@ Full licence can be found in Licence.txt file in the solution directory
 		<th>C:\VulkanSDK </th>
 	</tr>
 	<tr>
-		<th>GLFW 3.2 </th>
+		<th>GLFW 3.2.1 </th>
 		<th>http://www.glfw.org/index.html </th>
-		<th>C:\VulkanSDK </th>
+		<th>'Solution folder'..\External Libraries\glfw-3.2.1 </th>
 	</tr>
 </table>
