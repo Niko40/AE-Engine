@@ -42,4 +42,6 @@ private:
 //	DynamicGrid2D<SharedPointer<Scene>>		grid_nodes;
 };
 
+void CollectAllChildSceneBases( SceneBase * node, Vector<SceneBase*> * return_collection );
+
 }

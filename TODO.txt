@@ -18,6 +18,8 @@ TODO:
 - Add uniform buffer objects for pipelines
 	( DeviceResource_GraphicsPipeline.cpp )
 
+- Create an API that allows easier command buffer recording on initialization stage of the scene node
+
 - Enable actually drawing something
 	- Add proper values to the Vulkan render pass object
 	- Add rendering into G-buffers

@@ -21,8 +21,23 @@ class SceneNode;
 
 class FileResource_XML;
 
+// SceneBase post creation function call order:
+//	- Update_ResoureAvailability()
+//	  ( This function will initiate XML parser, handle extra resource loads and finalize resources.
+//		After everything is set and loaded a normal update loops can begin.
+//		All functions below can be called at odd times to save on CPU resources,
+//		first frame calls every function but after that call per frame is not guaranteed.
+//		Maximum call frequency is once a frame )
+//		- Update_Logic()			= From every frame to once a minute call frequency
+//		- Update_Animation()		= Frequency depending on the object AABB size on screen, from every frame to once a second
+//		- Update_GPU()				= Always called just after Update_Animation() and just before RecordCommand_Render() 
+//		- RecordCommand_Transfer()	= Can be called once a frame or once in the lifetime of the object
+//		- RecordCommand_Render()	= Can be called once a frame or once in the lifetime of the object
+			
+
 class SceneBase
 {
+	friend class SceneManager;
 	friend void ConfigResourceCheckerAndLoader( SceneBase * sb );
 
 public:
@@ -54,9 +69,12 @@ public:
 	virtual									~SceneBase();
 
 	SceneNode							*	CreateChild( SceneBase::Type scene_node_type, Path scene_node_path = "" );
+	Vector<SceneNode*>						GetChildNodes();
 
-	// Resource update function, call until all resources used by this scene node are fully loaded and ready to use
-	void									UpdateResourcesFromManager();
+	// Resource update function, call every once in a while to check if resources
+	// are loaded in and we can use this object, this function IS recursive to childs
+	// You only need to call this function until all resources have been loaded in
+	void									Update_ResoureAvailability();
 
 	// check is the primary file resource parsed, this IS NOT recursive to childs
 	bool									IsConfigFileParsed();
@@ -69,30 +87,56 @@ public:
 
 	const Path							&	GetConfigFilePath();
 
-protected:
-	// Animation update function, call once a frame or as needed.
-	// This will update all animations on the object and push new data into
-	// Vulkan buffers residing in system RAM.
-	virtual void							Update_Animation()				= 0;
-
-	// Logic update function, call once a frame or as needed.
-	// This will update all logic attached to the scene node, animation changes,
-	// AI and scripts.
+	// Logic update function, called once a frame or as needed.
+	// This will update all logic attached to the scene node like
+	// scripts, AI and other general updates.
 	virtual void							Update_Logic()					= 0;
 
-	// Parse config file, this is called from UpdateFromManager()
+	// Animation update function, called once a frame or as needed.
+	// This will update all animations on the object like bone animations,
+	// shape key animations and all updates of a mesh on internal buffers.
+	virtual void							Update_Animation()				= 0;
+
+	// GPU update function, this is called once a frame or as needed.
+	// This function updates data on the Vulkan buffers that are later copied
+	// onto the GPU buffers. This function will also update the GPU about everything
+	// else about this scene object.
+	virtual void							Update_GPU()					= 0;
+
+	// Record transfer commands onto the Vulkan command buffer.
+	// This function should only use commands that transfer on-the-fly data between buffers.
+	// Provided command buffer in parameters will run in the primary render queue family,
+	// meaning that all buffers should be owned by or visible in primary render queue family.
+	virtual void							RecordCommand_Transfer( VkCommandBuffer command_buffer )		= 0;
+
+	// Record render commands onto the Vulkan command buffer.
+	// This function should only use commands that render objects.
+	// Provided command buffer in parameters will run in the primary render queue family,
+	// meaning that all buffers should be owned by or visible in primary render queue family.
+	virtual void							RecordCommand_Render( VkCommandBuffer command_buffer )			= 0;
+
+protected:
+	// Parse config file, this is first called from Update_ResoureAvailability(),
+	// afterwards CheckResourcesLoaded() is called once in a while to check resource
+	// availability.
+	// Returns true if everything was done correctly, false if there were errors in
+	// which case this object will not partake in any actions in the world, including rendering.
 	virtual bool							ParseConfigFile()				= 0;
 
 	// After parsing the config file there might be some resources that need loading
-	// before using the scene node, after this function returns true the Finalize()
-	// function is called to finalize all loaded resources or data
+	// before using the scene node, after ParseConfigFile() function returns true the Finalize()
+	// function is called to finalize all loaded resources or data.
+	// Returns the state of the resources, check the enum, it's self explanatory.
+	// In case UNABLE_TO_LOAD, this object will not partake in any actions in the world,
+	// including rendering operations.
 	virtual ResourcesLoadState				CheckResourcesLoaded()			= 0;
 
-	// checking that all resources are properly loaded, this is the next function that
+	// After all resources are properly loaded in, this is the next function that
 	// gets called, the purpose of this is to finalize all data for the scene node to be
 	// able to use it when updating or rendering this scene node
 	// should return true on success and false if something went wrong in which case
-	// this scene node will not participate in updates or rendering operations
+	// this scene node will not participate in any actions in the world,
+	// including rendering operations.
 	virtual bool							FinalizeResources()				= 0;
 
 	Engine								*	p_engine						= nullptr;

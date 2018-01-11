@@ -8,6 +8,7 @@
 #include "../../Renderer/Renderer.h"
 #include "../../Memory/Memory.h"
 #include "../Scene/Scene.h"
+#include "../Scene/SceneNode.h"
 
 namespace AE
 {
@@ -25,7 +26,7 @@ SceneManager::SceneManager( Engine * engine, World * world )
 
 	TODO( "Add multithreading support for the scene update" );
 
-	active_scene	= MakeUniquePointer<Scene>( p_engine, this, "no file for now, todo" );
+	active_scene	= MakeUniquePointer<Scene>( p_engine, this, "" );
 }
 
 SceneManager::~SceneManager()
@@ -34,12 +35,21 @@ SceneManager::~SceneManager()
 
 void SceneManager::Update()
 {
-	active_scene->UpdateResourcesFromManager();
+	TODO( "Implement update frequencies for different types of scene updates" );
+	Vector<SceneBase*> collection;
+	CollectAllChildSceneBases( active_scene.Get(), &collection );
+	for( auto sbase : collection ) {
+		sbase->Update_ResoureAvailability();
+		sbase->Update_Logic();
+		sbase->Update_Animation();
+		sbase->Update_GPU();
+	}
+
 	TODO( "Grid nodes not enabled at this point." );
 	/*
 	for( auto & s : grid_nodes ) {
 		if( nullptr != s.Get() ) {
-			s->UpdateResourcesFromManager();
+			s->Update_ResoureAvailability();
 		}
 	}
 	*/
@@ -48,6 +58,14 @@ void SceneManager::Update()
 Scene * SceneManager::GetActiveScene() const
 {
 	return active_scene.Get();
+}
+
+void CollectAllChildSceneBases( SceneBase * node, Vector<SceneBase*> * return_collection )
+{
+	return_collection->push_back( node );
+	for( auto i : node->GetChildNodes() ) {
+		CollectAllChildSceneBases( i, return_collection );
+	}
 }
 
 }

@@ -101,6 +101,9 @@
     <Filter Include="Engine\World\Scene\Object\Camera">
       <UniqueIdentifier>{31b5e142-6d17-45d3-a1e1-aa049753d9f3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\CppFileSystem">
+      <UniqueIdentifier>{51bfcde9-12e8-4e51-9fcd-82d25809451e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Engine.cpp">
@@ -223,6 +226,9 @@
     </ClCompile>
     <ClCompile Include="Engine\World\Scene\SceneBase.cpp">
       <Filter>Engine\World\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\CppFileSystem\CppFileSystem.h">
+      <Filter>Engine\CppFileSystem</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

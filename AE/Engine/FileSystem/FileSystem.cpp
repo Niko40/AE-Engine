@@ -4,6 +4,7 @@
 #include <assert.h>
 
 #include "FileSystem.h"
+#include "FileStream.h"
 
 #include "../Logger/Logger.h"
 

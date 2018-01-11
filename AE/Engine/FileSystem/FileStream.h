@@ -10,8 +10,6 @@
 namespace AE
 {
 
-namespace fsys		= std::tr2::sys;
-
 class FileSystem;
 
 class FileStream
@@ -19,9 +17,9 @@ class FileStream
 	friend class FileSystem;
 
 public:
-	FileStream();
+	FileStream()							= delete;
 	FileStream( FileSystem * file_system );
-	FileStream( FileStream & other ) = delete;
+	FileStream( FileStream & other )		= delete;
 	FileStream( FileStream && other );
 	~FileStream();
 

@@ -8,6 +8,7 @@
 
 #include "../Memory/Memory.h"
 #include "../FileSystem/FileStream.h"
+#include "../CppFileSystem/CppFileSystem.h"
 
 namespace AE
 {

@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\CppFileSystem\CppFileSystem.h" />
     <ClCompile Include="Engine\Engine.cpp" />
     <ClCompile Include="Engine\FileResource\FileResource.cpp" />
     <ClCompile Include="Engine\FileResource\FileResourceManager.cpp" />
@@ -118,7 +119,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{9A694D7D-931E-4E14-8110-9F129A9832EF}</ProjectGuid>
     <RootNamespace>AE</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -147,12 +148,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(VK_SDK_PATH)\Include;$(VK_SDK_PATH)\..\glfw-3.2.1.bin.WIN64\include;$(SolutionDir)glm;$(SolutionDir)stb;$(SolutionDir)lua-5.3.4\src;$(SolutionDir)tinyxml2;$(IncludePath)</IncludePath>
-    <LibraryPath>$(VK_SDK_PATH)\Lib;$(VK_SDK_PATH)\..\glfw-3.2.1.bin.WIN$(PlatformArchitecture)\lib-vc2015;$(SolutionDir)x64\$(Configuration)-Lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(VK_SDK_PATH)\Include;$(SolutionDir)..\External Libraries\glfw-3.2.1\include;$(SolutionDir)glm;$(SolutionDir)stb;$(SolutionDir)lua-5.3.4\src;$(SolutionDir)tinyxml2;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VK_SDK_PATH)\Lib;$(SolutionDir)..\External Libraries\glfw-3.2.1\VS2017_64\src\$(Configuration);$(SolutionDir)x64\$(Configuration)-Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(VK_SDK_PATH)\Include;$(VK_SDK_PATH)\..\glfw-3.2.1.bin.WIN64\include;$(SolutionDir)glm;$(SolutionDir)stb;$(SolutionDir)lua-5.3.4\src;$(SolutionDir)tinyxml2;$(IncludePath)</IncludePath>
-    <LibraryPath>$(VK_SDK_PATH)\Lib;$(VK_SDK_PATH)\..\glfw-3.2.1.bin.WIN$(PlatformArchitecture)\lib-vc2015;$(SolutionDir)x64\$(Configuration)-Lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(VK_SDK_PATH)\Include;$(SolutionDir)..\External Libraries\glfw-3.2.1\include;$(SolutionDir)glm;$(SolutionDir)stb;$(SolutionDir)lua-5.3.4\src;$(SolutionDir)tinyxml2;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VK_SDK_PATH)\Lib;$(SolutionDir)..\External Libraries\glfw-3.2.1\VS2017_64\src\$(Configuration);$(SolutionDir)x64\$(Configuration)-Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

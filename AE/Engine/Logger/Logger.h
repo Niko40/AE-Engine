@@ -9,6 +9,7 @@
 #include "../Platform.h"
 
 #include "../Memory/MemoryTypes.h"
+#include "../CppFileSystem/CppFileSystem.h"
 
 namespace AE
 {
@@ -16,8 +17,6 @@ namespace engine_internal
 {
 void WinMessageBox( String text, String caption );
 }
-
-namespace fsys = std::tr2::sys;
 
 enum class LogType : uint32_t
 {

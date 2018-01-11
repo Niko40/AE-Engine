@@ -17,10 +17,14 @@ public:
 	Mat4						&	CalculateViewMatrix();
 	Mat4						&	CalculateProjectionMatrix( double fov_angle, VkExtent2D viewport_size, double near_plane, double far_plane );
 
-private:
-	void							Update_Animation();
 	void							Update_Logic();
+	void							Update_Animation();
+	void							Update_GPU();
 
+	void							RecordCommand_Transfer( VkCommandBuffer command_buffer );
+	void							RecordCommand_Render( VkCommandBuffer command_buffer );
+
+protected:
 	bool							ParseConfigFile();
 	ResourcesLoadState				CheckResourcesLoaded();
 	bool							FinalizeResources();
