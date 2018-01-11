@@ -6,10 +6,6 @@
 namespace AE
 {
 
-FileStream::FileStream()
-{
-}
-
 FileStream::FileStream( FileSystem * file_system )
 {
 	p_file_system		= file_system;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../Platform.h"
+
 #include <assert.h>
 #include <limits>
 #include <memory>
@@ -516,8 +518,6 @@ using Pair				= std::pair<T1, T2>;
 
 template<typename T1, typename T2>
 using Map				= std::map<T1, T2, std::less<T1>, engine_internal::MemoryAllocator<Pair<T1, T2>>>;
-
-using Path				= std::tr2::sys::path;
 
 using GridCoords2D		= glm::tvec2<int32_t, glm::highp>;
 

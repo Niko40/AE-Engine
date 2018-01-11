@@ -33,14 +33,6 @@ SceneManager::~SceneManager()
 {
 }
 
-void CollectAllChildSceneBases( SceneBase * node, Vector<SceneBase*> * collection )
-{
-	collection->push_back( node );
-	for( auto i : node->GetChildNodes() ) {
-		CollectAllChildSceneBases( i, collection );
-	}
-}
-
 void SceneManager::Update()
 {
 	TODO( "Implement update frequencies for different types of scene updates" );
@@ -66,6 +58,14 @@ void SceneManager::Update()
 Scene * SceneManager::GetActiveScene() const
 {
 	return active_scene.Get();
+}
+
+void CollectAllChildSceneBases( SceneBase * node, Vector<SceneBase*> * return_collection )
+{
+	return_collection->push_back( node );
+	for( auto i : node->GetChildNodes() ) {
+		CollectAllChildSceneBases( i, return_collection );
+	}
 }
 
 }
