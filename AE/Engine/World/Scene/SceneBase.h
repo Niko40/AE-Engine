@@ -30,7 +30,7 @@ class FileResource_XML;
 //		Maximum call frequency is once a frame )
 //		- Update_Logic()			= From every frame to once a minute call frequency
 //		- Update_Animation()		= Frequency depending on the object AABB size on screen, from every frame to once a second
-//		- Update_GPU()				= Always called just after Update_Animation() and just before RecordCommand_Render() 
+//		- Update_Buffers()			= Always called just after Update_Animation() and just before RecordCommand_Render() 
 //		- RecordCommand_Transfer()	= Can be called once a frame or once in the lifetime of the object
 //		- RecordCommand_Render()	= Can be called once a frame or once in the lifetime of the object
 			
@@ -101,19 +101,19 @@ public:
 	// This function updates data on the Vulkan buffers that are later copied
 	// onto the GPU buffers. This function will also update the GPU about everything
 	// else about this scene object.
-	virtual void							Update_GPU()					= 0;
+	virtual void							Update_Buffers()				= 0;
 
 	// Record transfer commands onto the Vulkan command buffer.
 	// This function should only use commands that transfer on-the-fly data between buffers.
 	// Provided command buffer in parameters will run in the primary render queue family,
 	// meaning that all buffers should be owned by or visible in primary render queue family.
-	virtual void							RecordCommand_Transfer( VkCommandBuffer command_buffer )		= 0;
+	virtual void							RecordCommand_Transfer( VkCommandBuffer command_buffer )									= 0;
 
 	// Record render commands onto the Vulkan command buffer.
 	// This function should only use commands that render objects.
 	// Provided command buffer in parameters will run in the primary render queue family,
 	// meaning that all buffers should be owned by or visible in primary render queue family.
-	virtual void							RecordCommand_Render( VkCommandBuffer command_buffer )			= 0;
+	virtual void							RecordCommand_Render( VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout )	= 0;
 
 protected:
 	// Parse config file, this is first called from Update_ResoureAvailability(),

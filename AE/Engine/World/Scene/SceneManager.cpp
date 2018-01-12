@@ -42,7 +42,7 @@ void SceneManager::Update()
 		sbase->Update_ResoureAvailability();
 		sbase->Update_Logic();
 		sbase->Update_Animation();
-		sbase->Update_GPU();
+		sbase->Update_Buffers();
 	}
 
 	TODO( "Grid nodes not enabled at this point." );
