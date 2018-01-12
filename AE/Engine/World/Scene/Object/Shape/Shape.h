@@ -16,10 +16,10 @@ public:
 
 	void							Update_Logic();
 	void							Update_Animation();
-	void							Update_GPU();
+	void							Update_Buffers();
 
 	void							RecordCommand_Transfer( VkCommandBuffer command_buffer );
-	void							RecordCommand_Render( VkCommandBuffer command_buffer );
+	void							RecordCommand_Render( VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout );
 
 protected:
 	bool							ParseConfigFile();

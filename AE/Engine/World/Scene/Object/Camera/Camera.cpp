@@ -37,16 +37,27 @@ void SceneNode_Camera::Update_Animation()
 {
 }
 
-void SceneNode_Camera::Update_GPU()
+void SceneNode_Camera::Update_Buffers()
 {
+	UniformBufferData_Camera buffer {};
+	buffer.view_matrix			= view_matrix;
+	buffer.projection_matrix	= projection_matrix;
+	uniform_buffer->CopyDataToHostBuffer( &buffer, sizeof( buffer ) );
 }
 
 void SceneNode_Camera::RecordCommand_Transfer( VkCommandBuffer command_buffer )
 {
+	uniform_buffer->RecordHostToDeviceBufferCopy( command_buffer );
 }
 
-void SceneNode_Camera::RecordCommand_Render( VkCommandBuffer command_buffer )
+void SceneNode_Camera::RecordCommand_Render( VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout )
 {
+	VkDescriptorSet set = uniform_buffer_descriptor_set;
+	vkCmdBindDescriptorSets( command_buffer,
+		VK_PIPELINE_BIND_POINT_GRAPHICS,
+		pipeline_layout,
+		0, 1, &set,
+		0, nullptr );
 }
 
 bool SceneNode_Camera::ParseConfigFile()

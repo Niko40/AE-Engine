@@ -27,7 +27,7 @@ void SceneNode_Shape::Update_Animation()
 {
 }
 
-void SceneNode_Shape::Update_GPU()
+void SceneNode_Shape::Update_Buffers()
 {
 }
 
@@ -35,7 +35,7 @@ void SceneNode_Shape::RecordCommand_Transfer( VkCommandBuffer command_buffer )
 {
 }
 
-void SceneNode_Shape::RecordCommand_Render( VkCommandBuffer command_buffer )
+void SceneNode_Shape::RecordCommand_Render( VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout )
 {
 }
 

@@ -21,7 +21,7 @@ void Scene::Update_Animation()
 {
 }
 
-void Scene::Update_GPU()
+void Scene::Update_Buffers()
 {
 }
 
@@ -29,7 +29,7 @@ void Scene::RecordCommand_Transfer( VkCommandBuffer command_buffer )
 {
 }
 
-void Scene::RecordCommand_Render( VkCommandBuffer command_buffer )
+void Scene::RecordCommand_Render( VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout )
 {
 }
 
