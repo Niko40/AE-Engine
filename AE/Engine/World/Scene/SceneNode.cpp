@@ -25,23 +25,6 @@ SceneNode::~SceneNode()
 {
 }
 
-const Mat4 & SceneNode::CalculateTransformationMatrixFromPosScaleRot()
-{
-	transformation_matrix = glm::mat4( 1 );
-	transformation_matrix = glm::translate( transformation_matrix, position );
-	transformation_matrix *= glm::mat4_cast( rotation );
-	transformation_matrix = glm::scale( transformation_matrix, scale );
-	return transformation_matrix;
-}
-
-void SceneNode::CalculatePosScaleRotFromTransformationMatrix( const Mat4 & new_transformations )
-{
-	Vec3 skew;
-	Vec4 perspective;
-	glm::decompose( new_transformations, scale, rotation, position, skew, perspective );
-	rotation	= glm::conjugate( rotation );		// returned rotation is a conjugate so we need to flip it
-}
-
 tinyxml2::XMLElement * SceneNode::ParseConfigFile_SceneNodeLevel()
 {
 	auto xml_root = config_file->GetRootElement();
@@ -52,9 +35,15 @@ tinyxml2::XMLElement * SceneNode::ParseConfigFile_SceneNodeLevel()
 	is_visible		= config_file->GetFieldValue_Bool( xml_root, "visible" );
 
 	// handle meshes
+	/*
 	for( auto xml_mesh = config_file->GetChildElement( xml_root, "MESH" ); xml_mesh; xml_mesh = xml_mesh->NextSiblingElement( "MESH" ) ) {
 		mesh_info_list.push_back( MakeSharedPointer<MeshInfo>() );
 		auto & mesh = mesh_info_list.back();
+	*/
+	auto xml_mesh = config_file->GetChildElement( xml_root, "MESH" );
+	if ( xml_mesh ) {
+		mesh_info			= MakeSharedPointer<MeshInfo>();
+		auto & mesh			= mesh_info;
 
 		mesh->mesh_resource	= p_device_resource_manager->RequestResource_Mesh( { config_file->GetFieldValue_Text( xml_mesh, "path" ) } );
 		mesh->name			= config_file->GetFieldValue_Text( xml_mesh, "name" );
@@ -106,7 +95,11 @@ tinyxml2::XMLElement * SceneNode::ParseConfigFile_SceneNodeLevel()
 
 SceneBase::ResourcesLoadState SceneNode::CheckResourcesLoaded_SceneNodeLevel()
 {
-	for( auto & m : mesh_info_list ) {
+//	for( auto & m : mesh_info_list ) {
+	if( mesh_info )
+	{
+		auto & m = mesh_info;
+
 		if( !m->mesh_resource->IsResourceOK() ) return ResourcesLoadState::UNABLE_TO_LOAD;
 		if( !m->mesh_resource->IsResourceReadyForUse() ) return ResourcesLoadState::NOT_READY;
 
@@ -125,7 +118,10 @@ SceneBase::ResourcesLoadState SceneNode::CheckResourcesLoaded_SceneNodeLevel()
 
 bool SceneNode::FinalizeResources_SceneNodeLevel()
 {
-	for( auto & i : mesh_info_list ) {
+//	for( auto & i : mesh_info_list ) {
+	if( mesh_info ) {
+		auto & i = mesh_info;
+
 		i->uniform_buffer	= MakeUniquePointer<UniformBuffer>( p_engine, p_renderer );
 		assert( i->uniform_buffer );
 		i->uniform_buffer->Initialize( sizeof( UniformBufferData_Mesh ) );

@@ -26,7 +26,7 @@ TODO:
 	- Add render pass from G-buffers to final render
 	- Pass final image to swapchain
 
-- Modify scene hierarchy
-	- A scene depends on SceneBase, it shouldn't depend on all of it
-	- Create a SceneCommon base instead and move most of the SceneBase functionality into SceneNode
-	( SceneBase.h/cpp, SceneNode.h/cpp, <create file for SceneNodeHierarchy class> )
+- Review scene hierarchy
+	- A scene depends on SceneBase, this is a lot of extras for scene to include so review what exactly is needed in a scene from SceneBase
+	- Rename SceneBase to a SceneCommon instead and move most of the old SceneBase functionality into SceneNode
+	( SceneBase.h/cpp, SceneNode.h/cpp, <create file for SceneHierarchy class> )

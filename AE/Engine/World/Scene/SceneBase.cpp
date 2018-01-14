@@ -1,6 +1,8 @@
 
 #include "SceneBase.h"
 
+#include <glm/gtx/matrix_decompose.hpp>
+
 #include "../../Engine.h"
 #include "../../Logger/Logger.h"
 #include "../../Memory/Memory.h"
@@ -169,6 +171,19 @@ const Path & SceneBase::GetConfigFilePath()
 	return config_file_path;
 }
 
+const Mat4 & SceneBase::CalculateTransformationMatrix()
+{
+	transformation_matrix = CalculateTransformationMatrixFromPosScaleRot( position, rotation, scale );
+	return transformation_matrix;
+}
+
+void SceneBase::CalculatePosScaleRot( const Mat4 & new_transformations )
+{
+	auto components			= CalculateComponentsFromTransformationMatrix( new_transformations );
+	position				= components.position;
+	rotation				= components.rotation;
+	scale					= components.scale;
+}
 
 bool ParseConfigFileHelper( tinyxml2::XMLElement * previous_level, String child_element_name, std::function<bool()> child_element_parser )
 {

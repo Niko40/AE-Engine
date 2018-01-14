@@ -5,7 +5,9 @@
 #include "../../../../Logger/Logger.h"
 #include "../../../../Renderer/DeviceResource/DeviceResourceManager.h"
 #include "../../../../Renderer/DeviceResource/Mesh/DeviceResource_Mesh.h"
+#include "../../../../Renderer/DeviceResource/GraphicsPipeline/DeviceResource_GraphicsPipeline.h"
 #include "../../../../FileResource/XML/FileResource_XML.h"
+#include "../../../../Renderer/Buffer/UniformBuffer.h"
 
 namespace AE
 {
@@ -25,14 +27,22 @@ void SceneNode_Shape::Update_Logic()
 
 void SceneNode_Shape::Update_Animation()
 {
+	// Shapes are static objects and no mesh updates are required, it's already in physical device memory
 }
 
 void SceneNode_Shape::Update_Buffers()
 {
+	// Shapes are static objects and no mesh updates are required, it's already in physical device memory
+}
+
+VkPipeline SceneNode_Shape::GetGraphicsPipeline()
+{
+	return mesh_info->render_info.graphics_pipeline_resource->GetVulkanPipeline();
 }
 
 void SceneNode_Shape::RecordCommand_Transfer( VkCommandBuffer command_buffer )
 {
+	// Shapes are static objects and no mesh updates are required, it's already in physical device memory
 }
 
 void SceneNode_Shape::RecordCommand_Render( VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout )

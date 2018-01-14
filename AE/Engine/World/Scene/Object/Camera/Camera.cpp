@@ -19,7 +19,7 @@ SceneNode_Camera::~SceneNode_Camera()
 
 Mat4 & SceneNode_Camera::CalculateViewMatrix()
 {
-	view_matrix			= glm::inverse( CalculateTransformationMatrixFromPosScaleRot() );
+	view_matrix			= glm::inverse( CalculateTransformationMatrixFromPosScaleRot( position, rotation, scale ) );
 	return view_matrix;
 }
 
@@ -43,6 +43,11 @@ void SceneNode_Camera::Update_Buffers()
 	buffer.view_matrix			= view_matrix;
 	buffer.projection_matrix	= projection_matrix;
 	uniform_buffer->CopyDataToHostBuffer( &buffer, sizeof( buffer ) );
+}
+
+VkPipeline SceneNode_Camera::GetGraphicsPipeline()
+{
+	return VK_NULL_HANDLE;
 }
 
 void SceneNode_Camera::RecordCommand_Transfer( VkCommandBuffer command_buffer )

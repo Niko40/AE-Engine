@@ -25,6 +25,11 @@ void Scene::Update_Buffers()
 {
 }
 
+VkPipeline Scene::GetGraphicsPipeline()
+{
+	return VK_NULL_HANDLE;
+}
+
 void Scene::RecordCommand_Transfer( VkCommandBuffer command_buffer )
 {
 }

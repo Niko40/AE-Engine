@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
 namespace AE
 {
@@ -52,7 +53,19 @@ using Mat4x2		= glm::dmat4x2;
 using Mat4x3		= glm::dmat4x3;
 using Mat4x4		= glm::dmat4x4;
 
+struct TransformationComponents
+{
+	Vec3			position;
+	Quat			rotation;
+	Vec3			scale;
+	Vec3			skew;
+	Vec4			perspective;
+};
+
 
 size_t RoundToAlignment( size_t src_value, size_t alignment_value );
+
+Mat4 CalculateTransformationMatrixFromPosScaleRot( const Vec3 & position, const Quat & rotation, const Vec3 & scale );
+TransformationComponents CalculateComponentsFromTransformationMatrix( const Mat4 & transformations );
 
 }

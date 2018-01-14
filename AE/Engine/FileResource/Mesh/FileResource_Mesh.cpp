@@ -76,6 +76,21 @@ const Vector<Polygon>& FileResource_Mesh::GetPolygons() const
 	return polygons;
 }
 
+Vector<Vertex>& FileResource_Mesh::GetEditableVertices()
+{
+	return vertices;
+}
+
+Vector<CopyVertex>& FileResource_Mesh::GetEditableCopyVertices()
+{
+	return copy_vertices;
+}
+
+Vector<Polygon>& FileResource_Mesh::GetEditablePolygons()
+{
+	return polygons;
+}
+
 size_t FileResource_Mesh::GetVerticesByteSize() const
 {
 	return vertices.size() * sizeof( Vertex );

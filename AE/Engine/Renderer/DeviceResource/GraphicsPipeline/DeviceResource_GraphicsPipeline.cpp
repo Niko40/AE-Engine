@@ -26,6 +26,11 @@ uint32_t DeviceResource_GraphicsPipeline::GetImageCount() const
 	return image_count;
 }
 
+VkPipeline DeviceResource_GraphicsPipeline::GetVulkanPipeline() const
+{
+	return vk_pipeline;
+}
+
 bool ContinueGraphicsPipelineLoadTest_1( DeviceResource * resource )
 {
 	auto res			= static_cast<DeviceResource_GraphicsPipeline*>( resource );
