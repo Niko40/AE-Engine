@@ -14,7 +14,7 @@ class SceneManager;
 class Scene : public SceneBase
 {
 public:
-	Scene( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path );
+	Scene( Engine * engine, SceneManager * scene_manager, SceneBase * parent, const Path & scene_node_path );
 	~Scene();
 
 	void							Update_Logic();

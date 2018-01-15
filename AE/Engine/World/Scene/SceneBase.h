@@ -65,27 +65,29 @@ public:
 		UNABLE_TO_LOAD,
 	};
 
-											SceneBase( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneBase::Type scene_node_type );
+											SceneBase( Engine * engine, SceneManager * scene_manager, SceneBase * parent, const Path & scene_node_path, SceneBase::Type scene_node_type );
 	virtual									~SceneBase();
 
 	SceneNode							*	CreateChild( SceneBase::Type scene_node_type, Path scene_node_path = "" );
 	Vector<SceneNode*>						GetChildNodes();
 
 	// Resource update function, call every once in a while to check if resources
-	// are loaded in and we can use this object, this function IS recursive to childs
-	// You only need to call this function until all resources have been loaded in
+	// are loaded in and we can use this object, this function IS NOT recursive to child scene nodes
+	// This function is called only until all resources have been loaded in
 	void									Update_ResoureAvailability();
 
-	// check is the primary file resource parsed, this IS NOT recursive to childs
+	// check is the primary file resource parsed, this IS NOT recursive to child scene nodes
 	bool									IsConfigFileParsed();
 
-	// check is the primary file resource loaded, this IS NOT recursive to childs
+	// check is the primary file resource loaded, this IS NOT recursive to child scene nodes
 	bool									IsConfigFileLoaded();
 
-	// check is the scene node is ready to use in general updates and renders, this IS NOT recursive to childs
+	// check is the scene node is ready to use in general updates and renders, this IS NOT recursive to child scene nodes
 	bool									IsSceneNodeUseReady();
 
 	const Path							&	GetConfigFilePath();
+
+	void									CalculateSceneNodeRecursiveParentHierarchy();
 
 	// Logic update function, called once a frame or as needed.
 	// This will update all logic attached to the scene node like
@@ -178,6 +180,8 @@ protected:
 	// this value is not calculated automatically, use CalculateTransformationMatrixFromPosScaleRot before using this
 	Mat4									transformation_matrix			= Mat4( 1 );
 
+	Mat4									inherited_transformation_matrix	= Mat4( 1 );
+
 	String									name;
 	bool									is_visible						= true;
 
@@ -187,6 +191,8 @@ private:
 	bool									is_config_file_parsed			= false;
 	bool									is_scene_node_use_ready			= false;
 	bool									is_scene_node_ok				= true;
+
+	SceneBase							*	p_parent						= nullptr;
 
 	List<UniquePointer<SceneNode>>			child_list;
 };

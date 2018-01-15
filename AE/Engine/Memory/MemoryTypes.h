@@ -166,6 +166,8 @@ public:
 		if( nullptr != ptr ) {
 			assert( nullptr != deleter );
 			deleter( ptr );
+			ptr			= nullptr;
+			deleter		= nullptr;
 		}
 	}
 

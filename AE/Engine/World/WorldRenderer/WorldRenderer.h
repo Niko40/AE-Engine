@@ -9,9 +9,9 @@ namespace AE
 class Engine;
 class Logger;
 class World;
+class Renderer;
 
-// World renderer is mostly responsible for partitioning the world into chunks,
-// creating, deleting and updating secondary command buffers on those chunks
+// World renderer is mostly responsible for partitioning the world into segments 
 class WorldRenderer
 {
 public:
@@ -24,6 +24,7 @@ private:
 	Engine						*	p_engine					= nullptr;
 	Logger						*	p_logger					= nullptr;
 	World						*	p_world						= nullptr;
+	Renderer					*	p_renderer					= nullptr;
 };
 
 }

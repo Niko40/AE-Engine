@@ -16,8 +16,8 @@
 namespace AE
 {
 
-SceneNode::SceneNode( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneBase::Type scene_node_type )
-	: SceneBase( engine, scene_manager, scene_node_path, scene_node_type )
+SceneNode::SceneNode( Engine * engine, SceneManager * scene_manager, SceneBase * parent, const Path & scene_node_path, SceneBase::Type scene_node_type )
+	: SceneBase( engine, scene_manager, parent, scene_node_path, scene_node_type )
 {
 }
 
@@ -49,6 +49,8 @@ tinyxml2::XMLElement * SceneNode::ParseConfigFile_SceneNodeLevel()
 		mesh->name			= config_file->GetFieldValue_Text( xml_mesh, "name" );
 		mesh->is_visible	= config_file->GetFieldValue_Bool( xml_mesh, "visible" );
 
+		// mesh specific transformation depricated since we now allow only one mesh per scene node
+		/*
 		auto position		= config_file->GetMultiFieldValues_Double( xml_mesh, "position" );
 		auto rotation		= config_file->GetMultiFieldValues_Double( xml_mesh, "rotation" );
 		auto scale			= config_file->GetMultiFieldValues_Double( xml_mesh, "scale" );
@@ -65,6 +67,7 @@ tinyxml2::XMLElement * SceneNode::ParseConfigFile_SceneNodeLevel()
 		mesh->scale.x		= ( scale.find( "x" ) != scale.end() ) ? scale[ "x" ] : 1;
 		mesh->scale.y		= ( scale.find( "y" ) != scale.end() ) ? scale[ "y" ] : 1;
 		mesh->scale.z		= ( scale.find( "z" ) != scale.end() ) ? scale[ "z" ] : 1;
+		*/
 
 		// handle render info
 		mesh->render_info.image_info.image_count			= -1;

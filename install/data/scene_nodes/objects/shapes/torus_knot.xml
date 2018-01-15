@@ -11,10 +11,6 @@
     <name value ="TorusKnot" />
     <path value ="data/models/shapes/torus_knot.me3d" />
     <visible value ="true" />
-    <!--Fields that have multiple parameters, the parameters are written like this-->
-    <position x="0" y="0" z="0" />
-    <rotation x="0" y="0" z="0" w="1" />
-    <scale x="1" y="1" z="1" />
     <RENDER_INFO>
       <graphics_pipeline_path value ="data/graphics_pipelines/default/default.xml" />
       <IMAGES>

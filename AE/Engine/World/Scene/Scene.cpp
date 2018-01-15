@@ -4,8 +4,8 @@
 namespace AE
 {
 
-Scene::Scene( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path )
-	: SceneBase( engine, scene_manager, scene_node_path, SceneBase::Type::SCENE )
+Scene::Scene( Engine * engine, SceneManager * scene_manager, SceneBase * parent, const Path & scene_node_path )
+	: SceneBase( engine, scene_manager, parent, scene_node_path, SceneBase::Type::SCENE )
 {
 }
 

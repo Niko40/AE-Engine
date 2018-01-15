@@ -41,9 +41,13 @@ public:
 	{
 		String								name;
 		bool								is_visible						= true;
+		
+		// Mesh specific transformation depricated since we now allow only one mesh per scene node
+		/*
 		Vec3								position						= Vec3( 0, 0, 0 );
 		Quat								rotation						= Quat( 1, 0, 0, 0 );
 		Vec3								scale							= Vec3( 1, 1, 1 );
+		*/
 
 		UniquePointer<UniformBuffer>		uniform_buffer					= nullptr;
 		DescriptorSetHandle					uniform_buffer_descriptor_set	= nullptr;
@@ -53,7 +57,7 @@ public:
 		RenderInfo							render_info						= {};
 	};
 
-											SceneNode( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneBase::Type scene_node_type );
+											SceneNode( Engine * engine, SceneManager * scene_manager, SceneBase * parent, const Path & scene_node_path, SceneBase::Type scene_node_type );
 	virtual									~SceneNode();
 
 protected:

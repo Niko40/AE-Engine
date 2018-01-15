@@ -44,6 +44,7 @@ public:
 	void								UpdateVulkanBuffer_Vertex( const Vector<Vertex> & vertices );
 
 	void								RecordVulkanCommand_TransferToPhysicalDevice( VkCommandBuffer command_buffer, bool transfer_indices = false );
+	void								RecordVulkanCommand_Render( VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout );
 
 private:
 	VkCommandPool						ref_vk_primary_render_command_pool			= VK_NULL_HANDLE;
@@ -61,9 +62,9 @@ private:
 
 	FileResource_Mesh				*	p_file_mesh_resource						= nullptr;
 
-	uint32_t							index_offset								= 0;
-	uint32_t							vertex_offset								= 0;
-	uint32_t							total_byte_size								= 0;
+	size_t								index_offset								= 0;
+	size_t								vertex_offset								= 0;
+	size_t								total_byte_size								= 0;
 
 	bool								warned_editable_static_return_vertices		= false;
 	bool								warned_editable_static_return_copy_vertices	= false;

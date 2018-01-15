@@ -11,7 +11,7 @@ namespace AE
 class SceneNode_Object : public SceneNode
 {
 public:
-					SceneNode_Object( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneBase::Type scene_node_type );
+					SceneNode_Object( Engine * engine, SceneManager * scene_manager, SceneBase * parent, const Path & scene_node_path, SceneBase::Type scene_node_type );
 	virtual			~SceneNode_Object();
 
 protected:

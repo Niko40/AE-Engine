@@ -11,7 +11,7 @@ namespace AE
 class SceneNode_Camera : public SceneNode_Object
 {
 public:
-	SceneNode_Camera( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path );
+	SceneNode_Camera( Engine * engine, SceneManager * scene_manager, SceneBase * parent, const Path & scene_node_path );
 	~SceneNode_Camera();
 
 	Mat4						&	CalculateViewMatrix();

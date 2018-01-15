@@ -599,4 +599,24 @@ void DeviceResource_Mesh::RecordVulkanCommand_TransferToPhysicalDevice( VkComman
 		1, &region );
 }
 
+void DeviceResource_Mesh::RecordVulkanCommand_Render( VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout )
+{
+	vkCmdBindIndexBuffer(
+		command_buffer,
+		vk_buffer,
+		index_offset,
+		VK_INDEX_TYPE_UINT32 );
+
+	vkCmdBindVertexBuffers(
+		command_buffer,
+		0, 1,
+		&vk_buffer,
+		&vertex_offset );
+
+	vkCmdDrawIndexed(
+		command_buffer,
+		uint32_t( p_file_mesh_resource->GetPolygons().size() * 3 ),
+		1, 0, 0, 0 );
+}
+
 }
