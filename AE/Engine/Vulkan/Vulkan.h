@@ -31,7 +31,8 @@ struct VulkanQueue
 	Mutex					*	mutex;
 };
 
-String VulkanToString( VkResult result );
+String VulkanResultToString( VkResult result );
+String VulkanFormatToString( VkFormat format );
 
 VkResult VulkanResultCheck( VkResult result );
 

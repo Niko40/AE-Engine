@@ -41,40 +41,24 @@ public:
 	{
 		String								name;
 		bool								is_visible						= true;
+		
+		// Mesh specific transformation depricated since we now allow only one mesh per scene node
+		/*
 		Vec3								position						= Vec3( 0, 0, 0 );
 		Quat								rotation						= Quat( 1, 0, 0, 0 );
 		Vec3								scale							= Vec3( 1, 1, 1 );
+		*/
 
-		DeviceResourceHandle<DeviceResource_Mesh>							mesh_resource;
 		UniquePointer<UniformBuffer>		uniform_buffer					= nullptr;
 		DescriptorSetHandle					uniform_buffer_descriptor_set	= nullptr;
+
+		DeviceResourceHandle<DeviceResource_Mesh>							mesh_resource;
 
 		RenderInfo							render_info						= {};
 	};
 
-											SceneNode( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneBase::Type scene_node_type );
+											SceneNode( Engine * engine, SceneManager * scene_manager, SceneBase * parent, const Path & scene_node_path, SceneBase::Type scene_node_type );
 	virtual									~SceneNode();
-
-	// Calculates a new transformation matrix from position, scale and rotation
-	// Matrix is stored in transformation_matrix variable, it's also returned out of convenience
-	const Mat4							&	CalculateTransformationMatrixFromPosScaleRot();
-
-	// inversion of CalculateTransformationMatrixFromPosScaleRot, this one takes in a matrix and
-	// calculates a new position, scale and rotation from it
-	void									CalculatePosScaleRotFromTransformationMatrix( const Mat4 & new_transformations );
-
-	// 3d position of the object
-	Vec3									position						= Vec3( 0, 0, 0 );
-
-	// Quaternion rotation of the object
-	Quat									rotation						= Quat( 1, 0, 0, 0 );
-
-	// 3d scale of the object
-	Vec3									scale							= Vec3( 1, 1, 1 );
-
-	// transformation matrix of the object to be used with other calculations that need it or with rendering
-	// this value is not calculated automatically, use CalculateTransformationMatrixFromPosScaleRot before using this
-	Mat4									transformation_matrix			= Mat4( 1 );
 
 protected:
 	// because it's easier to call parent functions than branching child object's functions
@@ -95,8 +79,8 @@ protected:
 	// returns true if everything is OK, false if there was an error in which case this scene node will not participate in updates or rendering operations
 	bool									FinalizeResources_SceneNodeLevel();
 
-private:
-	Vector<SharedPointer<MeshInfo>>			mesh_info_list;
+//	Vector<SharedPointer<MeshInfo>>			mesh_info_list;
+	SharedPointer<MeshInfo>					mesh_info				= nullptr;
 };
 
 }

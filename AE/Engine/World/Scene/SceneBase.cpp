@@ -1,6 +1,8 @@
 
 #include "SceneBase.h"
 
+#include <glm/gtx/matrix_decompose.hpp>
+
 #include "../../Engine.h"
 #include "../../Logger/Logger.h"
 #include "../../Memory/Memory.h"
@@ -23,10 +25,11 @@
 namespace AE
 {
 
-SceneBase::SceneBase( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneBase::Type scene_node_type )
+SceneBase::SceneBase( Engine * engine, SceneManager * scene_manager, SceneBase * parent, const Path & scene_node_path, SceneBase::Type scene_node_type )
 {
 	p_engine					= engine;
 	p_scene_manager				= scene_manager;
+	p_parent					= parent;
 	assert( p_engine );
 	assert( p_scene_manager );
 	p_file_resource_manager		= p_engine->GetFileResourceManager();
@@ -59,13 +62,13 @@ SceneNode * SceneBase::CreateChild( SceneBase::Type scene_node_type, Path scene_
 
 	case Type::CAMERA:
 	{
-		unique_ptr	= MakeUniquePointer<SceneNode_Camera>( p_engine, p_scene_manager, scene_node_path );
+		unique_ptr	= MakeUniquePointer<SceneNode_Camera>( p_engine, p_scene_manager, this, scene_node_path );
 		break;
 	}
 
 	case Type::SHAPE:
 	{
-		unique_ptr	= MakeUniquePointer<SceneNode_Shape>( p_engine, p_scene_manager, scene_node_path );
+		unique_ptr	= MakeUniquePointer<SceneNode_Shape>( p_engine, p_scene_manager, this, scene_node_path );
 		break;
 	}
 
@@ -169,6 +172,33 @@ const Path & SceneBase::GetConfigFilePath()
 	return config_file_path;
 }
 
+void SceneBase::CalculateSceneNodeRecursiveParentHierarchy()
+{
+	// calculate inherited transformation matrix
+	CalculateTransformationMatrix();
+	if( p_parent ) {
+		inherited_transformation_matrix		= p_parent->inherited_transformation_matrix * transformation_matrix;
+	} else {
+		inherited_transformation_matrix		= transformation_matrix;
+	}
+	for( auto & child : child_list ) {
+		child->CalculateSceneNodeRecursiveParentHierarchy();
+	}
+}
+
+const Mat4 & SceneBase::CalculateTransformationMatrix()
+{
+	transformation_matrix = CalculateTransformationMatrixFromPosScaleRot( position, rotation, scale );
+	return transformation_matrix;
+}
+
+void SceneBase::CalculatePosScaleRot( const Mat4 & new_transformations )
+{
+	auto components			= CalculateComponentsFromTransformationMatrix( new_transformations );
+	position				= components.position;
+	rotation				= components.rotation;
+	scale					= components.scale;
+}
 
 bool ParseConfigFileHelper( tinyxml2::XMLElement * previous_level, String child_element_name, std::function<bool()> child_element_parser )
 {

@@ -4,8 +4,8 @@
 namespace AE
 {
 
-Scene::Scene( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path )
-	: SceneBase( engine, scene_manager, scene_node_path, SceneBase::Type::SCENE )
+Scene::Scene( Engine * engine, SceneManager * scene_manager, SceneBase * parent, const Path & scene_node_path )
+	: SceneBase( engine, scene_manager, parent, scene_node_path, SceneBase::Type::SCENE )
 {
 }
 
@@ -23,6 +23,11 @@ void Scene::Update_Animation()
 
 void Scene::Update_Buffers()
 {
+}
+
+VkPipeline Scene::GetGraphicsPipeline()
+{
+	return VK_NULL_HANDLE;
 }
 
 void Scene::RecordCommand_Transfer( VkCommandBuffer command_buffer )

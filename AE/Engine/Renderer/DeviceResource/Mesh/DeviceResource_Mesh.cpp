@@ -74,33 +74,32 @@ DeviceResource::LoadingState DeviceResource_Mesh::Load()
 		return DeviceResource::LoadingState::UNABLE_TO_LOAD;
 	}
 
-	auto mesh_resource			= dynamic_cast<FileResource_Mesh*>( file_resources[ 0 ].Get() );
-	if( !mesh_resource ) {
+	p_file_mesh_resource			= dynamic_cast<FileResource_Mesh*>( file_resources[ 0 ].Get() );
+	if( !p_file_mesh_resource ) {
 		assert( 0 && "Can't load mesh, file resource dynamic_cast failed" );
 		return DeviceResource::LoadingState::UNABLE_TO_LOAD;
 	}
 
-	vertices		= mesh_resource->GetVertices();
-	copy_vertices	= mesh_resource->GetCopyVertices();
-	polygons		= mesh_resource->GetPolygons();
-
-	auto total_device_memory_reserve_size	=
-		mesh_resource->GetVerticesByteSize() +
-		mesh_resource->GetPolygonsByteSize() +
+	TODO( "This is an estimate and might be wrong, Create dummy buffers in the beginning of the application to check the real memory requirements for index and vertex buffers" );
+	auto reserve_byte_size =
+		p_file_mesh_resource->GetVerticesByteSize() +
+		p_file_mesh_resource->GetPolygonsByteSize() +
 		p_renderer->GetPhysicalDeviceLimits().minUniformBufferOffsetAlignment * 2;
 
 	// create all buffers, both indices and vertices are in one buffer
 	{
 		{
-			vk_staging_buffer	= p_device_memory_manager->CreateBuffer( 0, total_device_memory_reserve_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT );
-			vk_buffer			= p_device_memory_manager->CreateBuffer( 0, total_device_memory_reserve_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT );
+			TODO( "We may need to sync the two buffers memory size and alignment, more research and testing is required" );
+			vk_staging_buffer	= p_device_memory_manager->CreateBuffer( 0, reserve_byte_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT );
+			vk_buffer			= p_device_memory_manager->CreateBuffer( 0, reserve_byte_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT );
 
 			LOCK_GUARD( *ref_vk_device.mutex );
 			VkMemoryRequirements buffer_memory_requirements {};
 			vkGetBufferMemoryRequirements( ref_vk_device.object, vk_buffer, &buffer_memory_requirements );
 
+			total_byte_size		= buffer_memory_requirements.size;
 			index_offset		= 0;
-			vertex_offset		= uint32_t( RoundToAlignment( mesh_resource->GetPolygonsByteSize(), buffer_memory_requirements.alignment ) );
+			vertex_offset		= uint32_t( RoundToAlignment( p_file_mesh_resource->GetPolygonsByteSize(), buffer_memory_requirements.alignment ) );
 		}
 		staging_buffer_memory	= p_device_memory_manager->AllocateAndBindBufferMemory( vk_staging_buffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT );
 		buffer_memory			= p_device_memory_manager->AllocateAndBindBufferMemory( vk_buffer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
@@ -118,12 +117,12 @@ DeviceResource::LoadingState DeviceResource_Mesh::Load()
 		char * data;
 		{
 			LOCK_GUARD( *ref_vk_device.mutex );
-			vkMapMemory( ref_vk_device.object, staging_buffer_memory.memory, staging_buffer_memory.offset, staging_buffer_memory.size, 0, (void**)&data );
+			VulkanResultCheck( vkMapMemory( ref_vk_device.object, staging_buffer_memory.memory, staging_buffer_memory.offset, staging_buffer_memory.size, 0, (void**)&data ) );
 		}
 		assert( nullptr != data );
 		if( nullptr != data ) {
-			std::memcpy( data + index_offset, polygons.data(), GetPolygonsByteSize() );
-			std::memcpy( data + vertex_offset, vertices.data(), GetVerticesByteSize() );
+			std::memcpy( data + index_offset, p_file_mesh_resource->GetPolygons().data(), GetPolygonsByteSize() );
+			std::memcpy( data + vertex_offset, p_file_mesh_resource->GetVertices().data(), GetVerticesByteSize() );
 			{
 				LOCK_GUARD( *ref_vk_device.mutex );
 				vkUnmapMemory( ref_vk_device.object, staging_buffer_memory.memory );
@@ -147,7 +146,7 @@ DeviceResource::LoadingState DeviceResource_Mesh::Load()
 			command_buffer_AI.commandPool			= ref_vk_primary_render_command_pool;
 			command_buffer_AI.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 			command_buffer_AI.commandBufferCount	= 1;
-			vkAllocateCommandBuffers( ref_vk_device.object, &command_buffer_AI, &vk_primary_render_command_buffer );
+			VulkanResultCheck( vkAllocateCommandBuffers( ref_vk_device.object, &command_buffer_AI, &vk_primary_render_command_buffer ) );
 		}
 		{
 			VkCommandBufferAllocateInfo command_buffer_AI {};
@@ -156,7 +155,7 @@ DeviceResource::LoadingState DeviceResource_Mesh::Load()
 			command_buffer_AI.commandPool			= ref_vk_primary_transfer_command_pool;
 			command_buffer_AI.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 			command_buffer_AI.commandBufferCount	= 1;
-			vkAllocateCommandBuffers( ref_vk_device.object, &command_buffer_AI, &vk_primary_transfer_command_buffer );
+			VulkanResultCheck( vkAllocateCommandBuffers( ref_vk_device.object, &command_buffer_AI, &vk_primary_transfer_command_buffer ) );
 		}
 
 		if( !( vk_primary_render_command_buffer && vk_primary_transfer_command_buffer ) ) {
@@ -379,7 +378,7 @@ DeviceResource::LoadingState DeviceResource_Mesh::Load()
 
 				auto queue = p_renderer->GetPrimaryTransferQueue();
 				LOCK_GUARD( *queue.mutex );
-				vkQueueSubmit( queue.object, 1, &submit_info, VK_NULL_HANDLE );
+				VulkanResultCheck( vkQueueSubmit( queue.object, 1, &submit_info, VK_NULL_HANDLE ) );
 			}
 
 			// Submit primary render command buffer
@@ -399,7 +398,7 @@ DeviceResource::LoadingState DeviceResource_Mesh::Load()
 
 				auto queue = p_renderer->GetPrimaryRenderQueue();
 				LOCK_GUARD( *queue.mutex );
-				vkQueueSubmit( queue.object, 1, &submit_info, vk_fence_command_buffers_done );
+				VulkanResultCheck( vkQueueSubmit( queue.object, 1, &submit_info, vk_fence_command_buffers_done ) );
 			}
 		}
 	}
@@ -455,31 +454,25 @@ DeviceResource::UnloadingState DeviceResource_Mesh::Unload()
 		warned_editable_static_return_polygons		= false;
 	}
 
-	// clear local copy of the mesh
-	{
-		vertices.clear();
-		copy_vertices.clear();
-		polygons.clear();
-	}
-
 	return DeviceResource::UnloadingState::UNLOADED;
 }
 
 const Vector<Vertex>& DeviceResource_Mesh::GetVertices() const
 {
-	return vertices;
+	return p_file_mesh_resource->GetVertices();
 }
 
 const Vector<CopyVertex>& DeviceResource_Mesh::GetCopyVertices() const
 {
-	return copy_vertices;
+	return p_file_mesh_resource->GetCopyVertices();
 }
 
 const Vector<Polygon>& DeviceResource_Mesh::GetPolygons() const
 {
-	return polygons;
+	return p_file_mesh_resource->GetPolygons();
 }
 
+/*
 Vector<Vertex>& DeviceResource_Mesh::GetEditableVertices()
 {
 	if( GetResourceFlags() == DeviceResource::Flags::STATIC ) {
@@ -515,20 +508,115 @@ Vector<Polygon>& DeviceResource_Mesh::GetEditablePolygons()
 	}
 	return polygons;
 }
+*/
 
 size_t DeviceResource_Mesh::GetVerticesByteSize() const
 {
-	return vertices.size() * sizeof( Vertex );
+	return p_file_mesh_resource->GetVerticesByteSize();
 }
 
 size_t DeviceResource_Mesh::GetCopyVerticesByteSize() const
 {
-	return copy_vertices.size() * sizeof( CopyVertex );
+	return p_file_mesh_resource->GetCopyVerticesByteSize();
 }
 
 size_t DeviceResource_Mesh::GetPolygonsByteSize() const
 {
-	return polygons.size() * sizeof( Polygon );
+	return p_file_mesh_resource->GetPolygonsByteSize();
+}
+
+void DeviceResource_Mesh::UpdateVulkanBuffer_Index( const Vector<Polygon>& polygons )
+{
+	if( GetResourceFlags() & Flags::STATIC ) return;	// We shouldn't update a static device resource, it's already in memory anyways
+
+	if( polygons.size() != p_file_mesh_resource->GetPolygons().size() ) {
+		p_logger->LogWarning( "Tried updating mesh vertex data from differently sized array than what is currently in memory" );
+		assert( 0 );
+	}
+
+	{
+		char * data;
+		{
+			LOCK_GUARD( *ref_vk_device.mutex );
+			VulkanResultCheck( vkMapMemory( ref_vk_device.object, staging_buffer_memory.memory, staging_buffer_memory.offset, staging_buffer_memory.size, 0, (void**)&data ) );
+		}
+		assert( nullptr != data );
+		if( nullptr != data ) {
+			std::memcpy( data + index_offset, polygons.data(), GetPolygonsByteSize() );
+			{
+				LOCK_GUARD( *ref_vk_device.mutex );
+				vkUnmapMemory( ref_vk_device.object, staging_buffer_memory.memory );
+			}
+		} else {
+			assert( 0 && "Can't map staging buffer memory" );
+		}
+	}
+}
+
+void DeviceResource_Mesh::UpdateVulkanBuffer_Vertex( const Vector<Vertex>& vertices )
+{
+	if( GetResourceFlags() & Flags::STATIC ) return;	// We shouldn't update a static device resource, it's already in memory anyways
+
+	if( vertices.size() != p_file_mesh_resource->GetVertices().size() ) {
+		p_logger->LogWarning( "Tried updating mesh vertex data from differently sized array than what is currently in memory" );
+		assert( 0 );
+	}
+
+	{
+		char * data;
+		{
+			LOCK_GUARD( *ref_vk_device.mutex );
+			VulkanResultCheck( vkMapMemory( ref_vk_device.object, staging_buffer_memory.memory, staging_buffer_memory.offset, staging_buffer_memory.size, 0, (void**)&data ) );
+		}
+		assert( nullptr != data );
+		if( nullptr != data ) {
+			std::memcpy( data + vertex_offset, vertices.data(), GetVerticesByteSize() );
+			{
+				LOCK_GUARD( *ref_vk_device.mutex );
+				vkUnmapMemory( ref_vk_device.object, staging_buffer_memory.memory );
+			}
+		} else {
+			assert( 0 && "Can't map staging buffer memory" );
+		}
+	}
+}
+
+void DeviceResource_Mesh::RecordVulkanCommand_TransferToPhysicalDevice( VkCommandBuffer command_buffer, bool transfer_indices )
+{
+	VkBufferCopy region {};
+	if( transfer_indices ) {
+		region.srcOffset	= 0;
+		region.dstOffset	= 0;
+		region.size			= total_byte_size;
+	} else {
+		region.srcOffset	= vertex_offset;
+		region.dstOffset	= vertex_offset;
+		region.size			= GetVerticesByteSize();
+	}
+	vkCmdCopyBuffer( command_buffer,
+		vk_staging_buffer,
+		vk_buffer,
+		1, &region );
+}
+
+void DeviceResource_Mesh::RecordVulkanCommand_Render( VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout )
+{
+	vkCmdBindIndexBuffer(
+		command_buffer,
+		vk_buffer,
+		index_offset,
+		VK_INDEX_TYPE_UINT32 );
+
+	vkCmdBindVertexBuffers(
+		command_buffer,
+		0, 1,
+		&vk_buffer,
+		&vertex_offset );
+
+	vkCmdDrawIndexed(
+		command_buffer,
+		uint32_t( p_file_mesh_resource->GetPolygons().size() * 3 ),
+		1, 0, 0, 0 );
 }
 
 }

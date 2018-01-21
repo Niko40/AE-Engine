@@ -22,7 +22,7 @@ public:
 	void						Initialize( VkDeviceSize uniform_buffer_size );
 	void						DeInitialize();
 
-	void						CopyDataToHostBuffer( void * data, VkDeviceSize byte_size );
+	void						CopyDataToHostBuffer( const void * data, VkDeviceSize byte_size );
 	void						RecordHostToDeviceBufferCopy( VkCommandBuffer command_buffer );
 
 	VkBuffer					GetHostBuffer() const;

@@ -166,6 +166,8 @@ public:
 		if( nullptr != ptr ) {
 			assert( nullptr != deleter );
 			deleter( ptr );
+			ptr			= nullptr;
+			deleter		= nullptr;
 		}
 	}
 
@@ -221,6 +223,10 @@ public:
 		Destroy();
 	}
 
+	void operator=( nullptr_t )
+	{
+		Destroy();
+	}
 	void operator=( UniquePointer<T> && other )
 	{
 		std::swap( ptr, other.ptr );
@@ -386,6 +392,10 @@ public:
 	template<typename Any>
 	void operator=( UniquePointer<Any> ) = delete;
 
+	void operator=( nullptr_t )
+	{
+		DecRef();
+	}
 	void operator=( SharedPointer<T> && other )
 	{
 		if( *this != other ) {

@@ -29,13 +29,22 @@ public:
 	const Vector<CopyVertex>		&	GetCopyVertices() const;
 	const Vector<Polygon>			&	GetPolygons() const;
 
+	// There isn't a reason why the editable versions should ever be returned, the base model should be kept intact
+	/*
 	Vector<Vertex>					&	GetEditableVertices();
 	Vector<CopyVertex>				&	GetEditableCopyVertices();
 	Vector<Polygon>					&	GetEditablePolygons();
+	*/
 
 	size_t								GetVerticesByteSize() const;
 	size_t								GetCopyVerticesByteSize() const;
 	size_t								GetPolygonsByteSize() const;
+
+	void								UpdateVulkanBuffer_Index( const Vector<Polygon> & polygons );
+	void								UpdateVulkanBuffer_Vertex( const Vector<Vertex> & vertices );
+
+	void								RecordVulkanCommand_TransferToPhysicalDevice( VkCommandBuffer command_buffer, bool transfer_indices = false );
+	void								RecordVulkanCommand_Render( VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout );
 
 private:
 	VkCommandPool						ref_vk_primary_render_command_pool			= VK_NULL_HANDLE;
@@ -51,12 +60,11 @@ private:
 	DeviceMemoryInfo					buffer_memory								= {};
 	DeviceMemoryInfo					staging_buffer_memory						= {};
 
-	uint32_t							index_offset								= 0;
-	uint32_t							vertex_offset								= 0;
+	FileResource_Mesh				*	p_file_mesh_resource						= nullptr;
 
-	Vector<Vertex>						vertices;
-	Vector<CopyVertex>					copy_vertices;
-	Vector<Polygon>						polygons;
+	size_t								index_offset								= 0;
+	size_t								vertex_offset								= 0;
+	size_t								total_byte_size								= 0;
 
 	bool								warned_editable_static_return_vertices		= false;
 	bool								warned_editable_static_return_copy_vertices	= false;

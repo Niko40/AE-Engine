@@ -65,27 +65,29 @@ public:
 		UNABLE_TO_LOAD,
 	};
 
-											SceneBase( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneBase::Type scene_node_type );
+											SceneBase( Engine * engine, SceneManager * scene_manager, SceneBase * parent, const Path & scene_node_path, SceneBase::Type scene_node_type );
 	virtual									~SceneBase();
 
 	SceneNode							*	CreateChild( SceneBase::Type scene_node_type, Path scene_node_path = "" );
 	Vector<SceneNode*>						GetChildNodes();
 
 	// Resource update function, call every once in a while to check if resources
-	// are loaded in and we can use this object, this function IS recursive to childs
-	// You only need to call this function until all resources have been loaded in
+	// are loaded in and we can use this object, this function IS NOT recursive to child scene nodes
+	// This function is called only until all resources have been loaded in
 	void									Update_ResoureAvailability();
 
-	// check is the primary file resource parsed, this IS NOT recursive to childs
+	// check is the primary file resource parsed, this IS NOT recursive to child scene nodes
 	bool									IsConfigFileParsed();
 
-	// check is the primary file resource loaded, this IS NOT recursive to childs
+	// check is the primary file resource loaded, this IS NOT recursive to child scene nodes
 	bool									IsConfigFileLoaded();
 
-	// check is the scene node is ready to use in general updates and renders, this IS NOT recursive to childs
+	// check is the scene node is ready to use in general updates and renders, this IS NOT recursive to child scene nodes
 	bool									IsSceneNodeUseReady();
 
 	const Path							&	GetConfigFilePath();
+
+	void									CalculateSceneNodeRecursiveParentHierarchy();
 
 	// Logic update function, called once a frame or as needed.
 	// This will update all logic attached to the scene node like
@@ -103,6 +105,12 @@ public:
 	// else about this scene object.
 	virtual void							Update_Buffers()				= 0;
 
+	// We only use one mesh and one graphics pipeline per scene node. The render order is determined by renderer
+	// and to help maximize performance, scene nodes are queued up to minimize pipeline swaps.
+	// This requires the scene node to report what pipeline it's using.
+	// Either return the pipeline used or VK_NULL_HANDLE. Null pipeline will not render anything
+	virtual VkPipeline						GetGraphicsPipeline()			= 0;
+
 	// Record transfer commands onto the Vulkan command buffer.
 	// This function should only use commands that transfer on-the-fly data between buffers.
 	// Provided command buffer in parameters will run in the primary render queue family,
@@ -113,6 +121,7 @@ public:
 	// This function should only use commands that render objects.
 	// Provided command buffer in parameters will run in the primary render queue family,
 	// meaning that all buffers should be owned by or visible in primary render queue family.
+	// You do NOT need to bind the pipeline, it has already been binded by the renderer
 	virtual void							RecordCommand_Render( VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout )	= 0;
 
 protected:
@@ -150,6 +159,29 @@ protected:
 
 	FileResourceHandle<FileResource_XML>	config_file						= nullptr;
 
+	// Calculates a new transformation matrix from position, scale and rotation
+	// Matrix is stored in transformation_matrix variable, it's also returned out of convenience
+	const Mat4							&	CalculateTransformationMatrix();
+
+	// inversion of CalculateTransformationMatrixFromPosScaleRot, this one takes in a matrix and
+	// calculates a new position, scale and rotation from it
+	void									CalculatePosScaleRot( const Mat4 & new_transformations );
+
+	// 3d position of the object
+	Vec3									position						= Vec3( 0, 0, 0 );
+
+	// Quaternion rotation of the object
+	Quat									rotation						= Quat( 1, 0, 0, 0 );
+
+	// 3d scale of the object
+	Vec3									scale							= Vec3( 1, 1, 1 );
+
+	// transformation matrix of the object to be used with other calculations that need it or with rendering
+	// this value is not calculated automatically, use CalculateTransformationMatrixFromPosScaleRot before using this
+	Mat4									transformation_matrix			= Mat4( 1 );
+
+	Mat4									inherited_transformation_matrix	= Mat4( 1 );
+
 	String									name;
 	bool									is_visible						= true;
 
@@ -159,6 +191,8 @@ private:
 	bool									is_config_file_parsed			= false;
 	bool									is_scene_node_use_ready			= false;
 	bool									is_scene_node_ok				= true;
+
+	SceneBase							*	p_parent						= nullptr;
 
 	List<UniquePointer<SceneNode>>			child_list;
 };

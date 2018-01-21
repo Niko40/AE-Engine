@@ -75,7 +75,7 @@ void UniformBuffer::DeInitialize()
 	}
 }
 
-void UniformBuffer::CopyDataToHostBuffer( void * data, VkDeviceSize byte_size )
+void UniformBuffer::CopyDataToHostBuffer( const void * data, VkDeviceSize byte_size )
 {
 	assert( byte_size <= buffer_host_memory.size );
 

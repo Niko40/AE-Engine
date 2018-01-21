@@ -16,30 +16,13 @@
 namespace AE
 {
 
-SceneNode::SceneNode( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path, SceneBase::Type scene_node_type )
-	: SceneBase( engine, scene_manager, scene_node_path, scene_node_type )
+SceneNode::SceneNode( Engine * engine, SceneManager * scene_manager, SceneBase * parent, const Path & scene_node_path, SceneBase::Type scene_node_type )
+	: SceneBase( engine, scene_manager, parent, scene_node_path, scene_node_type )
 {
 }
 
 SceneNode::~SceneNode()
 {
-}
-
-const Mat4 & SceneNode::CalculateTransformationMatrixFromPosScaleRot()
-{
-	transformation_matrix = glm::mat4( 1 );
-	transformation_matrix = glm::translate( transformation_matrix, position );
-	transformation_matrix *= glm::mat4_cast( rotation );
-	transformation_matrix = glm::scale( transformation_matrix, scale );
-	return transformation_matrix;
-}
-
-void SceneNode::CalculatePosScaleRotFromTransformationMatrix( const Mat4 & new_transformations )
-{
-	Vec3 skew;
-	Vec4 perspective;
-	glm::decompose( new_transformations, scale, rotation, position, skew, perspective );
-	rotation	= glm::conjugate( rotation );		// returned rotation is a conjugate so we need to flip it
 }
 
 tinyxml2::XMLElement * SceneNode::ParseConfigFile_SceneNodeLevel()
@@ -52,14 +35,22 @@ tinyxml2::XMLElement * SceneNode::ParseConfigFile_SceneNodeLevel()
 	is_visible		= config_file->GetFieldValue_Bool( xml_root, "visible" );
 
 	// handle meshes
+	/*
 	for( auto xml_mesh = config_file->GetChildElement( xml_root, "MESH" ); xml_mesh; xml_mesh = xml_mesh->NextSiblingElement( "MESH" ) ) {
 		mesh_info_list.push_back( MakeSharedPointer<MeshInfo>() );
 		auto & mesh = mesh_info_list.back();
+	*/
+	auto xml_mesh = config_file->GetChildElement( xml_root, "MESH" );
+	if ( xml_mesh ) {
+		mesh_info			= MakeSharedPointer<MeshInfo>();
+		auto & mesh			= mesh_info;
 
 		mesh->mesh_resource	= p_device_resource_manager->RequestResource_Mesh( { config_file->GetFieldValue_Text( xml_mesh, "path" ) } );
 		mesh->name			= config_file->GetFieldValue_Text( xml_mesh, "name" );
 		mesh->is_visible	= config_file->GetFieldValue_Bool( xml_mesh, "visible" );
 
+		// mesh specific transformation depricated since we now allow only one mesh per scene node
+		/*
 		auto position		= config_file->GetMultiFieldValues_Double( xml_mesh, "position" );
 		auto rotation		= config_file->GetMultiFieldValues_Double( xml_mesh, "rotation" );
 		auto scale			= config_file->GetMultiFieldValues_Double( xml_mesh, "scale" );
@@ -76,6 +67,7 @@ tinyxml2::XMLElement * SceneNode::ParseConfigFile_SceneNodeLevel()
 		mesh->scale.x		= ( scale.find( "x" ) != scale.end() ) ? scale[ "x" ] : 1;
 		mesh->scale.y		= ( scale.find( "y" ) != scale.end() ) ? scale[ "y" ] : 1;
 		mesh->scale.z		= ( scale.find( "z" ) != scale.end() ) ? scale[ "z" ] : 1;
+		*/
 
 		// handle render info
 		mesh->render_info.image_info.image_count			= -1;
@@ -106,7 +98,11 @@ tinyxml2::XMLElement * SceneNode::ParseConfigFile_SceneNodeLevel()
 
 SceneBase::ResourcesLoadState SceneNode::CheckResourcesLoaded_SceneNodeLevel()
 {
-	for( auto & m : mesh_info_list ) {
+//	for( auto & m : mesh_info_list ) {
+	if( mesh_info )
+	{
+		auto & m = mesh_info;
+
 		if( !m->mesh_resource->IsResourceOK() ) return ResourcesLoadState::UNABLE_TO_LOAD;
 		if( !m->mesh_resource->IsResourceReadyForUse() ) return ResourcesLoadState::NOT_READY;
 
@@ -125,7 +121,10 @@ SceneBase::ResourcesLoadState SceneNode::CheckResourcesLoaded_SceneNodeLevel()
 
 bool SceneNode::FinalizeResources_SceneNodeLevel()
 {
-	for( auto & i : mesh_info_list ) {
+//	for( auto & i : mesh_info_list ) {
+	if( mesh_info ) {
+		auto & i = mesh_info;
+
 		i->uniform_buffer	= MakeUniquePointer<UniformBuffer>( p_engine, p_renderer );
 		assert( i->uniform_buffer );
 		i->uniform_buffer->Initialize( sizeof( UniformBufferData_Mesh ) );

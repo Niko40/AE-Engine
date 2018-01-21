@@ -8,8 +8,8 @@
 namespace AE
 {
 
-SceneNode_Camera::SceneNode_Camera( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path )
-	: SceneNode_Object( engine, scene_manager, scene_node_path, SceneBase::Type::CAMERA )
+SceneNode_Camera::SceneNode_Camera( Engine * engine, SceneManager * scene_manager, SceneBase * parent, const Path & scene_node_path )
+	: SceneNode_Object( engine, scene_manager, parent, scene_node_path, SceneBase::Type::CAMERA )
 {
 }
 
@@ -19,7 +19,7 @@ SceneNode_Camera::~SceneNode_Camera()
 
 Mat4 & SceneNode_Camera::CalculateViewMatrix()
 {
-	view_matrix			= glm::inverse( CalculateTransformationMatrixFromPosScaleRot() );
+	view_matrix			= glm::inverse( CalculateTransformationMatrixFromPosScaleRot( position, rotation, scale ) );
 	return view_matrix;
 }
 
@@ -43,6 +43,11 @@ void SceneNode_Camera::Update_Buffers()
 	buffer.view_matrix			= view_matrix;
 	buffer.projection_matrix	= projection_matrix;
 	uniform_buffer->CopyDataToHostBuffer( &buffer, sizeof( buffer ) );
+}
+
+VkPipeline SceneNode_Camera::GetGraphicsPipeline()
+{
+	return VK_NULL_HANDLE;
 }
 
 void SceneNode_Camera::RecordCommand_Transfer( VkCommandBuffer command_buffer )

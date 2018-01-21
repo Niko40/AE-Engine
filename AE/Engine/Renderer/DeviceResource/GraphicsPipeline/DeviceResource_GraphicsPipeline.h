@@ -20,6 +20,7 @@ public:
 	~DeviceResource_GraphicsPipeline();
 
 	uint32_t									GetImageCount() const;
+	VkPipeline									GetVulkanPipeline() const;
 
 private:
 	LoadingState								Load();

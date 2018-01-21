@@ -26,7 +26,7 @@ SceneManager::SceneManager( Engine * engine, World * world )
 
 	TODO( "Add multithreading support for the scene update" );
 
-	active_scene	= MakeUniquePointer<Scene>( p_engine, this, "" );
+	active_scene	= MakeUniquePointer<Scene>( p_engine, this, nullptr, "" );
 }
 
 SceneManager::~SceneManager()
@@ -35,14 +35,20 @@ SceneManager::~SceneManager()
 
 void SceneManager::Update()
 {
+	// update all parent hierarchies
+	active_scene->CalculateSceneNodeRecursiveParentHierarchy();
+
 	TODO( "Implement update frequencies for different types of scene updates" );
 	Vector<SceneBase*> collection;
 	CollectAllChildSceneBases( active_scene.Get(), &collection );
 	for( auto sbase : collection ) {
-		sbase->Update_ResoureAvailability();
-		sbase->Update_Logic();
-		sbase->Update_Animation();
-		sbase->Update_Buffers();
+		if( sbase->IsSceneNodeUseReady() ) {
+			sbase->Update_Logic();
+			sbase->Update_Animation();
+			sbase->Update_Buffers();
+		} else {
+			sbase->Update_ResoureAvailability();
+		}
 	}
 
 	TODO( "Grid nodes not enabled at this point." );

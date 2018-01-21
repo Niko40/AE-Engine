@@ -11,7 +11,7 @@ namespace AE
 class SceneNode_Camera : public SceneNode_Object
 {
 public:
-	SceneNode_Camera( Engine * engine, SceneManager * scene_manager, const Path & scene_node_path );
+	SceneNode_Camera( Engine * engine, SceneManager * scene_manager, SceneBase * parent, const Path & scene_node_path );
 	~SceneNode_Camera();
 
 	Mat4						&	CalculateViewMatrix();
@@ -20,6 +20,8 @@ public:
 	void							Update_Logic();
 	void							Update_Animation();
 	void							Update_Buffers();
+
+	VkPipeline						GetGraphicsPipeline();
 
 	void							RecordCommand_Transfer( VkCommandBuffer command_buffer );
 	void							RecordCommand_Render( VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout );

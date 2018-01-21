@@ -24,6 +24,10 @@ public:
 	const Vector<CopyVertex>		&	GetCopyVertices() const;
 	const Vector<Polygon>			&	GetPolygons() const;
 
+	Vector<Vertex>					&	GetEditableVertices();
+	Vector<CopyVertex>				&	GetEditableCopyVertices();
+	Vector<Polygon>					&	GetEditablePolygons();
+
 	size_t								GetVerticesByteSize() const;
 	size_t								GetCopyVerticesByteSize() const;
 	size_t								GetPolygonsByteSize() const;

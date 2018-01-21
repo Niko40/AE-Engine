@@ -43,27 +43,21 @@ Engine::Engine()
 	file_resource_manager->AllowResourceLoading( true );
 	file_resource_manager->AllowResourceUnloading( true );
 
-	window_manager			= MakeUniquePointer<WindowManager>( this );
+	VkExtent2D resolution { 800,600 };
+	renderer				= MakeUniquePointer<Renderer>( this, "testapp", VK_MAKE_VERSION( 0, 0, 1 ), resolution, false );
 
-	renderer				= MakeUniquePointer<Renderer>( this, "testapp", VK_MAKE_VERSION( 0, 0, 1 ) );
-
-	window_manager->OpenWindow( 800, 600, "testwindow", false );
-	renderer->InitializeRenderToWindow( window_manager.Get() );
-
-	window_manager->ShowWindow( true );
+	renderer->GetWindowManager()->ShowWindow( true );
 }
 
 
 Engine::~Engine()
 {
+	renderer->GetWindowManager()->ShowWindow( false );
 	active_world	= nullptr;
 
 	renderer->GetDeviceResourceManager()->AllowResourceRequests( false );
 	renderer->GetDeviceResourceManager()->WaitJobless();
 	renderer->GetDeviceResourceManager()->ScrapDeviceResources();
-
-	renderer->DeInitializeRenderToWindow();
-	window_manager->CloseWindow();
 
 	file_resource_manager->AllowResourceRequests( false );
 	file_resource_manager->WaitJobless();
@@ -77,8 +71,7 @@ bool Engine::Run()
 	if( active_world ) {
 		active_world->Update();
 	}
-	renderer->Update();
-	if( !window_manager->Update() ) {
+	if( !renderer->Update() ) {
 		keep_running = false;
 	}
 
@@ -93,11 +86,6 @@ FileSystem * Engine::GetFileSystem()
 FileResourceManager * Engine::GetFileResourceManager()
 {
 	return file_resource_manager.Get();
-}
-
-WindowManager * Engine::GetWindowManager()
-{
-	return window_manager.Get();
 }
 
 Renderer * Engine::GetRenderer()
