@@ -11,6 +11,7 @@
 #include "../Logger/Logger.h"
 #include "../Window/WindowManager.h"
 #include "../Renderer/DescriptorSet/DescriptorPoolManager.h"
+#include "Buffer/GBuffer.h"
 
 
 namespace AE
@@ -117,9 +118,11 @@ void Renderer::DestroyDebugReporting() {};
 #endif
 
 
-Renderer::Renderer( Engine * engine, std::string application_name, uint32_t application_version )
+Renderer::Renderer( Engine * engine, std::string application_name, uint32_t application_version, VkExtent2D resolution, bool fullscreen )
 	: SubSystem( engine, "Renderer" )
 {
+	glfwInit();
+
 	VkApplicationInfo application_info {};
 	application_info.sType				= VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	application_info.pNext				= nullptr;
@@ -144,6 +147,17 @@ Renderer::Renderer( Engine * engine, std::string application_name, uint32_t appl
 	device_memory_manager		= MakeUniquePointer<DeviceMemoryManager>( p_engine, this );
 	device_resource_manager		= MakeUniquePointer<DeviceResourceManager>( p_engine, this, device_memory_manager.Get() );
 
+	window_manager				= MakeUniquePointer<WindowManager>( p_engine, this );
+	window_manager->OpenWindow( resolution, application_name, fullscreen );
+	window_manager->CreateWindowSurface();
+	window_manager->CreateSwapchain();
+	window_manager->CreateSwapchainImageViews();
+	render_resolution			= window_manager->GetVulkanSurfaceCapabilities().currentExtent;
+	FindDepthStencilFormat();
+	CreateGBuffers();
+	CreateRenderPass();
+	CreateWindowFramebuffers();
+
 	device_resource_manager->AllowResourceRequests( true );
 	device_resource_manager->AllowResourceLoading( true );
 	device_resource_manager->AllowResourceUnloading( true );
@@ -151,59 +165,37 @@ Renderer::Renderer( Engine * engine, std::string application_name, uint32_t appl
 
 Renderer::~Renderer()
 {
-	if( render_initialized_to_window ) DeInitializeRenderToWindow();
-
 	device_resource_manager->WaitJobless();
 
 	device_resource_manager->AllowResourceRequests( false );
 	device_resource_manager->AllowResourceLoading( false );
 
+	DestroyWindowFramebuffers();
+	DestroyRenderPass();
+	DestroyGBuffers();
+	window_manager->DestroySwapchainImageViews();
+	window_manager->DestroySwapchain();
+	window_manager->DestroyWindowSurface();
+	window_manager->CloseWindow();
+
 	device_resource_manager		= nullptr;
 	device_memory_manager		= nullptr;
 	descriptor_pool_manager		= nullptr;
+	window_manager				= nullptr;
 
 	DestroyGraphicsPipelineLayouts();
 	DestroyDescriptorSetLayouts();
 	DestroyDevice();
 	DestroyDebugReporting();
 	DestroyInstance();
+
+	glfwTerminate();
 }
 
-void Renderer::Update()
+bool Renderer::Update()
 {
 	device_resource_manager->Update();
-}
-
-void Renderer::InitializeRenderToWindow( WindowManager * window_manager )
-{
-	assert( window_manager );
-
-	if( render_initialized_to_window ) DeInitializeRenderToWindow();
-
-	p_window		= window_manager;
-
-	CreateWindowSurface();
-	CreateSwapchain();
-	CreateSwapchainImageViews();
-	CreateDepthStencilImageAndView();
-	CreateRenderPass();
-	CreateWindowFramebuffers();
-
-	render_initialized_to_window		= true;
-}
-
-void Renderer::DeInitializeRenderToWindow()
-{
-	if( !render_initialized_to_window ) return;
-
-	render_initialized_to_window		= false;
-
-	DestroyWindowFramebuffers();
-	DestroyRenderPass();
-	DestroyDepthStencilImageAndView();
-	DestroySwapchainImageViews();
-	DestroySwapchain();
-	DestroyWindowSurface();
+	return window_manager->Update();
 }
 
 VkInstance Renderer::GetVulkanInstance() const
@@ -226,14 +218,19 @@ VkRenderPass Renderer::GetVulkanRenderPass() const
 	return vk_render_pass;
 }
 
-DeviceMemoryManager * Renderer::GetDeviceMemoryManager() const
+DeviceMemoryManager * Renderer::GetDeviceMemoryManager()
 {
 	return device_memory_manager.Get();
 }
 
-DeviceResourceManager * Renderer::GetDeviceResourceManager() const
+DeviceResourceManager * Renderer::GetDeviceResourceManager()
 {
 	return device_resource_manager.Get();
+}
+
+WindowManager * Renderer::GetWindowManager()
+{
+	return window_manager.Get();
 }
 
 uint32_t Renderer::GetPrimaryRenderQueueFamilyIndex() const
@@ -817,305 +814,79 @@ void Renderer::GetQueueHandles()
 	}
 }
 
-void Renderer::CreateWindowSurface()
+void Renderer::FindDepthStencilFormat()
 {
-	vk_surface					= p_window->CreateVulkanSurface( vk_instance );
-	if( !vk_surface ) {
-		p_logger->LogCritical( "Couldn't create Vulkan surface" );
-	}
+	Vector<VkFormat> try_formats {
+		VK_FORMAT_D32_SFLOAT_S8_UINT,
+		VK_FORMAT_D24_UNORM_S8_UINT,
+		VK_FORMAT_D16_UNORM_S8_UINT,
+		VK_FORMAT_D32_SFLOAT,
+		VK_FORMAT_D16_UNORM,
+	};
 
-	VkBool32 WSI_supported		= VK_FALSE;
-	VulkanResultCheck( vkGetPhysicalDeviceSurfaceSupportKHR( vk_physical_device, primary_render_queue_family_index, vk_surface, &WSI_supported ) );
-
-	if( !WSI_supported ) {
-		std::stringstream ss;
-		ss << "Vulkan surface is not supported on current physical device->'";
-		ss << physical_device_properties.deviceName;
-		ss << "' and queue family->";
-		ss << primary_render_queue_family_index;
-		p_logger->LogCritical( ss.str() );
-	}
-
-	VulkanResultCheck( vkGetPhysicalDeviceSurfaceCapabilitiesKHR( vk_physical_device, vk_surface, &surface_capabilities ) );
-
-	if( surface_capabilities.currentExtent.width == UINT32_MAX ) {
-		int x = 0, y = 0;
-		glfwGetWindowSize( p_window->GetGLFWWindow(), &x, &y );
-		surface_capabilities.currentExtent.width	= uint32_t( x );
-		surface_capabilities.currentExtent.height	= uint32_t( y );
-	}
-
-	uint32_t surface_count		= 0;
-	VulkanResultCheck( vkGetPhysicalDeviceSurfaceFormatsKHR( vk_physical_device, vk_surface, &surface_count, nullptr ) );
-	Vector<VkSurfaceFormatKHR> surface_formats( surface_count );
-	VulkanResultCheck( vkGetPhysicalDeviceSurfaceFormatsKHR( vk_physical_device, vk_surface, &surface_count, surface_formats.data() ) );
-
-	if( surface_formats.size() <= 0 ) {
-		p_logger->LogCritical( "Vulkan surface formats missing" );
-	}
-
-	if( surface_formats[ 0 ].format	== VK_FORMAT_UNDEFINED ) {
-		surface_format.format		= VK_FORMAT_B8G8R8A8_UNORM;
-		surface_format.colorSpace	= VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-	} else {
-		surface_format				= surface_formats[ 0 ];
-	}
-}
-
-void Renderer::DestroyWindowSurface()
-{
-	vkDestroySurfaceKHR( vk_instance, vk_surface, VULKAN_ALLOC );
-	vk_surface = VK_NULL_HANDLE;
-}
-
-void Renderer::CreateSwapchain()
-{
-	if( swapchain_vsync ) {
-		swapchain_image_count	= 2;
-	} else {
-		swapchain_image_count	= swapchain_image_count_target;
-	}
-
-	if( swapchain_image_count < surface_capabilities.minImageCount )		swapchain_image_count	= surface_capabilities.minImageCount;
-	if( surface_capabilities.maxImageCount > 0 ) {
-		if( swapchain_image_count > surface_capabilities.maxImageCount )	swapchain_image_count	= surface_capabilities.maxImageCount;
-	}
-
-	swapchain_present_mode				= VK_PRESENT_MODE_FIFO_KHR;
-	if( !swapchain_vsync ) {
-		uint32_t present_mode_count		= 0;
-		VulkanResultCheck( vkGetPhysicalDeviceSurfacePresentModesKHR( vk_physical_device, vk_surface, &present_mode_count, nullptr ) );
-		Vector<VkPresentModeKHR> present_modes( present_mode_count );
-		VulkanResultCheck( vkGetPhysicalDeviceSurfacePresentModesKHR( vk_physical_device, vk_surface, &present_mode_count, present_modes.data() ) );
-
-		TODO( "Add more options to the user to select present modes" );
-		for( auto m : present_modes ) {
-			if( m == VK_PRESENT_MODE_MAILBOX_KHR ) {
-				swapchain_present_mode	= m;
-				break;
-			}
+	for( auto f : try_formats ) {
+		VkFormatProperties format_properties {};
+		vkGetPhysicalDeviceFormatProperties( vk_physical_device, f, &format_properties );
+		if( format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) {
+			depth_stencil_format = f;
+			break;
 		}
 	}
-
-	VkSwapchainCreateInfoKHR swapchain_CI {};
-	swapchain_CI.sType					= VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	swapchain_CI.pNext					= nullptr;
-	swapchain_CI.flags					= 0;
-	swapchain_CI.surface				= vk_surface;
-	swapchain_CI.minImageCount			= swapchain_image_count;
-	swapchain_CI.imageFormat			= surface_format.format;
-	swapchain_CI.imageColorSpace		= surface_format.colorSpace;
-	swapchain_CI.imageExtent			= surface_capabilities.currentExtent;
-	swapchain_CI.imageArrayLayers		= 1;
-	swapchain_CI.imageUsage				= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-	swapchain_CI.imageSharingMode		= VK_SHARING_MODE_EXCLUSIVE;
-	swapchain_CI.queueFamilyIndexCount	= 1;
-	swapchain_CI.pQueueFamilyIndices	= &primary_render_queue_family_index;
-	swapchain_CI.preTransform			= VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-	swapchain_CI.compositeAlpha			= VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-	swapchain_CI.presentMode			= swapchain_present_mode;
-	swapchain_CI.clipped				= VK_TRUE;
-	swapchain_CI.oldSwapchain			= nullptr;
-
-	{
-		// We don't have device resource threads at this points but better
-		// to be sure and start locking the mutex for the vulkan device at this point
-		LOCK_GUARD( *vk_device.mutex );
-		VulkanResultCheck( vkCreateSwapchainKHR( vk_device.object, &swapchain_CI, VULKAN_ALLOC, &vk_swapchain ) );
+	if( depth_stencil_format == VK_FORMAT_UNDEFINED ) {
+		p_logger->LogCritical( "Depth stencil format not selected." );
 	}
-	if( !vk_swapchain ) {
-		p_logger->LogCritical( "Swapchain creation failed" );
+	if( ( depth_stencil_format == VK_FORMAT_D32_SFLOAT_S8_UINT ) ||
+		( depth_stencil_format == VK_FORMAT_D24_UNORM_S8_UINT ) ||
+		( depth_stencil_format == VK_FORMAT_D16_UNORM_S8_UINT ) ||
+		( depth_stencil_format == VK_FORMAT_S8_UINT ) ) {
+		stencil_available				= true;
 	}
-}
-
-void Renderer::DestroySwapchain()
-{
-	// We don't have device resource threads at this points but better to be sure
-	LOCK_GUARD( *vk_device.mutex );
-	vkDestroySwapchainKHR( vk_device.object, vk_swapchain, VULKAN_ALLOC );
-	vk_swapchain = VK_NULL_HANDLE;
-}
-
-void Renderer::CreateSwapchainImageViews()
-{
-	// We don't have device resource threads at this points but better to be sure
-	LOCK_GUARD( *vk_device.mutex );
-
-	// getting the images is easy so we'll just do it in here
-	VulkanResultCheck( vkGetSwapchainImagesKHR( vk_device.object, vk_swapchain, &swapchain_image_count, nullptr ) );
-	swapchain_images.resize( swapchain_image_count );
-	VulkanResultCheck( vkGetSwapchainImagesKHR( vk_device.object, vk_swapchain, &swapchain_image_count, swapchain_images.data() ) );
-
-	swapchain_image_views.resize( swapchain_image_count );
-	for( uint32_t i=0; i < swapchain_image_count; ++i ) {
-		VkImageViewCreateInfo image_view_CI {};
-		image_view_CI.sType				= VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		image_view_CI.pNext				= nullptr;
-		image_view_CI.flags				= 0;
-		image_view_CI.image				= swapchain_images[ i ];
-		image_view_CI.viewType			= VK_IMAGE_VIEW_TYPE_2D;
-		image_view_CI.format			= surface_format.format;
-		image_view_CI.components.r		= VK_COMPONENT_SWIZZLE_IDENTITY;
-		image_view_CI.components.g		= VK_COMPONENT_SWIZZLE_IDENTITY;
-		image_view_CI.components.b		= VK_COMPONENT_SWIZZLE_IDENTITY;
-		image_view_CI.components.a		= VK_COMPONENT_SWIZZLE_IDENTITY;
-		image_view_CI.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
-		image_view_CI.subresourceRange.baseMipLevel		= 0;
-		image_view_CI.subresourceRange.levelCount		= 1;
-		image_view_CI.subresourceRange.baseArrayLayer	= 0;
-		image_view_CI.subresourceRange.layerCount		= 1;
-
-		VulkanResultCheck( vkCreateImageView( vk_device.object, &image_view_CI, VULKAN_ALLOC, &swapchain_image_views[ i ] ) );
-		if( !swapchain_image_views[ i ] ) {
-			p_logger->LogCritical( "Swapchain image view creation failed" );
-		}
-	}
-}
-
-void Renderer::DestroySwapchainImageViews()
-{
-	// We don't have device resource threads at this points but better to be sure
-	LOCK_GUARD( *vk_device.mutex );
-
-	for( auto iv : swapchain_image_views ) {
-		vkDestroyImageView( vk_device.object, iv, VULKAN_ALLOC );
-	}
-
-	swapchain_images.clear();
-	swapchain_image_views.clear();
-}
-
-void Renderer::CreateDepthStencilImageAndView()
-{
-	{
-		Vector<VkFormat> try_formats {
-			VK_FORMAT_D32_SFLOAT_S8_UINT,
-			VK_FORMAT_D24_UNORM_S8_UINT,
-			VK_FORMAT_D16_UNORM_S8_UINT,
-			VK_FORMAT_D32_SFLOAT,
-			VK_FORMAT_D16_UNORM,
-		};
-
-		for( auto f : try_formats ) {
-			VkFormatProperties format_properties {};
-			vkGetPhysicalDeviceFormatProperties( vk_physical_device, f, &format_properties );
-			if( format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) {
-				depth_stencil_format = f;
-				break;
-			}
-		}
-		if( depth_stencil_format == VK_FORMAT_UNDEFINED ) {
-			p_logger->LogCritical( "Depth stencil format not selected." );
-		}
-		if( ( depth_stencil_format == VK_FORMAT_D32_SFLOAT_S8_UINT ) ||
-			( depth_stencil_format == VK_FORMAT_D24_UNORM_S8_UINT ) ||
-			( depth_stencil_format == VK_FORMAT_D16_UNORM_S8_UINT ) ||
-			( depth_stencil_format == VK_FORMAT_S8_UINT ) ) {
-			stencil_available				= true;
-		}
-	}
-
-	VkImageCreateInfo image_CI {};
-	image_CI.sType					= VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-	image_CI.pNext					= nullptr;
-	image_CI.flags					= 0;
-	image_CI.imageType				= VK_IMAGE_TYPE_2D;
-	image_CI.format					= depth_stencil_format;
-	image_CI.extent.width			= surface_capabilities.currentExtent.width;
-	image_CI.extent.height			= surface_capabilities.currentExtent.height;
-	image_CI.extent.depth			= 1;
-	image_CI.mipLevels				= 1;
-	image_CI.arrayLayers			= 1;
-	image_CI.samples				= VK_SAMPLE_COUNT_1_BIT;
-	image_CI.tiling					= VK_IMAGE_TILING_OPTIMAL;
-	image_CI.usage					= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-	image_CI.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
-	image_CI.queueFamilyIndexCount	= 1;
-	image_CI.pQueueFamilyIndices	= &primary_render_queue_family_index;
-	image_CI.initialLayout			= VK_IMAGE_LAYOUT_UNDEFINED;
-
-	{
-		// We don't have device resource threads at this points but better to be sure
-		LOCK_GUARD( *vk_device.mutex );
-		VulkanResultCheck( vkCreateImage( vk_device.object, &image_CI, VULKAN_ALLOC, &depth_stencil_image ) );
-	}
-	if( !depth_stencil_image ) {
-		p_logger->LogCritical( "Depth stencil image creation failed" );
-	}
-	depth_stencil_image_memory		= device_memory_manager->AllocateAndBindImageMemory( depth_stencil_image, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
-	if( !depth_stencil_image_memory.memory ) {
-		p_logger->LogCritical( "Depth stencil image memory allocation failed" );
-	}
-
-	VkImageViewCreateInfo image_view_CI {};
-	image_view_CI.sType			= VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	image_view_CI.pNext			= nullptr;
-	image_view_CI.flags			= 0;
-	image_view_CI.image			= depth_stencil_image;
-	image_view_CI.viewType		= VK_IMAGE_VIEW_TYPE_2D;
-	image_view_CI.format		= depth_stencil_format;
-	image_view_CI.components.r	= VK_COMPONENT_SWIZZLE_IDENTITY;
-	image_view_CI.components.g	= VK_COMPONENT_SWIZZLE_IDENTITY;
-	image_view_CI.components.b	= VK_COMPONENT_SWIZZLE_IDENTITY;
-	image_view_CI.components.a	= VK_COMPONENT_SWIZZLE_IDENTITY;
-	image_view_CI.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_DEPTH_BIT | ( stencil_available ? VK_IMAGE_ASPECT_STENCIL_BIT : 0 );
-	image_view_CI.subresourceRange.baseMipLevel		= 0;
-	image_view_CI.subresourceRange.levelCount		= 1;
-	image_view_CI.subresourceRange.baseArrayLayer	= 0;
-	image_view_CI.subresourceRange.layerCount		= 1;
-
-	{
-		// We don't have device resource threads at this points but better to be sure
-		LOCK_GUARD( *vk_device.mutex );
-		VulkanResultCheck( vkCreateImageView( vk_device.object, &image_view_CI, VULKAN_ALLOC, &depth_stencil_image_view ) );
-	}
-	if( !depth_stencil_image_view ) {
-		p_logger->LogCritical( "Depth stencil image view creation failed" );
-	}
-}
-
-void Renderer::DestroyDepthStencilImageAndView()
-{
-	{
-		// We don't have device resource threads at this points but better to be sure
-		LOCK_GUARD( *vk_device.mutex );
-		vkDestroyImageView( vk_device.object, depth_stencil_image_view, VULKAN_ALLOC );
-		vkDestroyImage( vk_device.object, depth_stencil_image, VULKAN_ALLOC );
-	}
-	device_memory_manager->FreeMemory( depth_stencil_image_memory );
-	depth_stencil_image_memory = {};
 }
 
 void Renderer::CreateRenderPass()
 {
-	Vector<VkAttachmentDescription> attachments( 2 );
+	Array<VkSubpassDescription, 2>	subpasses {};
+	Array<VkAttachmentDescription, 3> attachments {};
+
+	// Depth stencil attachment
 	attachments[ 0 ].flags				= 0;
-	attachments[ 0 ].format				= depth_stencil_format;
+	attachments[ 0 ].format				= gbuffers[ 0 ]->GetVulkanFormat();
 	attachments[ 0 ].samples			= VK_SAMPLE_COUNT_1_BIT;
 	attachments[ 0 ].loadOp				= VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachments[ 0 ].storeOp			= VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachments[ 0 ].stencilLoadOp		= VK_ATTACHMENT_LOAD_OP_DONT_CARE;		// Change if we ever use stencils
-	attachments[ 0 ].stencilStoreOp		= VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[ 0 ].stencilStoreOp		= VK_ATTACHMENT_STORE_OP_DONT_CARE;		// Change if we ever use stencils
 	attachments[ 0 ].initialLayout		= VK_IMAGE_LAYOUT_UNDEFINED;			// Change if we ever use stencils
 	attachments[ 0 ].finalLayout		= VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
+	// G-buffers
+	// Color
 	attachments[ 1 ].flags				= 0;
-	attachments[ 1 ].format				= surface_format.format;
+	attachments[ 1 ].format				= gbuffers[ 1 ]->GetVulkanFormat();
 	attachments[ 1 ].samples			= VK_SAMPLE_COUNT_1_BIT;
 	attachments[ 1 ].loadOp				= VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachments[ 1 ].storeOp			= VK_ATTACHMENT_STORE_OP_STORE;
 	attachments[ 1 ].initialLayout		= VK_IMAGE_LAYOUT_UNDEFINED;
-	attachments[ 1 ].finalLayout		= VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	attachments[ 1 ].finalLayout		= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
+	// Final render to the window surface
+	attachments[ 2 ].flags				= 0;
+	attachments[ 2 ].format				= window_manager->GetVulkanSurfaceFormat().format;
+	attachments[ 2 ].samples			= VK_SAMPLE_COUNT_1_BIT;
+	attachments[ 2 ].loadOp				= VK_ATTACHMENT_LOAD_OP_CLEAR;			// Experiment later if we could just ignore this
+	attachments[ 2 ].storeOp			= VK_ATTACHMENT_STORE_OP_STORE;
+	attachments[ 2 ].initialLayout		= VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[ 2 ].finalLayout		= VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+	// Subpass 0, G-buffer rendering
 	VkAttachmentReference subpass_0_depth_stencil_image_reference {};
 	subpass_0_depth_stencil_image_reference.attachment		= 0;
 	subpass_0_depth_stencil_image_reference.layout			= VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-	Vector<VkAttachmentReference> subpass_0_color_image_references( 1 );
+	Array<VkAttachmentReference, 1> subpass_0_color_image_references {};
 	subpass_0_color_image_references[ 0 ].attachment		= 1;
 	subpass_0_color_image_references[ 0 ].layout			= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-	Vector<VkSubpassDescription>	subpasses( 1 );
 	subpasses[ 0 ].flags					= 0;
 	subpasses[ 0 ].pipelineBindPoint		= VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpasses[ 0 ].inputAttachmentCount		= 0;
@@ -1127,6 +898,53 @@ void Renderer::CreateRenderPass()
 	subpasses[ 0 ].preserveAttachmentCount	= 0;
 	subpasses[ 0 ].pPreserveAttachments		= nullptr;
 
+	// Subpass 1, G-buffer combining and rendering to window surface
+	Array<VkAttachmentReference, 1> subpass_1_input_attachment_references {};
+	subpass_1_input_attachment_references[ 0 ].attachment	= 1;
+	subpass_1_input_attachment_references[ 0 ].layout		= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	Array<VkAttachmentReference, 1> subpass_1_color_image_references {};
+	subpass_1_color_image_references[ 0 ].attachment		= 2;
+	subpass_1_color_image_references[ 0 ].layout			= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	subpasses[ 1 ].flags					= 0;
+	subpasses[ 1 ].pipelineBindPoint		= VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpasses[ 1 ].inputAttachmentCount		= uint32_t( subpass_1_input_attachment_references.size() );
+	subpasses[ 1 ].pInputAttachments		= subpass_1_input_attachment_references.data();
+	subpasses[ 1 ].colorAttachmentCount		= uint32_t( subpass_1_color_image_references.size() );
+	subpasses[ 1 ].pColorAttachments		= subpass_1_color_image_references.data();
+	subpasses[ 1 ].pResolveAttachments		= nullptr;
+	subpasses[ 1 ].pDepthStencilAttachment	= nullptr;
+	subpasses[ 1 ].preserveAttachmentCount	= 0;
+	subpasses[ 1 ].pPreserveAttachments		= nullptr;
+
+	// Introduce dependencies between subpasses
+	Array<VkSubpassDependency, 3> subpass_dependencies {};
+	subpass_dependencies[ 0 ].srcSubpass		= VK_SUBPASS_EXTERNAL;
+	subpass_dependencies[ 0 ].dstSubpass		= 0;
+	subpass_dependencies[ 0 ].srcStageMask		= VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	subpass_dependencies[ 0 ].dstStageMask		= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	subpass_dependencies[ 0 ].srcAccessMask		= VK_ACCESS_MEMORY_WRITE_BIT;
+	subpass_dependencies[ 0 ].dstAccessMask		= VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	subpass_dependencies[ 0 ].dependencyFlags	= 0;
+
+	subpass_dependencies[ 1 ].srcSubpass		= 0;
+	subpass_dependencies[ 1 ].dstSubpass		= 1;
+	subpass_dependencies[ 1 ].srcStageMask		= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	subpass_dependencies[ 1 ].dstStageMask		= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	subpass_dependencies[ 1 ].srcAccessMask		= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	subpass_dependencies[ 1 ].dstAccessMask		= VK_ACCESS_INPUT_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	subpass_dependencies[ 1 ].dependencyFlags	= 0;
+
+	subpass_dependencies[ 2 ].srcSubpass		= 1;
+	subpass_dependencies[ 2 ].dstSubpass		= VK_SUBPASS_EXTERNAL;
+	subpass_dependencies[ 2 ].srcStageMask		= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	subpass_dependencies[ 2 ].dstStageMask		= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	subpass_dependencies[ 2 ].srcAccessMask		= VK_ACCESS_INPUT_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	subpass_dependencies[ 2 ].dstAccessMask		= VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+	subpass_dependencies[ 2 ].dependencyFlags	= 0;
+
+	// Create the actual render pass
 	VkRenderPassCreateInfo render_pass_CI {};
 	render_pass_CI.sType				= VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	render_pass_CI.pNext				= nullptr;
@@ -1135,8 +953,8 @@ void Renderer::CreateRenderPass()
 	render_pass_CI.pAttachments			= attachments.data();
 	render_pass_CI.subpassCount			= uint32_t( subpasses.size() );
 	render_pass_CI.pSubpasses			= subpasses.data();
-	render_pass_CI.dependencyCount		= 0;
-	render_pass_CI.pDependencies		= nullptr;
+	render_pass_CI.dependencyCount		= uint32_t( subpass_dependencies.size() );
+	render_pass_CI.pDependencies		= subpass_dependencies.data();
 
 	{
 		// We don't have device resource threads at this points but better to be sure
@@ -1160,11 +978,18 @@ void Renderer::CreateWindowFramebuffers()
 	// We don't have device resource threads at this points but better to be sure
 	LOCK_GUARD( *vk_device.mutex );
 
-	vk_framebuffers.resize( swapchain_image_count );
-	for( uint32_t i=0; i < swapchain_image_count; ++i ) {
-		Vector<VkImageView> attachments( 2 );
-		attachments[ 0 ]	= depth_stencil_image_view;
-		attachments[ 1 ]	= swapchain_image_views[ i ];
+	vk_framebuffers.resize( window_manager->GetSwapchainImageCount() );
+	for( uint32_t i=0; i < window_manager->GetSwapchainImageCount(); ++i ) {
+		Array<VkImageView, 3> attachments {};
+		// Depth stencil attachment
+//		attachments[ 0 ]	= depth_stencil_image_view;
+		attachments[ 0 ]	= gbuffers[ 0 ]->GetVulkanImageView();
+
+		// G-Buffer attachments
+		attachments[ 1 ]	= gbuffers[ 1 ]->GetVulkanImageView();
+
+		// Final swapchain image
+		attachments[ 2 ]	= window_manager->GetSwapchainImageViews()[ i ];
 
 		VkFramebufferCreateInfo framebuffer_CI {};
 		framebuffer_CI.sType				= VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -1173,13 +998,13 @@ void Renderer::CreateWindowFramebuffers()
 		framebuffer_CI.renderPass			= vk_render_pass;
 		framebuffer_CI.attachmentCount		= uint32_t( attachments.size() );
 		framebuffer_CI.pAttachments			= attachments.data();
-		framebuffer_CI.width				= surface_capabilities.currentExtent.width;
-		framebuffer_CI.height				= surface_capabilities.currentExtent.height;
+		framebuffer_CI.width				= render_resolution.width;
+		framebuffer_CI.height				= render_resolution.height;
 		framebuffer_CI.layers				= 1;
 
 		VulkanResultCheck( vkCreateFramebuffer( vk_device.object, &framebuffer_CI, VULKAN_ALLOC, &vk_framebuffers[ i ] ) );
 		if( !vk_framebuffers[ i ] ) {
-			p_logger->LogCritical( "Framebuffer creation failed" );
+			p_logger->LogCritical( "Window framebuffer creation failed, format: " );
 		}
 	}
 }
@@ -1352,6 +1177,32 @@ void Renderer::DestroyGraphicsPipelineLayouts()
 		vkDestroyPipelineLayout( vk_device.object, l, VULKAN_ALLOC );
 	}
 	vk_graphics_pipeline_layouts.clear();
+}
+
+void Renderer::CreateGBuffers()
+{
+	// Depth stencil
+	gbuffers[ 0 ]		= MakeUniquePointer<GBuffer>(
+		p_engine, this,
+		depth_stencil_format,
+		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+		VK_IMAGE_ASPECT_DEPTH_BIT | ( stencil_available ? VK_IMAGE_ASPECT_STENCIL_BIT : 0 ),
+		render_resolution );
+
+	// Color
+	gbuffers[ 1 ]		= MakeUniquePointer<GBuffer>(
+		p_engine, this,
+		VK_FORMAT_B8G8R8A8_UNORM,
+		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
+		VK_IMAGE_ASPECT_COLOR_BIT,
+		render_resolution );
+}
+
+void Renderer::DestroyGBuffers()
+{
+	for( auto & g : gbuffers ) {
+		g		= nullptr;
+	}
 }
 
 }

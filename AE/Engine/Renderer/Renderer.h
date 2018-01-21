@@ -21,25 +21,24 @@ class DeviceMemoryManager;
 class DeviceResourceManager;
 class DescriptorPoolManager;
 class SceneBase;
+class GBuffer;
 
 class Renderer : public SubSystem
 {
 public:
-	Renderer( Engine * engine, std::string application_name, uint32_t application_version );
+	Renderer( Engine * engine, std::string application_name, uint32_t application_version, VkExtent2D resolution, bool fullscreen );
 	~Renderer();
 
-	void									Update();
-
-	void									InitializeRenderToWindow( WindowManager * window_manager );
-	void									DeInitializeRenderToWindow();
+	bool									Update();
 
 	VkInstance								GetVulkanInstance() const;
 	VkPhysicalDevice						GetVulkanPhysicalDevice() const;
 	VulkanDevice							GetVulkanDevice() const;
 	VkRenderPass							GetVulkanRenderPass() const;
 
-	DeviceMemoryManager					*	GetDeviceMemoryManager() const;
-	DeviceResourceManager				*	GetDeviceResourceManager() const;
+	DeviceMemoryManager					*	GetDeviceMemoryManager();
+	DeviceResourceManager				*	GetDeviceResourceManager();
+	WindowManager						*	GetWindowManager();
 
 	uint32_t								GetPrimaryRenderQueueFamilyIndex() const;
 	uint32_t								GetSecondaryRenderQueueFamilyIndex() const;
@@ -90,18 +89,7 @@ private:
 
 	void									GetQueueHandles();
 
-
-	void									CreateWindowSurface();
-	void									DestroyWindowSurface();
-
-	void									CreateSwapchain();
-	void									DestroySwapchain();
-
-	void									CreateSwapchainImageViews();
-	void									DestroySwapchainImageViews();
-
-	void									CreateDepthStencilImageAndView();
-	void									DestroyDepthStencilImageAndView();
+	void									FindDepthStencilFormat();
 
 	void									CreateRenderPass();
 	void									DestroyRenderPass();
@@ -115,8 +103,8 @@ private:
 	void									CreateGraphicsPipelineLayouts();
 	void									DestroyGraphicsPipelineLayouts();
 
-
-	WindowManager						*	p_window								= nullptr;
+	void									CreateGBuffers();
+	void									DestroyGBuffers();
 
 	VkInstance								vk_instance								= nullptr;
 	VkPhysicalDevice						vk_physical_device						= nullptr;
@@ -126,6 +114,7 @@ private:
 
 	UniquePointer<DeviceMemoryManager>		device_memory_manager					= nullptr;
 	UniquePointer<DeviceResourceManager>	device_resource_manager					= nullptr;
+	UniquePointer<WindowManager>			window_manager							= nullptr;
 
 	VkApplicationInfo						application_info						= {};
 
@@ -156,33 +145,16 @@ private:
 	uint32_t								primary_transfer_queue_family_index		= UINT32_MAX;
 	QueueAvailability						queue_availability						= QueueAvailability::UNDEFINED;
 
+	VkExtent2D								render_resolution						= { 800, 600 };
+
 	Vector<const char*>						instance_layer_names;
 	Vector<const char*>						instance_extension_names;
 	Vector<const char*>						device_extension_names;
 
-	VkSurfaceKHR							vk_surface								= nullptr;
-	VkSurfaceCapabilitiesKHR				surface_capabilities					= {};
-	uint32_t								surface_size_x							= 0;
-	uint32_t								surface_size_y							= 0;
-	VkSurfaceFormatKHR						surface_format							= {};
-
-	VkSwapchainKHR							vk_swapchain							= nullptr;
-	uint32_t								swapchain_image_count					= 3;
-	uint32_t								swapchain_image_count_target			= 3;
-	bool									swapchain_vsync							= false;
-	VkPresentModeKHR						swapchain_present_mode					= VK_PRESENT_MODE_MAILBOX_KHR;
-	Vector<VkImage>							swapchain_images;
-	Vector<VkImageView>						swapchain_image_views;
-
-	VkImage									depth_stencil_image						= nullptr;
-	DeviceMemoryInfo						depth_stencil_image_memory				= {};
-	VkImageView								depth_stencil_image_view				= nullptr;
 	VkFormat								depth_stencil_format					= VK_FORMAT_UNDEFINED;
 	bool									stencil_available						= false;
 
 	VkRenderPass							vk_render_pass							= nullptr;
-
-	Vector<VkFramebuffer>					vk_framebuffers;
 
 	// related to graphics pipeline layouts
 	VkDescriptorSetLayout					vk_descriptor_set_layout_for_camera		= nullptr;
@@ -195,6 +167,9 @@ private:
 	// for only 1 texture, choose layout at index 0, for 2 textures, choose layout at index 1...
 	// the amount of layouts matches BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT
 	Vector<VkPipelineLayout>				vk_graphics_pipeline_layouts;
+
+	Array<UniquePointer<GBuffer>, 2>		gbuffers								= {};
+	Vector<VkFramebuffer>					vk_framebuffers;
 
 	UniquePointer<DescriptorPoolManager>	descriptor_pool_manager;
 

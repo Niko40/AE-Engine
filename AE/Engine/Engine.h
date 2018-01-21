@@ -15,7 +15,6 @@ namespace AE
 class Logger;
 class FileSystem;
 class FileResourceManager;
-class WindowManager;
 class Renderer;
 class World;
 
@@ -41,7 +40,6 @@ public:
 
 	FileSystem						*	GetFileSystem();
 	FileResourceManager				*	GetFileResourceManager();
-	WindowManager					*	GetWindowManager();
 	Renderer						*	GetRenderer();
 	
 	World							*	CreateWorld( Path path );
@@ -50,7 +48,6 @@ public:
 private:
 	UniquePointer<FileSystem>			filesystem;
 	UniquePointer<FileResourceManager>	file_resource_manager;
-	UniquePointer<WindowManager>		window_manager;
 	UniquePointer<Renderer>				renderer;
 
 	UniquePointer<World>				active_world;

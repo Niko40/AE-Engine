@@ -26,6 +26,7 @@
     <ClCompile Include="Engine\Logger\Logger.cpp" />
     <ClCompile Include="Engine\Math\Math.cpp" />
     <ClCompile Include="Engine\Memory\MemoryPool\MemoryPool.cpp" />
+    <ClCompile Include="Engine\Renderer\Buffer\GBuffer.cpp" />
     <ClCompile Include="Engine\Renderer\Buffer\UniformBuffer.cpp" />
     <ClCompile Include="Engine\Renderer\DescriptorSet\DescriptorPoolManager.cpp" />
     <ClCompile Include="Engine\Renderer\DescriptorSet\DescriptorPoolInfo.cpp" />
@@ -76,6 +77,7 @@
     <ClInclude Include="Engine\Memory\MemoryPool\MemoryPool.h" />
     <ClInclude Include="Engine\Memory\MemoryTypes.h" />
     <ClInclude Include="Engine\Platform.h" />
+    <ClInclude Include="Engine\Renderer\Buffer\GBuffer.h" />
     <ClInclude Include="Engine\Renderer\Buffer\UniformBuffer.h" />
     <ClInclude Include="Engine\Renderer\Buffer\UniformBufferTypes.h" />
     <ClInclude Include="Engine\Renderer\DescriptorSet\DescriptorPoolManager.h" />

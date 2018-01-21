@@ -230,6 +230,9 @@
     <ClCompile Include="Engine\CppFileSystem\CppFileSystem.h">
       <Filter>Engine\CppFileSystem</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Renderer\Buffer\GBuffer.cpp">
+      <Filter>Engine\Renderer\Buffer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Engine.h">
@@ -384,6 +387,9 @@
     </ClInclude>
     <ClInclude Include="Engine\World\Scene\SceneBase.h">
       <Filter>Engine\World\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Renderer\Buffer\GBuffer.h">
+      <Filter>Engine\Renderer\Buffer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
