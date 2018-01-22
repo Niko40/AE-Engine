@@ -39,6 +39,9 @@ public:
 
 	uint32_t								GetSwapchainImageCount() const;
 
+	uint32_t								AquireSwapchainImage();
+	void									PresentSwapchainImage( uint32_t image_number, Vector<VkSemaphore> wait_semaphores );
+
 private:
 	void									OpenWindow( VkExtent2D size, std::string title, bool fullscreen );
 	void									CloseWindow();
@@ -58,6 +61,7 @@ private:
 	VkInstance								ref_vk_instance							= VK_NULL_HANDLE;
 	VkPhysicalDevice						ref_vk_physical_device					= VK_NULL_HANDLE;
 	VulkanDevice							ref_vk_device							= {};
+	VulkanQueue								ref_primary_render_queue				= {};
 
 	uint32_t								primary_render_queue_family_index		= UINT32_MAX;
 
@@ -74,6 +78,8 @@ private:
 	VkPresentModeKHR						swapchain_present_mode					= VK_PRESENT_MODE_MAILBOX_KHR;
 	Vector<VkImage>							swapchain_images;
 	Vector<VkImageView>						swapchain_image_views;
+
+	VkFence									vk_fence_swapchain_image_ready			= VK_NULL_HANDLE;
 };
 
 }

@@ -96,6 +96,52 @@ void VulkanResultCheckLoggerFunction( String msg )
 	std::cout << "Abnormal Vulkan result: " << msg << std::endl;
 }
 
+void VulkanWaitForFencesNonDeviceBlocking( VulkanDevice & ref_vk_device, const Vector<VkFence> & fences, VkBool32 wait_all )
+{
+	assert( ref_vk_device.mutex );
+	assert( fences.size() );
+	while( true ) {
+		// waiting for fences in a loop to not block device mutex for long periods of time
+		VkResult result;
+		{
+			LOCK_GUARD( *ref_vk_device.mutex );
+			result = vkWaitForFences(
+				ref_vk_device.object,
+				uint32_t( fences.size() ),
+				fences.data(),
+				wait_all, BUILD_NON_BLOCKING_TIMEOUT_FOR_FENCES );
+		}
+		switch( result ) {
+		case VK_SUCCESS:
+			return;
+		case VK_TIMEOUT:
+			std::this_thread::yield();
+			break;
+		default:
+			VulkanResultCheck( result );
+			break;
+		}
+	}
+}
+
+void VulkanWaitAndResetFencesNonDeviceBlocking( VulkanDevice & ref_vk_device, const Vector<VkFence> & fences )
+{
+	assert( ref_vk_device.mutex );
+	assert( fences.size() );
+	VulkanWaitForFencesNonDeviceBlocking( ref_vk_device, fences, VK_TRUE );
+	LOCK_GUARD( *ref_vk_device.mutex );
+	VulkanResultCheck( vkResetFences( ref_vk_device.object, uint32_t( fences.size() ), fences.data() ) );
+}
+
+void VulkanResetFences( VulkanDevice & ref_vk_device, const Vector<VkFence>& fences )
+{
+	assert( ref_vk_device.mutex );
+	assert( fences.size() );
+
+	LOCK_GUARD( *ref_vk_device.mutex );
+	VulkanResultCheck( vkResetFences( ref_vk_device.object, uint32_t( fences.size() ), fences.data() ) );
+}
+
 String VulkanResultToString( VkResult result )
 {
 	switch( result ) {

@@ -23,6 +23,19 @@ class DescriptorPoolManager;
 class SceneBase;
 class GBuffer;
 
+enum class GBUFFERS : uint32_t
+{
+	DEPTH_STENCIL,			// Format determined later
+	COLOR_RGB__EMIT_R,		// R16_G16_B16_A16_SNORM
+//	SPECULAR_RGB__EMIT_G,	// R16_G16_B16_A16_SNORM
+//	NORMAL_RGB__EMIT_B,		// R16_G16_B16_A16_SNORM
+//	LOCATION_XYZ,			// R32_G32_B32_A32_SFLOAT
+	COUNT,					// NOT A G-BUFFER, this is a counter of how many G-Buffers there actually are
+};
+
+constexpr uint32_t GBUFFERS_COUNT				= static_cast<uint32_t>( GBUFFERS::COUNT );
+constexpr uint32_t SWAPCHAIN_ATTACHMENT_INDEX	= GBUFFERS_COUNT;	// Swapchain attachment comes after all GBUFFERS so it's index is the G-Buffer count
+
 class Renderer : public SubSystem
 {
 public:
@@ -70,6 +83,19 @@ public:
 
 	bool									IsFormatSupported( VkImageTiling tiling, VkFormat format, VkFormatFeatureFlags feature_flags );
 
+	// Begin render. Aquire a new swapchain image from the window manager, begins
+	// and returns a command buffer that we should use to render our scene with.
+	VkCommandBuffer							BeginRender();
+
+	// End the render. Submits the command buffer to the primary render queue
+	// and gives the correct swapchain image to the presentation engine as soon as it's done rendering.
+	void									EndRender( VkCommandBuffer command_buffer_from_begin_render );
+
+	// Command: BeginRenderPass:
+	// Convenience function that will record the vkBeginRenderPass() function into the command buffer that you provided.
+	// Parameters are collected from the current renderer object.
+	void									Command_BeginRenderPass( VkCommandBuffer command_buffer, VkSubpassContents subpass_contents );
+
 private:
 	void									SetupDebugReporting();
 	void									CreateDebugReporting();
@@ -106,8 +132,14 @@ private:
 	void									CreateGBuffers();
 	void									DestroyGBuffers();
 
-	VkInstance								vk_instance								= nullptr;
-	VkPhysicalDevice						vk_physical_device						= nullptr;
+	void									CreatePrimaryCommandBuffers();
+	void									DestroyPrimaryCommandBuffers();
+
+	void									CreateSynchronizationObjects();
+	void									DestroySynchronizationObjects();
+
+	VkInstance								vk_instance								= VK_NULL_HANDLE;
+	VkPhysicalDevice						vk_physical_device						= VK_NULL_HANDLE;
 	VulkanDevice							vk_device								= {};
 
 	Mutex									device_mutex;
@@ -146,6 +178,17 @@ private:
 	QueueAvailability						queue_availability						= QueueAvailability::UNDEFINED;
 
 	VkExtent2D								render_resolution						= { 800, 600 };
+	uint32_t								swapchain_image_count					= 0;
+	uint32_t								current_swapchain_image					= 0;
+	uint32_t								previous_swapchain_image				= 0;
+	Vector<VkClearValue>					clear_values;
+
+	VkCommandPool							vk_primary_command_pool					= VK_NULL_HANDLE;
+	Vector<VkCommandBuffer>					vk_primary_command_buffers;
+	Vector<VkFence>							vk_primary_command_buffer_fences;
+
+	VkSemaphore								vk_semaphore_render_complete			= VK_NULL_HANDLE;
+//	VkFence									vk_fence_render_complete				= VK_NULL_HANDLE;
 
 	Vector<const char*>						instance_layer_names;
 	Vector<const char*>						instance_extension_names;
@@ -154,12 +197,12 @@ private:
 	VkFormat								depth_stencil_format					= VK_FORMAT_UNDEFINED;
 	bool									stencil_available						= false;
 
-	VkRenderPass							vk_render_pass							= nullptr;
+	VkRenderPass							vk_render_pass							= VK_NULL_HANDLE;
 
 	// related to graphics pipeline layouts
-	VkDescriptorSetLayout					vk_descriptor_set_layout_for_camera		= nullptr;
-	VkDescriptorSetLayout					vk_descriptor_set_layout_for_mesh		= nullptr;
-	VkDescriptorSetLayout					vk_descriptor_set_layout_for_pipeline	= nullptr;
+	VkDescriptorSetLayout					vk_descriptor_set_layout_for_camera		= VK_NULL_HANDLE;
+	VkDescriptorSetLayout					vk_descriptor_set_layout_for_mesh		= VK_NULL_HANDLE;
+	VkDescriptorSetLayout					vk_descriptor_set_layout_for_pipeline	= VK_NULL_HANDLE;
 	Vector<VkDescriptorSetLayout>			vk_descriptor_set_layouts_for_images;
 
 	// graphics pipeline layouts, we only deal with static sets so we don't need a custom layout per pipeline
@@ -168,7 +211,7 @@ private:
 	// the amount of layouts matches BUILD_MAX_PER_SHADER_SAMPLED_IMAGE_COUNT
 	Vector<VkPipelineLayout>				vk_graphics_pipeline_layouts;
 
-	Array<UniquePointer<GBuffer>, 2>		gbuffers								= {};
+	Array<UniquePointer<GBuffer>, GBUFFERS_COUNT>									gbuffers						= {};
 	Vector<VkFramebuffer>					vk_framebuffers;
 
 	UniquePointer<DescriptorPoolManager>	descriptor_pool_manager;
@@ -176,7 +219,7 @@ private:
 	VkDebugReportCallbackEXT				debug_report_callback					= VK_NULL_HANDLE;
 	VkDebugReportCallbackCreateInfoEXT		debug_report_callback_create_info		= {};
 
-	bool									render_initialized_to_window			= false;
+	bool									do_synchronization						= false;
 };
 
 }

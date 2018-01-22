@@ -153,10 +153,15 @@ Renderer::Renderer( Engine * engine, std::string application_name, uint32_t appl
 	window_manager->CreateSwapchain();
 	window_manager->CreateSwapchainImageViews();
 	render_resolution			= window_manager->GetVulkanSurfaceCapabilities().currentExtent;
+	swapchain_image_count		= window_manager->GetSwapchainImageCount();
 	FindDepthStencilFormat();
 	CreateGBuffers();
 	CreateRenderPass();
 	CreateWindowFramebuffers();
+	vk_primary_command_buffers.resize( swapchain_image_count );
+	vk_primary_command_buffer_fences.resize( swapchain_image_count );
+	CreatePrimaryCommandBuffers();
+	CreateSynchronizationObjects();
 
 	device_resource_manager->AllowResourceRequests( true );
 	device_resource_manager->AllowResourceLoading( true );
@@ -170,6 +175,17 @@ Renderer::~Renderer()
 	device_resource_manager->AllowResourceRequests( false );
 	device_resource_manager->AllowResourceLoading( false );
 
+	device_resource_manager->WaitJobless();		// because of multiple worker threads, just in case
+
+	{	// Wait for the whole device to become idle before trying to free any of the resources
+		LOCK_GUARD( *vk_device.mutex );
+		vkDeviceWaitIdle( vk_device.object );
+	}
+
+	DestroySynchronizationObjects();
+	DestroyPrimaryCommandBuffers();
+	vk_primary_command_buffer_fences.clear();
+	vk_primary_command_buffers.clear();
 	DestroyWindowFramebuffers();
 	DestroyRenderPass();
 	DestroyGBuffers();
@@ -370,9 +386,89 @@ bool Renderer::IsFormatSupported( VkImageTiling tiling, VkFormat format, VkForma
 	}
 }
 
+VkCommandBuffer Renderer::BeginRender()
+{
+	previous_swapchain_image	= current_swapchain_image;
+	current_swapchain_image		= window_manager->AquireSwapchainImage();
+
+	// We ignore synchronization on the first go because nothing is being signalled yet
+	if( do_synchronization ) {
+		// If the new swapchain image is the same as the old one, then we need to synchronize here
+		if( previous_swapchain_image == current_swapchain_image ) {
+			VulkanWaitForFencesNonDeviceBlocking( vk_device, { vk_primary_command_buffer_fences[ current_swapchain_image ] }, VK_TRUE );
+		}
+	}
+
+	assert( UINT32_MAX != current_swapchain_image );
+	assert( current_swapchain_image < swapchain_image_count );
+
+	VkCommandBuffer command_buffer	= vk_primary_command_buffers[ current_swapchain_image ];
+	VkCommandBufferBeginInfo command_buffer_BI {};
+	command_buffer_BI.sType				= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	command_buffer_BI.pNext				= nullptr;
+	command_buffer_BI.flags				= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	command_buffer_BI.pInheritanceInfo	= nullptr;
+	VulkanResultCheck( vkBeginCommandBuffer( command_buffer, &command_buffer_BI ) );
+	return command_buffer;
+}
+
+void Renderer::EndRender( VkCommandBuffer command_buffer_from_begin_render )
+{
+	assert( command_buffer_from_begin_render == vk_primary_command_buffers[ current_swapchain_image ] );
+	VulkanResultCheck( vkEndCommandBuffer( command_buffer_from_begin_render ) );
+
+	VkSubmitInfo submit_info {};
+	submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submit_info.pNext					= nullptr;
+	submit_info.waitSemaphoreCount		= 0;
+	submit_info.pWaitSemaphores			= nullptr;
+	submit_info.pWaitDstStageMask		= nullptr;
+	submit_info.commandBufferCount		= 1;
+	submit_info.pCommandBuffers			= &command_buffer_from_begin_render;
+	submit_info.signalSemaphoreCount	= 1;
+	submit_info.pSignalSemaphores		= &vk_semaphore_render_complete;
+
+	// We ignore synchronization on the first go because nothing is being signalled yet
+	if( do_synchronization ) {
+		// wait for the fence from the previous render to become signaled, this is where the physical device will sync with the host.
+		// The previous render must be fully finished before submitting more work because we don't queue the
+		// data we send to the physical device, we need to be sure that data isn't in use when we start rendering again
+		VulkanWaitAndResetFencesNonDeviceBlocking( vk_device, { vk_primary_command_buffer_fences[ previous_swapchain_image ] } );
+	}
+	{
+		LOCK_GUARD( *vk_primary_render_queue.mutex );
+		VulkanResultCheck( vkQueueSubmit( vk_primary_render_queue.object, 1, &submit_info, vk_primary_command_buffer_fences[ current_swapchain_image ] ) );
+	}
+
+	do_synchronization		= true;
+
+	window_manager->PresentSwapchainImage( current_swapchain_image, { vk_semaphore_render_complete } );
+}
+
+void Renderer::Command_BeginRenderPass( VkCommandBuffer command_buffer, VkSubpassContents subpass_contents )
+{
+	VkRect2D render_area {};
+	render_area.offset		= { 0, 0 };
+	render_area.extent		= render_resolution;
+
+	VkRenderPassBeginInfo render_pass_BI {};
+	render_pass_BI.sType			= VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	render_pass_BI.pNext			= nullptr;
+	render_pass_BI.renderPass		= vk_render_pass;
+	render_pass_BI.framebuffer		= vk_framebuffers[ current_swapchain_image ];
+	render_pass_BI.renderArea		= render_area;
+	render_pass_BI.clearValueCount	= uint32_t( clear_values.size() );
+	render_pass_BI.pClearValues		= clear_values.data();
+
+	vkCmdBeginRenderPass(
+		command_buffer,
+		&render_pass_BI,
+		subpass_contents );
+}
+
 void Renderer::SetupRequiredLayersAndExtensions()
 {
-	// Get reguired WSI extension names directly from GLFW "VK_KHR_surface"
+	// Get reguired WSI extension names directly from GLFW. "VK_KHR_surface"
 	// is always included, others included are system specific, like
 	// VK_KHR_WIN32_SURFACE_EXTENSION_NAME ("VK_KHR_win32_surface") on Windows OS
 	{
@@ -845,104 +941,239 @@ void Renderer::FindDepthStencilFormat()
 
 void Renderer::CreateRenderPass()
 {
-	Array<VkSubpassDescription, 2>	subpasses {};
-	Array<VkAttachmentDescription, 3> attachments {};
+	Vector<VkAttachmentDescription>			attachments;
 
-	// Depth stencil attachment
-	attachments[ 0 ].flags				= 0;
-	attachments[ 0 ].format				= gbuffers[ 0 ]->GetVulkanFormat();
-	attachments[ 0 ].samples			= VK_SAMPLE_COUNT_1_BIT;
-	attachments[ 0 ].loadOp				= VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachments[ 0 ].storeOp			= VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[ 0 ].stencilLoadOp		= VK_ATTACHMENT_LOAD_OP_DONT_CARE;		// Change if we ever use stencils
-	attachments[ 0 ].stencilStoreOp		= VK_ATTACHMENT_STORE_OP_DONT_CARE;		// Change if we ever use stencils
-	attachments[ 0 ].initialLayout		= VK_IMAGE_LAYOUT_UNDEFINED;			// Change if we ever use stencils
-	attachments[ 0 ].finalLayout		= VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	Vector<VkSubpassDescription>			subpasses;
 
-	// G-buffers
-	// Color
-	attachments[ 1 ].flags				= 0;
-	attachments[ 1 ].format				= gbuffers[ 1 ]->GetVulkanFormat();
-	attachments[ 1 ].samples			= VK_SAMPLE_COUNT_1_BIT;
-	attachments[ 1 ].loadOp				= VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachments[ 1 ].storeOp			= VK_ATTACHMENT_STORE_OP_STORE;
-	attachments[ 1 ].initialLayout		= VK_IMAGE_LAYOUT_UNDEFINED;
-	attachments[ 1 ].finalLayout		= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	Vector<Vector<VkAttachmentReference>>	input_references;
+	Vector<Vector<VkAttachmentReference>>	color_references;
+	Vector<Vector<VkAttachmentReference>>	resolve_references;
+	Vector<VkAttachmentReference>			depth_stencil_references;
+	Vector<Vector<uint32_t>>				preserve_references;
 
-	// Final render to the window surface
-	attachments[ 2 ].flags				= 0;
-	attachments[ 2 ].format				= window_manager->GetVulkanSurfaceFormat().format;
-	attachments[ 2 ].samples			= VK_SAMPLE_COUNT_1_BIT;
-	attachments[ 2 ].loadOp				= VK_ATTACHMENT_LOAD_OP_CLEAR;			// Experiment later if we could just ignore this
-	attachments[ 2 ].storeOp			= VK_ATTACHMENT_STORE_OP_STORE;
-	attachments[ 2 ].initialLayout		= VK_IMAGE_LAYOUT_UNDEFINED;
-	attachments[ 2 ].finalLayout		= VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	Vector<VkSubpassDependency>				subpass_dependencies;
 
-	// Subpass 0, G-buffer rendering
-	VkAttachmentReference subpass_0_depth_stencil_image_reference {};
-	subpass_0_depth_stencil_image_reference.attachment		= 0;
-	subpass_0_depth_stencil_image_reference.layout			= VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	attachments.reserve( 8 );
+	subpasses.reserve( 8 );
+	input_references.reserve( 8 );
+	color_references.reserve( 8 );
+	resolve_references.reserve( 8 );
+	depth_stencil_references.reserve( 8 );
+	preserve_references.reserve( 8 );
+	subpass_dependencies.reserve( 8 );
 
-	Array<VkAttachmentReference, 1> subpass_0_color_image_references {};
-	subpass_0_color_image_references[ 0 ].attachment		= 1;
-	subpass_0_color_image_references[ 0 ].layout			= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	clear_values.clear();
+	clear_values.reserve( 8 );
 
-	subpasses[ 0 ].flags					= 0;
-	subpasses[ 0 ].pipelineBindPoint		= VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpasses[ 0 ].inputAttachmentCount		= 0;
-	subpasses[ 0 ].pInputAttachments		= nullptr;
-	subpasses[ 0 ].colorAttachmentCount		= uint32_t( subpass_0_color_image_references.size() );
-	subpasses[ 0 ].pColorAttachments		= subpass_0_color_image_references.data();
-	subpasses[ 0 ].pResolveAttachments		= nullptr;		// Change if we ever use hardware antialiazing
-	subpasses[ 0 ].pDepthStencilAttachment	= &subpass_0_depth_stencil_image_reference;
-	subpasses[ 0 ].preserveAttachmentCount	= 0;
-	subpasses[ 0 ].pPreserveAttachments		= nullptr;
+	{
+		// Depth stencil attachment
+		VkAttachmentDescription				attachment {};
+		attachment.flags					= 0;
+		attachment.format					= gbuffers[ uint32_t( GBUFFERS::DEPTH_STENCIL ) ]->GetVulkanFormat();
+		attachment.samples					= VK_SAMPLE_COUNT_1_BIT;
+		attachment.loadOp					= VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachment.storeOp					= VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachment.stencilLoadOp			= VK_ATTACHMENT_LOAD_OP_DONT_CARE;		// Change if we ever use stencils
+		attachment.stencilStoreOp			= VK_ATTACHMENT_STORE_OP_DONT_CARE;		// Change if we ever use stencils
+		attachment.initialLayout			= VK_IMAGE_LAYOUT_UNDEFINED;			// Change if we ever use stencils
+		attachment.finalLayout				= VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		attachments.push_back( attachment );
+		{
+			// Clear value for depth stencil attachment
+			VkClearValue cl {};
+			cl.depthStencil.depth		= 1.0f;
+			cl.depthStencil.stencil		= 0;
+			clear_values.push_back( cl );
+		}
+	}
+	{
+		// G-buffers
+		{
+			// Color
+			VkAttachmentDescription			attachment {};
+			attachment.flags				= 0;
+			attachment.format				= gbuffers[ uint32_t( GBUFFERS::COLOR_RGB__EMIT_R ) ]->GetVulkanFormat();
+			attachment.samples				= VK_SAMPLE_COUNT_1_BIT;
+			attachment.loadOp				= VK_ATTACHMENT_LOAD_OP_CLEAR;
+			attachment.storeOp				= VK_ATTACHMENT_STORE_OP_STORE;
+			attachment.initialLayout		= VK_IMAGE_LAYOUT_UNDEFINED;
+			attachment.finalLayout			= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			attachments.push_back( attachment );
+			{
+				// Clear value for color attachment
+				VkClearValue cl {};
+				cl.color.float32[ 0 ]		= 0.2f;
+				cl.color.float32[ 1 ]		= 0.2f;
+				cl.color.float32[ 2 ]		= 0.2f;
+				cl.color.float32[ 3 ]		= 0.0f;
+				clear_values.push_back( cl );
+			}
+		}
+	}
+	{
+		// Final render to the window surface
+		VkAttachmentDescription				attachment {};
+		attachment.flags					= 0;
+		attachment.format					= window_manager->GetVulkanSurfaceFormat().format;
+		attachment.samples					= VK_SAMPLE_COUNT_1_BIT;
+		attachment.loadOp					= VK_ATTACHMENT_LOAD_OP_CLEAR;			// Experiment later if we could just ignore this, for now we'll just clear it
+		attachment.storeOp					= VK_ATTACHMENT_STORE_OP_STORE;
+		attachment.initialLayout			= VK_IMAGE_LAYOUT_UNDEFINED;
+		attachment.finalLayout				= VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		attachments.push_back( attachment );
+		{
+			// Clear value for WSI attachment
+			VkClearValue cl {};
+			cl.color.float32[ 0 ]		= 0.2f;
+			cl.color.float32[ 1 ]		= 0.2f;
+			cl.color.float32[ 2 ]		= 0.2f;
+			cl.color.float32[ 3 ]		= 0.0f;
+			clear_values.push_back( cl );
+		}
+	}
 
-	// Subpass 1, G-buffer combining and rendering to window surface
-	Array<VkAttachmentReference, 1> subpass_1_input_attachment_references {};
-	subpass_1_input_attachment_references[ 0 ].attachment	= 1;
-	subpass_1_input_attachment_references[ 0 ].layout		= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	// Image references for subpasses
+	{
+		// Subpass 0, G-buffer rendering
+		{
+			input_references.push_back( {} );
+			color_references.push_back( {} );
+			resolve_references.push_back( {} );
+			depth_stencil_references.push_back( {} );
+			preserve_references.push_back( {} );
+			auto & input_refs					= input_references.back();
+			auto & color_refs					= color_references.back();
+			auto & resolve_refs					= resolve_references.back();
+			auto & depth_stencil_refs			= depth_stencil_references.back();
+			auto & preserve_refs				= preserve_references.back();
 
-	Array<VkAttachmentReference, 1> subpass_1_color_image_references {};
-	subpass_1_color_image_references[ 0 ].attachment		= 2;
-	subpass_1_color_image_references[ 0 ].layout			= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			// Color references for this subpass
+			{
+				// Color attachment at index 0
+				VkAttachmentReference cr;
+				cr.attachment					= uint32_t( GBUFFERS::COLOR_RGB__EMIT_R );
+				cr.layout						= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				color_refs.push_back( cr );
+			}
+			// Depth stencil reference for this subpass
+			{
+				VkAttachmentReference depth_stencil_ref {};
+				depth_stencil_ref.attachment	= uint32_t( GBUFFERS::DEPTH_STENCIL );
+				depth_stencil_ref.layout		= VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+				depth_stencil_refs				= depth_stencil_ref;
+			}
+		}
 
-	subpasses[ 1 ].flags					= 0;
-	subpasses[ 1 ].pipelineBindPoint		= VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpasses[ 1 ].inputAttachmentCount		= uint32_t( subpass_1_input_attachment_references.size() );
-	subpasses[ 1 ].pInputAttachments		= subpass_1_input_attachment_references.data();
-	subpasses[ 1 ].colorAttachmentCount		= uint32_t( subpass_1_color_image_references.size() );
-	subpasses[ 1 ].pColorAttachments		= subpass_1_color_image_references.data();
-	subpasses[ 1 ].pResolveAttachments		= nullptr;
-	subpasses[ 1 ].pDepthStencilAttachment	= nullptr;
-	subpasses[ 1 ].preserveAttachmentCount	= 0;
-	subpasses[ 1 ].pPreserveAttachments		= nullptr;
+		// Subpass 1, G-buffer combining
+		{
+			input_references.push_back( {} );
+			color_references.push_back( {} );
+			resolve_references.push_back( {} );
+			depth_stencil_references.push_back( {} );
+			preserve_references.push_back( {} );
+			auto & input_refs					= input_references.back();
+			auto & color_refs					= color_references.back();
+			auto & resolve_refs					= resolve_references.back();
+			auto & depth_stencil_refs			= depth_stencil_references.back();
+			auto & preserve_refs				= preserve_references.back();
+
+			// Input references for this subpass
+			{
+				// Input attachment at index 0
+				VkAttachmentReference cr;
+				cr.attachment					= uint32_t( GBUFFERS::COLOR_RGB__EMIT_R );
+				cr.layout						= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				input_refs.push_back( cr );
+			}
+			// Color references for this subpass
+			{
+				// Color attachment at index 0
+				VkAttachmentReference cr;
+				cr.attachment					= SWAPCHAIN_ATTACHMENT_INDEX;
+				cr.layout						= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				color_refs.push_back( cr );
+			}
+		}
+	}
+
+	// Subpasses
+	{
+		// Subpass 0, rendering into G-Buffers
+		uint32_t i							= 0;		// Current subpass
+		VkSubpassDescription subpass {};
+		subpass.flags						= 0;
+		subpass.pipelineBindPoint			= VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.inputAttachmentCount		= uint32_t( input_references[ i ].size() );
+		subpass.pInputAttachments			= input_references[ i ].data();
+		subpass.colorAttachmentCount		= uint32_t( color_references[ i ].size() );
+		subpass.pColorAttachments			= color_references[ i ].data();
+		subpass.pResolveAttachments			= resolve_references[ i ].data();
+		subpass.pDepthStencilAttachment		= &depth_stencil_references[ i ];
+		subpass.preserveAttachmentCount		= uint32_t( preserve_references[ i ].size() );
+		subpass.pPreserveAttachments		= preserve_references[ i ].data();
+		subpasses.push_back( subpass );
+	}
+	{
+		// Subpass 1, combining G-Buffers into final render
+		uint32_t i							= 1;		// Current subpass
+		VkSubpassDescription subpass {};
+		subpass.flags						= 0;
+		subpass.pipelineBindPoint			= VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.inputAttachmentCount		= uint32_t( input_references[ i ].size() );
+		subpass.pInputAttachments			= input_references[ i ].data();
+		subpass.colorAttachmentCount		= uint32_t( color_references[ i ].size() );
+		subpass.pColorAttachments			= color_references[ i ].data();
+		subpass.pResolveAttachments			= resolve_references[ i ].data();
+		subpass.pDepthStencilAttachment		= nullptr;		// Depth stencil testing disabled for this subpass
+		subpass.preserveAttachmentCount		= uint32_t( preserve_references[ i ].size() );
+		subpass.pPreserveAttachments		= preserve_references[ i ].data();
+		subpasses.push_back( subpass );
+	}
 
 	// Introduce dependencies between subpasses
-	Array<VkSubpassDependency, 3> subpass_dependencies {};
-	subpass_dependencies[ 0 ].srcSubpass		= VK_SUBPASS_EXTERNAL;
-	subpass_dependencies[ 0 ].dstSubpass		= 0;
-	subpass_dependencies[ 0 ].srcStageMask		= VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	subpass_dependencies[ 0 ].dstStageMask		= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	subpass_dependencies[ 0 ].srcAccessMask		= VK_ACCESS_MEMORY_WRITE_BIT;
-	subpass_dependencies[ 0 ].dstAccessMask		= VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	subpass_dependencies[ 0 ].dependencyFlags	= 0;
-
-	subpass_dependencies[ 1 ].srcSubpass		= 0;
-	subpass_dependencies[ 1 ].dstSubpass		= 1;
-	subpass_dependencies[ 1 ].srcStageMask		= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	subpass_dependencies[ 1 ].dstStageMask		= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	subpass_dependencies[ 1 ].srcAccessMask		= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	subpass_dependencies[ 1 ].dstAccessMask		= VK_ACCESS_INPUT_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	subpass_dependencies[ 1 ].dependencyFlags	= 0;
-
-	subpass_dependencies[ 2 ].srcSubpass		= 1;
-	subpass_dependencies[ 2 ].dstSubpass		= VK_SUBPASS_EXTERNAL;
-	subpass_dependencies[ 2 ].srcStageMask		= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	subpass_dependencies[ 2 ].dstStageMask		= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-	subpass_dependencies[ 2 ].srcAccessMask		= VK_ACCESS_INPUT_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	subpass_dependencies[ 2 ].dstAccessMask		= VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-	subpass_dependencies[ 2 ].dependencyFlags	= 0;
+	{
+		// Dependency from the commands before beginning of the render pass.
+		// Needed because we transfer data before entering the render pass.
+		VkSubpassDependency dependency {};
+		dependency.srcSubpass			= VK_SUBPASS_EXTERNAL;
+		dependency.dstSubpass			= 0;
+		dependency.srcStageMask			= VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+		dependency.dstStageMask			= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.srcAccessMask		= VK_ACCESS_MEMORY_WRITE_BIT;
+		dependency.dstAccessMask		= VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependency.dependencyFlags		= 0;
+		subpass_dependencies.push_back( dependency );
+	}
+	{
+		// Dependency from the first sub-pass to the second.
+		// Needed because we render the G-Buffers on the first sub-pass
+		// and use them as input attachments on the second.
+		VkSubpassDependency dependency {};
+		dependency.srcSubpass			= 0;
+		dependency.dstSubpass			= 1;
+		dependency.srcStageMask			= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.dstStageMask			= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dependency.srcAccessMask		= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependency.dstAccessMask		= VK_ACCESS_INPUT_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependency.dependencyFlags		= 0;
+		subpass_dependencies.push_back( dependency );
+	}
+	{
+		// Dependency from the render pass to commands coming after the render pass
+		// Not necessarily needed but if we read any of the images after the render pass
+		// we need to be sure they're available.
+		// For now though it's "just in case" to make one less potential crash
+		TODO( "Study if this has any serious negative hit to the performance and take actions accordingly." );
+		VkSubpassDependency dependency {};
+		dependency.srcSubpass			= 1;
+		dependency.dstSubpass			= VK_SUBPASS_EXTERNAL;
+		dependency.srcStageMask			= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dependency.dstStageMask			= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		dependency.srcAccessMask		= VK_ACCESS_INPUT_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependency.dstAccessMask		= VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+		dependency.dependencyFlags		= 0;
+		subpass_dependencies.push_back( dependency );
+	}
 
 	// Create the actual render pass
 	VkRenderPassCreateInfo render_pass_CI {};
@@ -980,16 +1211,14 @@ void Renderer::CreateWindowFramebuffers()
 
 	vk_framebuffers.resize( window_manager->GetSwapchainImageCount() );
 	for( uint32_t i=0; i < window_manager->GetSwapchainImageCount(); ++i ) {
-		Array<VkImageView, 3> attachments {};
-		// Depth stencil attachment
-//		attachments[ 0 ]	= depth_stencil_image_view;
-		attachments[ 0 ]	= gbuffers[ 0 ]->GetVulkanImageView();
+		Array<VkImageView, GBUFFERS_COUNT + 1> attachments {};
+		// G-Buffer attachments, including depth stencil attachment
+		for( uint32_t a=0; a < GBUFFERS_COUNT; ++a ) {
+			attachments[ a ]						= gbuffers[ a ]->GetVulkanImageView();
+		}
 
-		// G-Buffer attachments
-		attachments[ 1 ]	= gbuffers[ 1 ]->GetVulkanImageView();
-
-		// Final swapchain image
-		attachments[ 2 ]	= window_manager->GetSwapchainImageViews()[ i ];
+		// Final swapchain image is the last attachment
+		attachments[ SWAPCHAIN_ATTACHMENT_INDEX ]	= window_manager->GetSwapchainImageViews()[ i ];
 
 		VkFramebufferCreateInfo framebuffer_CI {};
 		framebuffer_CI.sType				= VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -1202,6 +1431,78 @@ void Renderer::DestroyGBuffers()
 {
 	for( auto & g : gbuffers ) {
 		g		= nullptr;
+	}
+}
+
+void Renderer::CreatePrimaryCommandBuffers()
+{
+	VkCommandPoolCreateInfo command_pool_CI {};
+	command_pool_CI.sType					= VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	command_pool_CI.pNext					= nullptr;
+	command_pool_CI.flags					= VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	command_pool_CI.queueFamilyIndex		= primary_render_queue_family_index;
+	{
+		LOCK_GUARD( *vk_device.mutex );
+		VulkanResultCheck( vkCreateCommandPool( vk_device.object, &command_pool_CI, VULKAN_ALLOC, &vk_primary_command_pool ) );
+	}
+
+	VkCommandBufferAllocateInfo command_buffer_AI {};
+	command_buffer_AI.sType					= VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	command_buffer_AI.pNext					= nullptr;
+	command_buffer_AI.commandPool			= vk_primary_command_pool;
+	command_buffer_AI.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	command_buffer_AI.commandBufferCount	= 1;
+	{
+		LOCK_GUARD( *vk_device.mutex );
+		for( auto & i : vk_primary_command_buffers ) {
+			VulkanResultCheck( vkAllocateCommandBuffers( vk_device.object, &command_buffer_AI, &i ) );
+		}
+	}
+}
+
+void Renderer::DestroyPrimaryCommandBuffers()
+{
+	{
+		LOCK_GUARD( *vk_device.mutex );
+		vkDestroyCommandPool( vk_device.object, vk_primary_command_pool, VULKAN_ALLOC );
+	}
+}
+
+void Renderer::CreateSynchronizationObjects()
+{
+	{
+		// Render complete semaphore
+		VkSemaphoreCreateInfo semaphore_CI {};
+		semaphore_CI.sType			= VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		semaphore_CI.pNext			= nullptr;
+		semaphore_CI.flags			= 0;
+		LOCK_GUARD( *vk_device.mutex );
+		VulkanResultCheck( vkCreateSemaphore( vk_device.object, &semaphore_CI, VULKAN_ALLOC, &vk_semaphore_render_complete ) );
+	}
+	{
+		// Render complete fence
+		VkFenceCreateInfo fence_CI {};
+		fence_CI.sType			= VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fence_CI.pNext			= nullptr;
+		fence_CI.flags			= 0;
+		LOCK_GUARD( *vk_device.mutex );
+//		VulkanResultCheck( vkCreateFence( vk_device.object, &fence_CI, VULKAN_ALLOC, &vk_fence_render_complete ) );
+		for( auto & i : vk_primary_command_buffer_fences ) {
+			VulkanResultCheck( vkCreateFence( vk_device.object, &fence_CI, VULKAN_ALLOC, &i ) );
+		}
+	}
+}
+
+void Renderer::DestroySynchronizationObjects()
+{
+	{
+		// Destroy everything
+		LOCK_GUARD( *vk_device.mutex );
+		vkDestroySemaphore( vk_device.object, vk_semaphore_render_complete, VULKAN_ALLOC );
+//		vkDestroyFence( vk_device.object, vk_fence_render_complete, VULKAN_ALLOC );
+		for( auto & i : vk_primary_command_buffer_fences ) {
+			vkDestroyFence( vk_device.object, i, VULKAN_ALLOC );
+		}
 	}
 }
 
