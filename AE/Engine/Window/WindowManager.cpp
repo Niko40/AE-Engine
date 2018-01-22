@@ -4,6 +4,7 @@
 #include "WindowManager.h"
 #include "../Logger/Logger.h"
 #include "../Renderer/Renderer.h"
+#include "../Renderer/QueueInfo.h"
 
 #include <assert.h>
 
@@ -18,6 +19,7 @@ WindowManager::WindowManager( Engine * engine, Renderer * renderer )
 	ref_vk_instance						= p_renderer->GetVulkanInstance();
 	ref_vk_physical_device				= p_renderer->GetVulkanPhysicalDevice();
 	ref_vk_device						= p_renderer->GetVulkanDevice();
+	ref_primary_render_queue			= p_renderer->GetPrimaryRenderQueue();
 	primary_render_queue_family_index	= p_renderer->GetPrimaryRenderQueueFamilyIndex();
 	assert( ref_vk_instance );
 	assert( ref_vk_physical_device );
@@ -26,10 +28,25 @@ WindowManager::WindowManager( Engine * engine, Renderer * renderer )
 	assert( primary_render_queue_family_index != UINT32_MAX );
 
 	p_logger->LogInfo( "Window manager initialized" );
+
+	{
+		// Create Vulkan fence for aquiring an image
+		VkFenceCreateInfo fence_CI {};
+		fence_CI.sType			= VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fence_CI.pNext			= nullptr;
+		fence_CI.flags			= 0;
+		LOCK_GUARD( *ref_vk_device.mutex );
+		VulkanResultCheck( vkCreateFence( ref_vk_device.object, &fence_CI, VULKAN_ALLOC, &vk_fence_swapchain_image_ready ) );
+	}
 }
 
 WindowManager::~WindowManager()
 {
+	{
+		LOCK_GUARD( *ref_vk_device.mutex );
+		vkDestroyFence( ref_vk_device.object, vk_fence_swapchain_image_ready, VULKAN_ALLOC );
+		vk_fence_swapchain_image_ready		= VK_NULL_HANDLE;
+	}
 	p_logger->LogInfo( "Window manager terminated" );
 }
 
@@ -80,6 +97,40 @@ const Vector<VkImageView>& WindowManager::GetSwapchainImageViews() const
 uint32_t WindowManager::GetSwapchainImageCount() const
 {
 	return swapchain_image_count;
+}
+
+uint32_t WindowManager::AquireSwapchainImage()
+{
+	uint32_t	next_image		= 0;
+	{
+		LOCK_GUARD( *ref_vk_device.mutex );
+		VulkanResultCheck( vkAcquireNextImageKHR( ref_vk_device.object, vk_swapchain, UINT64_MAX, VK_NULL_HANDLE, vk_fence_swapchain_image_ready, &next_image ) );
+	}
+	{
+		LOCK_GUARD( *ref_vk_device.mutex );
+		vkWaitForFences( ref_vk_device.object, 1, &vk_fence_swapchain_image_ready, VK_TRUE, UINT64_MAX );
+		VulkanResultCheck( vkResetFences( ref_vk_device.object, 1, &vk_fence_swapchain_image_ready ) );
+	}
+	return next_image;
+}
+
+void WindowManager::PresentSwapchainImage( uint32_t image_number, Vector<VkSemaphore> wait_semaphores )
+{
+	VkResult present_result			= VK_SUCCESS;
+	VkPresentInfoKHR present_info {};
+	present_info.sType				= VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	present_info.pNext				= nullptr;
+	present_info.waitSemaphoreCount	= uint32_t( wait_semaphores.size() );
+	present_info.pWaitSemaphores	= wait_semaphores.data();
+	present_info.swapchainCount		= 1;
+	present_info.pSwapchains		= &vk_swapchain;
+	present_info.pImageIndices		= &image_number;
+	present_info.pResults			= &present_result;
+	{
+		LOCK_GUARD( *ref_primary_render_queue.mutex );
+		VulkanResultCheck( vkQueuePresentKHR( ref_primary_render_queue.object, &present_info ) );
+		VulkanResultCheck( present_result );
+	}
 }
 
 void WindowManager::OpenWindow( VkExtent2D size, std::string title, bool fullscreen )

@@ -19,6 +19,7 @@ int main( int argc, char ** argv )
 	AE::Engine engine;
 	auto world			= engine.CreateWorld( "data/worlds/test.world" );
 	auto scene_manager	= world->GetSceneManager();
+	auto renderer		= engine.GetRenderer();
 	
 	/*
 	auto file_resman	= engine.GetFileResourceManager();
@@ -37,6 +38,13 @@ int main( int argc, char ** argv )
 
 			// simulate one frame in about 60 fps
 			std::this_thread::sleep_for( std::chrono::milliseconds( 17 ) );
+
+			auto command_buffer		= renderer->BeginRender();
+			renderer->Command_BeginRenderPass( command_buffer, VK_SUBPASS_CONTENTS_INLINE );
+			vkCmdNextSubpass( command_buffer, VK_SUBPASS_CONTENTS_INLINE );
+			vkCmdEndRenderPass( command_buffer );
+
+			renderer->EndRender( command_buffer );
 		}
 	}
 

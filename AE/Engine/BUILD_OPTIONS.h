@@ -104,3 +104,14 @@
 // Descriptor pools like all the other vulkan pools in this engine are created per thread
 // VALUES: maximum number of how many descriptor sets we can allocate from a single vulkan pool
 #define BUILD_MAX_DESCRIPTOR_SETS_IN_POOL								128
+
+// Because we handle resources on the background that require accessing the Vulkan device
+// and because waiting for fences blocks the mutex to the Vulkan device this could interfere
+// with the background resource operations, effectively slowing things down, we need a "busy loop"
+// that will periodically unlock the mutex, giving background threads a chance to process.
+// This tells how long the non-blocking function is going to block at a time, higher values
+// block longer periods at a time, smaller values will consume more system resources.
+// In theory this will not effect rendering speed, only the balance between background resource
+// handling speed and main thread power consumption.
+// VALUES: blocking period of a non-blocking "wait for fences" function, in nanoseconds.
+#define BUILD_NON_BLOCKING_TIMEOUT_FOR_FENCES							10000

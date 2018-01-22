@@ -31,6 +31,15 @@ struct VulkanQueue
 	Mutex					*	mutex;
 };
 
+// Non device blocking function to wait for fences, indefinitely if fences are never set
+void VulkanWaitForFencesNonDeviceBlocking( VulkanDevice & ref_vk_device, const Vector<VkFence> & fences, VkBool32 wait_all );
+
+// Non device blocking function to wait for fences and then reset them, will wait indefinitely if fences are never set
+void VulkanWaitAndResetFencesNonDeviceBlocking( VulkanDevice & ref_vk_device, const Vector<VkFence> & fences );
+
+// simple reset fences function
+void VulkanResetFences( VulkanDevice & ref_vk_device, const Vector<VkFence> & fences );
+
 String VulkanResultToString( VkResult result );
 String VulkanFormatToString( VkFormat format );
 

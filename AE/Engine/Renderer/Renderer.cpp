@@ -153,10 +153,15 @@ Renderer::Renderer( Engine * engine, std::string application_name, uint32_t appl
 	window_manager->CreateSwapchain();
 	window_manager->CreateSwapchainImageViews();
 	render_resolution			= window_manager->GetVulkanSurfaceCapabilities().currentExtent;
+	swapchain_image_count		= window_manager->GetSwapchainImageCount();
 	FindDepthStencilFormat();
 	CreateGBuffers();
 	CreateRenderPass();
 	CreateWindowFramebuffers();
+	vk_primary_command_buffers.resize( swapchain_image_count );
+	vk_primary_command_buffer_fences.resize( swapchain_image_count );
+	CreatePrimaryCommandBuffers();
+	CreateSynchronizationObjects();
 
 	device_resource_manager->AllowResourceRequests( true );
 	device_resource_manager->AllowResourceLoading( true );
@@ -170,6 +175,17 @@ Renderer::~Renderer()
 	device_resource_manager->AllowResourceRequests( false );
 	device_resource_manager->AllowResourceLoading( false );
 
+	device_resource_manager->WaitJobless();		// because of multiple worker threads, just in case
+
+	{	// Wait for the whole device to become idle before trying to free any of the resources
+		LOCK_GUARD( *vk_device.mutex );
+		vkDeviceWaitIdle( vk_device.object );
+	}
+
+	DestroySynchronizationObjects();
+	DestroyPrimaryCommandBuffers();
+	vk_primary_command_buffer_fences.clear();
+	vk_primary_command_buffers.clear();
 	DestroyWindowFramebuffers();
 	DestroyRenderPass();
 	DestroyGBuffers();
@@ -370,9 +386,89 @@ bool Renderer::IsFormatSupported( VkImageTiling tiling, VkFormat format, VkForma
 	}
 }
 
+VkCommandBuffer Renderer::BeginRender()
+{
+	previous_swapchain_image	= current_swapchain_image;
+	current_swapchain_image		= window_manager->AquireSwapchainImage();
+
+	// We ignore synchronization on the first go because nothing is being signalled yet
+	if( do_synchronization ) {
+		// If the new swapchain image is the same as the old one, then we need to synchronize here
+		if( previous_swapchain_image == current_swapchain_image ) {
+			VulkanWaitForFencesNonDeviceBlocking( vk_device, { vk_primary_command_buffer_fences[ current_swapchain_image ] }, VK_TRUE );
+		}
+	}
+
+	assert( UINT32_MAX != current_swapchain_image );
+	assert( current_swapchain_image < swapchain_image_count );
+
+	VkCommandBuffer command_buffer	= vk_primary_command_buffers[ current_swapchain_image ];
+	VkCommandBufferBeginInfo command_buffer_BI {};
+	command_buffer_BI.sType				= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	command_buffer_BI.pNext				= nullptr;
+	command_buffer_BI.flags				= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	command_buffer_BI.pInheritanceInfo	= nullptr;
+	VulkanResultCheck( vkBeginCommandBuffer( command_buffer, &command_buffer_BI ) );
+	return command_buffer;
+}
+
+void Renderer::EndRender( VkCommandBuffer command_buffer_from_begin_render )
+{
+	assert( command_buffer_from_begin_render == vk_primary_command_buffers[ current_swapchain_image ] );
+	VulkanResultCheck( vkEndCommandBuffer( command_buffer_from_begin_render ) );
+
+	VkSubmitInfo submit_info {};
+	submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submit_info.pNext					= nullptr;
+	submit_info.waitSemaphoreCount		= 0;
+	submit_info.pWaitSemaphores			= nullptr;
+	submit_info.pWaitDstStageMask		= nullptr;
+	submit_info.commandBufferCount		= 1;
+	submit_info.pCommandBuffers			= &command_buffer_from_begin_render;
+	submit_info.signalSemaphoreCount	= 1;
+	submit_info.pSignalSemaphores		= &vk_semaphore_render_complete;
+
+	// We ignore synchronization on the first go because nothing is being signalled yet
+	if( do_synchronization ) {
+		// wait for the fence from the previous render to become signaled, this is where the physical device will sync with the host.
+		// The previous render must be fully finished before submitting more work because we don't queue the
+		// data we send to the physical device, we need to be sure that data isn't in use when we start rendering again
+		VulkanWaitAndResetFencesNonDeviceBlocking( vk_device, { vk_primary_command_buffer_fences[ previous_swapchain_image ] } );
+	}
+	{
+		LOCK_GUARD( *vk_primary_render_queue.mutex );
+		VulkanResultCheck( vkQueueSubmit( vk_primary_render_queue.object, 1, &submit_info, vk_primary_command_buffer_fences[ current_swapchain_image ] ) );
+	}
+
+	do_synchronization		= true;
+
+	window_manager->PresentSwapchainImage( current_swapchain_image, { vk_semaphore_render_complete } );
+}
+
+void Renderer::Command_BeginRenderPass( VkCommandBuffer command_buffer, VkSubpassContents subpass_contents )
+{
+	VkRect2D render_area {};
+	render_area.offset		= { 0, 0 };
+	render_area.extent		= render_resolution;
+
+	VkRenderPassBeginInfo render_pass_BI {};
+	render_pass_BI.sType			= VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	render_pass_BI.pNext			= nullptr;
+	render_pass_BI.renderPass		= vk_render_pass;
+	render_pass_BI.framebuffer		= vk_framebuffers[ current_swapchain_image ];
+	render_pass_BI.renderArea		= render_area;
+	render_pass_BI.clearValueCount	= uint32_t( clear_values.size() );
+	render_pass_BI.pClearValues		= clear_values.data();
+
+	vkCmdBeginRenderPass(
+		command_buffer,
+		&render_pass_BI,
+		subpass_contents );
+}
+
 void Renderer::SetupRequiredLayersAndExtensions()
 {
-	// Get reguired WSI extension names directly from GLFW "VK_KHR_surface"
+	// Get reguired WSI extension names directly from GLFW. "VK_KHR_surface"
 	// is always included, others included are system specific, like
 	// VK_KHR_WIN32_SURFACE_EXTENSION_NAME ("VK_KHR_win32_surface") on Windows OS
 	{
@@ -857,20 +953,23 @@ void Renderer::CreateRenderPass()
 
 	Vector<VkSubpassDependency>				subpass_dependencies;
 
-	attachments.reserve( 16 );
-	subpasses.reserve( 16 );
-	input_references.reserve( 16 );
-	color_references.reserve( 16 );
-	resolve_references.reserve( 16 );
-	depth_stencil_references.reserve( 16 );
-	preserve_references.reserve( 16 );
-	subpass_dependencies.reserve( 16 );
+	attachments.reserve( 8 );
+	subpasses.reserve( 8 );
+	input_references.reserve( 8 );
+	color_references.reserve( 8 );
+	resolve_references.reserve( 8 );
+	depth_stencil_references.reserve( 8 );
+	preserve_references.reserve( 8 );
+	subpass_dependencies.reserve( 8 );
+
+	clear_values.clear();
+	clear_values.reserve( 8 );
 
 	{
 		// Depth stencil attachment
 		VkAttachmentDescription				attachment {};
 		attachment.flags					= 0;
-		attachment.format					= gbuffers[ 0 ]->GetVulkanFormat();
+		attachment.format					= gbuffers[ uint32_t( GBUFFERS::DEPTH_STENCIL ) ]->GetVulkanFormat();
 		attachment.samples					= VK_SAMPLE_COUNT_1_BIT;
 		attachment.loadOp					= VK_ATTACHMENT_LOAD_OP_CLEAR;
 		attachment.storeOp					= VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -879,6 +978,13 @@ void Renderer::CreateRenderPass()
 		attachment.initialLayout			= VK_IMAGE_LAYOUT_UNDEFINED;			// Change if we ever use stencils
 		attachment.finalLayout				= VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		attachments.push_back( attachment );
+		{
+			// Clear value for depth stencil attachment
+			VkClearValue cl {};
+			cl.depthStencil.depth		= 1.0f;
+			cl.depthStencil.stencil		= 0;
+			clear_values.push_back( cl );
+		}
 	}
 	{
 		// G-buffers
@@ -886,13 +992,22 @@ void Renderer::CreateRenderPass()
 			// Color
 			VkAttachmentDescription			attachment {};
 			attachment.flags				= 0;
-			attachment.format				= gbuffers[ 1 ]->GetVulkanFormat();
+			attachment.format				= gbuffers[ uint32_t( GBUFFERS::COLOR_RGB__EMIT_R ) ]->GetVulkanFormat();
 			attachment.samples				= VK_SAMPLE_COUNT_1_BIT;
 			attachment.loadOp				= VK_ATTACHMENT_LOAD_OP_CLEAR;
 			attachment.storeOp				= VK_ATTACHMENT_STORE_OP_STORE;
 			attachment.initialLayout		= VK_IMAGE_LAYOUT_UNDEFINED;
 			attachment.finalLayout			= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			attachments.push_back( attachment );
+			{
+				// Clear value for color attachment
+				VkClearValue cl {};
+				cl.color.float32[ 0 ]		= 0.2f;
+				cl.color.float32[ 1 ]		= 0.2f;
+				cl.color.float32[ 2 ]		= 0.2f;
+				cl.color.float32[ 3 ]		= 0.0f;
+				clear_values.push_back( cl );
+			}
 		}
 	}
 	{
@@ -901,11 +1016,20 @@ void Renderer::CreateRenderPass()
 		attachment.flags					= 0;
 		attachment.format					= window_manager->GetVulkanSurfaceFormat().format;
 		attachment.samples					= VK_SAMPLE_COUNT_1_BIT;
-		attachment.loadOp					= VK_ATTACHMENT_LOAD_OP_CLEAR;			// Experiment later if we could just ignore this
+		attachment.loadOp					= VK_ATTACHMENT_LOAD_OP_CLEAR;			// Experiment later if we could just ignore this, for now we'll just clear it
 		attachment.storeOp					= VK_ATTACHMENT_STORE_OP_STORE;
 		attachment.initialLayout			= VK_IMAGE_LAYOUT_UNDEFINED;
 		attachment.finalLayout				= VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 		attachments.push_back( attachment );
+		{
+			// Clear value for WSI attachment
+			VkClearValue cl {};
+			cl.color.float32[ 0 ]		= 0.2f;
+			cl.color.float32[ 1 ]		= 0.2f;
+			cl.color.float32[ 2 ]		= 0.2f;
+			cl.color.float32[ 3 ]		= 0.0f;
+			clear_values.push_back( cl );
+		}
 	}
 
 	// Image references for subpasses
@@ -925,6 +1049,7 @@ void Renderer::CreateRenderPass()
 
 			// Color references for this subpass
 			{
+				// Color attachment at index 0
 				VkAttachmentReference cr;
 				cr.attachment					= uint32_t( GBUFFERS::COLOR_RGB__EMIT_R );
 				cr.layout						= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -954,6 +1079,7 @@ void Renderer::CreateRenderPass()
 
 			// Input references for this subpass
 			{
+				// Input attachment at index 0
 				VkAttachmentReference cr;
 				cr.attachment					= uint32_t( GBUFFERS::COLOR_RGB__EMIT_R );
 				cr.layout						= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -961,6 +1087,7 @@ void Renderer::CreateRenderPass()
 			}
 			// Color references for this subpass
 			{
+				// Color attachment at index 0
 				VkAttachmentReference cr;
 				cr.attachment					= SWAPCHAIN_ATTACHMENT_INDEX;
 				cr.layout						= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -1304,6 +1431,78 @@ void Renderer::DestroyGBuffers()
 {
 	for( auto & g : gbuffers ) {
 		g		= nullptr;
+	}
+}
+
+void Renderer::CreatePrimaryCommandBuffers()
+{
+	VkCommandPoolCreateInfo command_pool_CI {};
+	command_pool_CI.sType					= VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	command_pool_CI.pNext					= nullptr;
+	command_pool_CI.flags					= VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	command_pool_CI.queueFamilyIndex		= primary_render_queue_family_index;
+	{
+		LOCK_GUARD( *vk_device.mutex );
+		VulkanResultCheck( vkCreateCommandPool( vk_device.object, &command_pool_CI, VULKAN_ALLOC, &vk_primary_command_pool ) );
+	}
+
+	VkCommandBufferAllocateInfo command_buffer_AI {};
+	command_buffer_AI.sType					= VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	command_buffer_AI.pNext					= nullptr;
+	command_buffer_AI.commandPool			= vk_primary_command_pool;
+	command_buffer_AI.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	command_buffer_AI.commandBufferCount	= 1;
+	{
+		LOCK_GUARD( *vk_device.mutex );
+		for( auto & i : vk_primary_command_buffers ) {
+			VulkanResultCheck( vkAllocateCommandBuffers( vk_device.object, &command_buffer_AI, &i ) );
+		}
+	}
+}
+
+void Renderer::DestroyPrimaryCommandBuffers()
+{
+	{
+		LOCK_GUARD( *vk_device.mutex );
+		vkDestroyCommandPool( vk_device.object, vk_primary_command_pool, VULKAN_ALLOC );
+	}
+}
+
+void Renderer::CreateSynchronizationObjects()
+{
+	{
+		// Render complete semaphore
+		VkSemaphoreCreateInfo semaphore_CI {};
+		semaphore_CI.sType			= VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		semaphore_CI.pNext			= nullptr;
+		semaphore_CI.flags			= 0;
+		LOCK_GUARD( *vk_device.mutex );
+		VulkanResultCheck( vkCreateSemaphore( vk_device.object, &semaphore_CI, VULKAN_ALLOC, &vk_semaphore_render_complete ) );
+	}
+	{
+		// Render complete fence
+		VkFenceCreateInfo fence_CI {};
+		fence_CI.sType			= VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fence_CI.pNext			= nullptr;
+		fence_CI.flags			= 0;
+		LOCK_GUARD( *vk_device.mutex );
+//		VulkanResultCheck( vkCreateFence( vk_device.object, &fence_CI, VULKAN_ALLOC, &vk_fence_render_complete ) );
+		for( auto & i : vk_primary_command_buffer_fences ) {
+			VulkanResultCheck( vkCreateFence( vk_device.object, &fence_CI, VULKAN_ALLOC, &i ) );
+		}
+	}
+}
+
+void Renderer::DestroySynchronizationObjects()
+{
+	{
+		// Destroy everything
+		LOCK_GUARD( *vk_device.mutex );
+		vkDestroySemaphore( vk_device.object, vk_semaphore_render_complete, VULKAN_ALLOC );
+//		vkDestroyFence( vk_device.object, vk_fence_render_complete, VULKAN_ALLOC );
+		for( auto & i : vk_primary_command_buffer_fences ) {
+			vkDestroyFence( vk_device.object, i, VULKAN_ALLOC );
+		}
 	}
 }
 

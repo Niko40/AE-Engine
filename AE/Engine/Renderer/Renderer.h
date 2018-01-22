@@ -83,6 +83,19 @@ public:
 
 	bool									IsFormatSupported( VkImageTiling tiling, VkFormat format, VkFormatFeatureFlags feature_flags );
 
+	// Begin render. Aquire a new swapchain image from the window manager, begins
+	// and returns a command buffer that we should use to render our scene with.
+	VkCommandBuffer							BeginRender();
+
+	// End the render. Submits the command buffer to the primary render queue
+	// and gives the correct swapchain image to the presentation engine as soon as it's done rendering.
+	void									EndRender( VkCommandBuffer command_buffer_from_begin_render );
+
+	// Command: BeginRenderPass:
+	// Convenience function that will record the vkBeginRenderPass() function into the command buffer that you provided.
+	// Parameters are collected from the current renderer object.
+	void									Command_BeginRenderPass( VkCommandBuffer command_buffer, VkSubpassContents subpass_contents );
+
 private:
 	void									SetupDebugReporting();
 	void									CreateDebugReporting();
@@ -118,6 +131,12 @@ private:
 
 	void									CreateGBuffers();
 	void									DestroyGBuffers();
+
+	void									CreatePrimaryCommandBuffers();
+	void									DestroyPrimaryCommandBuffers();
+
+	void									CreateSynchronizationObjects();
+	void									DestroySynchronizationObjects();
 
 	VkInstance								vk_instance								= VK_NULL_HANDLE;
 	VkPhysicalDevice						vk_physical_device						= VK_NULL_HANDLE;
@@ -159,6 +178,17 @@ private:
 	QueueAvailability						queue_availability						= QueueAvailability::UNDEFINED;
 
 	VkExtent2D								render_resolution						= { 800, 600 };
+	uint32_t								swapchain_image_count					= 0;
+	uint32_t								current_swapchain_image					= 0;
+	uint32_t								previous_swapchain_image				= 0;
+	Vector<VkClearValue>					clear_values;
+
+	VkCommandPool							vk_primary_command_pool					= VK_NULL_HANDLE;
+	Vector<VkCommandBuffer>					vk_primary_command_buffers;
+	Vector<VkFence>							vk_primary_command_buffer_fences;
+
+	VkSemaphore								vk_semaphore_render_complete			= VK_NULL_HANDLE;
+//	VkFence									vk_fence_render_complete				= VK_NULL_HANDLE;
 
 	Vector<const char*>						instance_layer_names;
 	Vector<const char*>						instance_extension_names;
@@ -189,7 +219,7 @@ private:
 	VkDebugReportCallbackEXT				debug_report_callback					= VK_NULL_HANDLE;
 	VkDebugReportCallbackCreateInfoEXT		debug_report_callback_create_info		= {};
 
-	bool									render_initialized_to_window			= false;
+	bool									do_synchronization						= false;
 };
 
 }
