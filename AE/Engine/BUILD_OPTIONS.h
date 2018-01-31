@@ -115,3 +115,7 @@
 // handling speed and main thread power consumption.
 // VALUES: blocking period of a non-blocking "wait for fences" function, in nanoseconds.
 #define BUILD_NON_BLOCKING_TIMEOUT_FOR_FENCES							10000
+
+// Same as above for swapchain image acquisition.
+// VALUES: blocking period of a non-blocking "aquire next image" function, in nanoseconds.
+#define BUILD_NON_BLOCKING_TIMEOUT_FOR_AQUIRE_NEXT_IMAGE				10000

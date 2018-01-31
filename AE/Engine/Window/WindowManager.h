@@ -39,7 +39,13 @@ public:
 
 	uint32_t								GetSwapchainImageCount() const;
 
-	uint32_t								AquireSwapchainImage();
+	// Aquire the next swapchain image and return it's id. This function may or may not block depending on the presentation engine of the OS.
+	// You can provide a semaphore that will be set once the image is ready to be used.
+	// If no semaphore is provided (VK_NULL_HANDLE) then this function will not return until the next image is fully available for use
+	uint32_t								AquireSwapchainImage( VkSemaphore semaphore_image_ready );
+
+	// Present swapchain image, you should provide one or more semaphores to wait before presenting, typically from the final render completion.
+	// if no semaphores are given, the image is presented immediately, in this case make sure the image is ready to be presented.
 	void									PresentSwapchainImage( uint32_t image_number, Vector<VkSemaphore> wait_semaphores );
 
 private:

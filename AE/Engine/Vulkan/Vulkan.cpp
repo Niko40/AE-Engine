@@ -142,6 +142,48 @@ void VulkanResetFences( VulkanDevice & ref_vk_device, const Vector<VkFence>& fen
 	VulkanResultCheck( vkResetFences( ref_vk_device.object, uint32_t( fences.size() ), fences.data() ) );
 }
 
+uint32_t VulkanAquireSwapchainImageNonDeviceBlocking( VulkanDevice & ref_vk_device, VkSwapchainKHR ref_vk_swapchain, VkSemaphore ref_vk_semaphore, VkFence ref_vk_fence )
+{
+	assert( ref_vk_device.mutex );
+	assert( ref_vk_swapchain );
+	assert( ref_vk_semaphore || ref_vk_fence );
+
+	uint32_t next_image		= UINT32_MAX;
+
+	while( true ) {
+		// waiting for fences in a loop to not block device mutex for long periods of time
+		VkResult result;
+		{
+			LOCK_GUARD( *ref_vk_device.mutex );
+			result = vkAcquireNextImageKHR(
+				ref_vk_device.object,
+				ref_vk_swapchain,
+				BUILD_NON_BLOCKING_TIMEOUT_FOR_AQUIRE_NEXT_IMAGE,
+				ref_vk_semaphore,
+				ref_vk_fence,
+				&next_image );
+		}
+		switch( result ) {
+		case VK_SUCCESS:
+			TODO( "We should check and log if the next_image variable doesn't contain proper values." );
+			return next_image;
+		case VK_NOT_READY:
+		case VK_TIMEOUT:
+			std::this_thread::yield();
+			break;
+		case VK_SUBOPTIMAL_KHR:
+			TODO( "Add messaging system, tell renderer to resize image buffers." );
+			TODO( "We should check and log if the next_image variable doesn't contain proper values." );
+			return next_image;
+			break;
+		default:
+			VulkanResultCheck( result );
+			break;
+		}
+	}
+	return next_image;
+}
+
 String VulkanResultToString( VkResult result )
 {
 	switch( result ) {

@@ -33,8 +33,30 @@ enum class GBUFFERS : uint32_t
 	COUNT,					// NOT A G-BUFFER, this is a counter of how many G-Buffers there actually are
 };
 
+TODO;
+// Planning
+enum class GRAPHICS_PIPELINE_TYPE : uint32_t
+{
+	VERTEX_CAMERA_MESH,
+	VERTEX_CAMERA_MESH_IMAGE_1,
+	VERTEX_CAMERA_MESH_IMAGE_2,
+	VERTEX_CAMERA_MESH_IMAGE_3,
+	VERTEX_CAMERA_MESH_IMAGE_4,
+	VERTEX_CAMERA_MESH_IMAGE_5,
+	VERTEX_CAMERA_MESH_IMAGE_6,
+	VERTEX_CAMERA_MESH_IMAGE_7,
+	VERTEX_CAMERA_MESH_IMAGE_8,
+};
+
 constexpr uint32_t GBUFFERS_COUNT				= static_cast<uint32_t>( GBUFFERS::COUNT );
 constexpr uint32_t SWAPCHAIN_ATTACHMENT_INDEX	= GBUFFERS_COUNT;	// Swapchain attachment comes after all GBUFFERS so it's index is the G-Buffer count
+
+enum class FORMAT_PROPERTIES_FEATURE : uint32_t
+{
+	OPTIMAL_IMAGE,
+	LINEAR_IMAGE,
+	BUFFER,
+};
 
 class Renderer : public SubSystem
 {
@@ -81,7 +103,7 @@ public:
 
 	DescriptorPoolManager				*	GetDescriptorPoolManager();
 
-	bool									IsFormatSupported( VkImageTiling tiling, VkFormat format, VkFormatFeatureFlags feature_flags );
+	bool									IsFormatSupported( FORMAT_PROPERTIES_FEATURE feature, VkFormat format, VkFormatFeatureFlags feature_flags );
 
 	// Begin render. Aquire a new swapchain image from the window manager, begins
 	// and returns a command buffer that we should use to render our scene with.
@@ -187,6 +209,7 @@ private:
 	Vector<VkCommandBuffer>					vk_primary_command_buffers;
 	Vector<VkFence>							vk_primary_command_buffer_fences;
 
+	VkSemaphore								vk_semaphore_next_swapchain_image_available		= VK_NULL_HANDLE;
 	VkSemaphore								vk_semaphore_render_complete			= VK_NULL_HANDLE;
 //	VkFence									vk_fence_render_complete				= VK_NULL_HANDLE;
 

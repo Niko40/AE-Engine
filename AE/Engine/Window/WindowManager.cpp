@@ -99,18 +99,18 @@ uint32_t WindowManager::GetSwapchainImageCount() const
 	return swapchain_image_count;
 }
 
-uint32_t WindowManager::AquireSwapchainImage()
+uint32_t WindowManager::AquireSwapchainImage( VkSemaphore semaphore_image_ready )
 {
-	uint32_t	next_image		= 0;
+	uint32_t	next_image		= UINT32_MAX;
+
+	if( semaphore_image_ready == VK_NULL_HANDLE )
 	{
-		LOCK_GUARD( *ref_vk_device.mutex );
-		VulkanResultCheck( vkAcquireNextImageKHR( ref_vk_device.object, vk_swapchain, UINT64_MAX, VK_NULL_HANDLE, vk_fence_swapchain_image_ready, &next_image ) );
+		next_image	= VulkanAquireSwapchainImageNonDeviceBlocking( ref_vk_device, vk_swapchain, VK_NULL_HANDLE, vk_fence_swapchain_image_ready );
+		VulkanWaitAndResetFencesNonDeviceBlocking( ref_vk_device, { vk_fence_swapchain_image_ready } );
+	} else {
+		next_image	= VulkanAquireSwapchainImageNonDeviceBlocking( ref_vk_device, vk_swapchain, semaphore_image_ready, VK_NULL_HANDLE );
 	}
-	{
-		LOCK_GUARD( *ref_vk_device.mutex );
-		vkWaitForFences( ref_vk_device.object, 1, &vk_fence_swapchain_image_ready, VK_TRUE, UINT64_MAX );
-		VulkanResultCheck( vkResetFences( ref_vk_device.object, 1, &vk_fence_swapchain_image_ready ) );
-	}
+	assert( UINT32_MAX != next_image );
 	return next_image;
 }
 

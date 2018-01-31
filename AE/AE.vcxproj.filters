@@ -396,9 +396,12 @@
     <Xml Include="..\install\data\scene_nodes\objects\shapes\torus_knot.xml" />
     <Xml Include="..\install\data\graphics_pipelines\default\default.xml" />
     <Xml Include="..\install\data\cameras\DefaultCamera.xml" />
+    <Xml Include="..\install\data\graphics_pipelines\default_gbuffer\default_gbuffer.xml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\install\data\graphics_pipelines\default\default.frag" />
     <None Include="..\install\data\graphics_pipelines\default\default.vert" />
+    <None Include="..\install\data\graphics_pipelines\default_gbuffer\default_gbuffer.vert" />
+    <None Include="..\install\data\graphics_pipelines\default_gbuffer\default_gbuffer.frag" />
   </ItemGroup>
 </Project>

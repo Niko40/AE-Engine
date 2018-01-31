@@ -1,20 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<!--All graphics pipelines have the root node name GRAPHICS_PIPELINE-->
 <GRAPHICS_PIPELINE>
-  <name>Default G-Buffer Pipeline</name>
+  <name>Default Pipeline</name>
 
-  <!--
-  The scene rendering process is hard-coded, which render stage this pipeline and
-  it's shaders handle is given below. This will also effect the amount and type of
-  data you need output and the amount and type of data that the shader is given.
-  All possible values are:
-  GBUFFER_SELECTION       = rendering from selected items to a G-Buffer
-  LIGHT_PRIMARY           = primary render from scene to most of the G-Buffers
-  COMBINED_PRIMARY        = primary combinator shader that combines all G-Buffers into a render
-  ... TODO more
-  -->
-  <render_stage value ="GBUFFER_PRIMARY"/>
+  <render_stage value ="LIGHT_PRIMARY"/>
 
   <!--
   flags cares little about the name of the attribute, only the values, it counts them all and bit or's them together ( f1 | f2 | ... )
@@ -37,12 +26,12 @@
       geometry="geom.spv"
       fragment="frag.spv"/>
       -->
-    
+
     <!--You only need to include stages that you need, as usual at least vertex and fragment shaders are required-->
     <paths
-      vertex="data/graphics_pipelines/default/default.vert.spv"
-      fragment="data/graphics_pipelines/default/default.frag.spv"/>
-    
+      vertex="data/graphics_pipelines/default/default_gbuffer.vert.spv"
+      fragment="data/graphics_pipelines/default/default_gbuffer.frag.spv"/>
+
     <!--Same prinsiple as with shader_paths, define entry points for every shader, "main" is default if not set-->
     <entry_points
       vertex="main"
@@ -65,12 +54,12 @@
     TRIANGLE_STRIP_WITH_ADJACENCY
     -->
     <topology value="TRIANGLE_LIST"/>
-    
+
     <!--Restart primitive drawing if the index list includes a special value,
     that value is UINT32_MAX, by default this will be disabled-->
     <primitive_restart_enable value="false"/>
   </INPUT_ASSEMBLY>
-  
+
   <!--tessellation state, this is ignored if either tessellation control or evaluation shaders are missing-->
   <TESSELLATION>
     <!--this is the amount of control points given to the tessellation control shader, default is 3
@@ -84,10 +73,10 @@
     <!--Clamp the fragment depth values instead of clipping them, default is false,
     in which case fragments outside depth boundaries will not be rendered-->
     <depth_clamp_enable value="false"/>
-    
+
     <!--Discard primitives immediately before rasterization state, default is false-->
     <rasterizer_discard_enable value="false"/>
-    
+
     <!--Polygon mode tells how the polygon is handled, possible values are
     FILL    <- default
     LINE
@@ -114,16 +103,16 @@
     <depth_bias_constant_factor value="0.0"/>
     <depth_bias_clamp value="0.0"/>
     <depth_bias_slope_factor value="0.0"/>
-    
+
     <!--This only has an effect when drawing lines-->
     <line_width value="1.0"/>
-    
+
   </RASTERIZATION>
 
   <DEPTH_STENCIL>
     <!--Enable depth testing-->
     <depth_test_enable value="true"/>
-    
+
     <!--Enable depth writing after testing, always false if depth_test_enable is false-->
     <depth_write_enable value="true"/>
 
@@ -151,7 +140,7 @@
   <COLOR_BLEND>
     <!--Enable logical operations between the fragments color and existing color in the framebuffer-->
     <logic_op_enable value="false"/>
-    
+
     <!--Logical operations to perform before writing to the framebuffer, possible values are
     CLEAR
     AND
@@ -177,7 +166,7 @@
       <!--This tells which G-buffer this blend attachment considers-->
       <!--G-buffers are TODO so this value is ignored for now-->
       <g_buffer_name value="OUTPUT"/>
-      
+
       <!--Tells if we want to enable color blending for this blend attachment-->
       <blend_enable value="false"/>
 
@@ -218,7 +207,7 @@
       -->
       <color_blend_op value="ADD"/>
       <alpha_blend_op value="ADD"/>
-      
+
       <!--Example of alpha blending:
       <src_color_blend_factor value="SRC_ALPHA"/>
       <dst_color_blend_factor value="ONE_MINUS_SRC_ALPHA"/>
@@ -231,7 +220,7 @@
       <!--This tells which color components to actually write to the framebuffer, by default this is empty so nothing would be visible-->
       <color_component_flags f1="R" f2="G" f3="B" f4="A"/>
     </BLEND_ATTACHMENT>
-    
+
     <!--Blend constants for BLEND_ATTACHMENTs only used if any of the blend factors uses CONSTANT-->
     <blend_constant_r value="1.0"/>
     <blend_constant_g value="1.0"/>

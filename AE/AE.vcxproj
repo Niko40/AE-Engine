@@ -111,12 +111,19 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="..\install\data\cameras\DefaultCamera.xml" />
-    <Xml Include="..\install\data\graphics_pipelines\default\default.xml" />
+    <Xml Include="..\install\data\graphics_pipelines\default\default.xml">
+      <SubType>Designer</SubType>
+    </Xml>
+    <Xml Include="..\install\data\graphics_pipelines\default_gbuffer\default_gbuffer.xml">
+      <SubType>Designer</SubType>
+    </Xml>
     <Xml Include="..\install\data\scene_nodes\objects\shapes\torus_knot.xml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\install\data\graphics_pipelines\default\default.frag" />
     <None Include="..\install\data\graphics_pipelines\default\default.vert" />
+    <None Include="..\install\data\graphics_pipelines\default_gbuffer\default_gbuffer.frag" />
+    <None Include="..\install\data\graphics_pipelines\default_gbuffer\default_gbuffer.vert" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{9A694D7D-931E-4E14-8110-9F129A9832EF}</ProjectGuid>

@@ -14,7 +14,7 @@ layout(set=3, binding=0) uniform sampler2D diffuse;
 layout(location=0) in vec2 fragment_uv;
 
 
-// output of final colors
+// output to G-Buffers
 layout(location=0) out vec4 final_color;
 
 

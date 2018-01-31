@@ -371,17 +371,19 @@ DescriptorPoolManager * Renderer::GetDescriptorPoolManager()
 	*/
 }
 
-bool Renderer::IsFormatSupported( VkImageTiling tiling, VkFormat format, VkFormatFeatureFlags feature_flags )
+bool Renderer::IsFormatSupported( FORMAT_PROPERTIES_FEATURE feature, VkFormat format, VkFormatFeatureFlags feature_flags )
 {
 	VkFormatProperties fp {};
 	vkGetPhysicalDeviceFormatProperties( vk_physical_device, format, &fp );
-	switch( tiling ) {
-	case VK_IMAGE_TILING_OPTIMAL:
-		return ( ( fp.optimalTilingFeatures & feature_flags ) == feature_flags );
-	case VK_IMAGE_TILING_LINEAR:
+	switch( feature ) {
+	case FORMAT_PROPERTIES_FEATURE::LINEAR_IMAGE:
 		return ( ( fp.linearTilingFeatures & feature_flags ) == feature_flags );
+	case FORMAT_PROPERTIES_FEATURE::OPTIMAL_IMAGE:
+		return ( ( fp.optimalTilingFeatures & feature_flags ) == feature_flags );
+	case FORMAT_PROPERTIES_FEATURE::BUFFER:
+		return ( ( fp.bufferFeatures & feature_flags ) == feature_flags );
 	default:
-		p_logger->LogWarning( "Enum error: FileResource_Image tiling can only be vk::ImageTiling::eOptimal or vk::ImageTiling::eLinear" );
+		p_logger->LogWarning( "Enum error: Format properties feature can only be LINEAR, OPTIMAL or BUFFER" );
 		return false;
 	}
 }
@@ -389,7 +391,7 @@ bool Renderer::IsFormatSupported( VkImageTiling tiling, VkFormat format, VkForma
 VkCommandBuffer Renderer::BeginRender()
 {
 	previous_swapchain_image	= current_swapchain_image;
-	current_swapchain_image		= window_manager->AquireSwapchainImage();
+	current_swapchain_image		= window_manager->AquireSwapchainImage( vk_semaphore_next_swapchain_image_available );
 
 	// We ignore synchronization on the first go because nothing is being signalled yet
 	if( do_synchronization ) {
@@ -415,14 +417,18 @@ VkCommandBuffer Renderer::BeginRender()
 void Renderer::EndRender( VkCommandBuffer command_buffer_from_begin_render )
 {
 	assert( command_buffer_from_begin_render == vk_primary_command_buffers[ current_swapchain_image ] );
+	if( command_buffer_from_begin_render != vk_primary_command_buffers[ current_swapchain_image ] ) {
+		p_logger->LogCritical( "Wrong command buffer submitted to the EndFunction function." );
+	}
 	VulkanResultCheck( vkEndCommandBuffer( command_buffer_from_begin_render ) );
 
+	VkPipelineStageFlags wait_dst_stage_flags	= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	VkSubmitInfo submit_info {};
 	submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submit_info.pNext					= nullptr;
-	submit_info.waitSemaphoreCount		= 0;
-	submit_info.pWaitSemaphores			= nullptr;
-	submit_info.pWaitDstStageMask		= nullptr;
+	submit_info.waitSemaphoreCount		= 1;
+	submit_info.pWaitSemaphores			= &vk_semaphore_next_swapchain_image_available;
+	submit_info.pWaitDstStageMask		= &wait_dst_stage_flags;
 	submit_info.commandBufferCount		= 1;
 	submit_info.pCommandBuffers			= &command_buffer_from_begin_render;
 	submit_info.signalSemaphoreCount	= 1;
@@ -1471,22 +1477,28 @@ void Renderer::DestroyPrimaryCommandBuffers()
 void Renderer::CreateSynchronizationObjects()
 {
 	{
-		// Render complete semaphore
+		// Common create info for semaphores
 		VkSemaphoreCreateInfo semaphore_CI {};
 		semaphore_CI.sType			= VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 		semaphore_CI.pNext			= nullptr;
 		semaphore_CI.flags			= 0;
+
 		LOCK_GUARD( *vk_device.mutex );
+		// next swapchain image available semaphore
+		VulkanResultCheck( vkCreateSemaphore( vk_device.object, &semaphore_CI, VULKAN_ALLOC, &vk_semaphore_next_swapchain_image_available ) );
+
+		// Render complete semaphore
 		VulkanResultCheck( vkCreateSemaphore( vk_device.object, &semaphore_CI, VULKAN_ALLOC, &vk_semaphore_render_complete ) );
 	}
 	{
-		// Render complete fence
+		// Common create info for fences
 		VkFenceCreateInfo fence_CI {};
 		fence_CI.sType			= VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 		fence_CI.pNext			= nullptr;
 		fence_CI.flags			= 0;
 		LOCK_GUARD( *vk_device.mutex );
 //		VulkanResultCheck( vkCreateFence( vk_device.object, &fence_CI, VULKAN_ALLOC, &vk_fence_render_complete ) );
+		// Command buffer fences
 		for( auto & i : vk_primary_command_buffer_fences ) {
 			VulkanResultCheck( vkCreateFence( vk_device.object, &fence_CI, VULKAN_ALLOC, &i ) );
 		}
@@ -1499,6 +1511,7 @@ void Renderer::DestroySynchronizationObjects()
 		// Destroy everything
 		LOCK_GUARD( *vk_device.mutex );
 		vkDestroySemaphore( vk_device.object, vk_semaphore_render_complete, VULKAN_ALLOC );
+		vkDestroySemaphore( vk_device.object, vk_semaphore_next_swapchain_image_available, VULKAN_ALLOC );
 //		vkDestroyFence( vk_device.object, vk_fence_render_complete, VULKAN_ALLOC );
 		for( auto & i : vk_primary_command_buffer_fences ) {
 			vkDestroyFence( vk_device.object, i, VULKAN_ALLOC );

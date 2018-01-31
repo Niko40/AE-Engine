@@ -668,7 +668,7 @@ ImageData ConvertImageToPhysicalDeviceSupportedFormat( Renderer * renderer, cons
 	case VK_FORMAT_R8_UNORM:
 	{
 		if( renderer->IsFormatSupported(
-			VK_IMAGE_TILING_OPTIMAL,
+			FORMAT_PROPERTIES_FEATURE::OPTIMAL_IMAGE,
 			VK_FORMAT_R8_UNORM,
 			VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT | VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR ) ) {
 			// use image data directly
@@ -678,7 +678,7 @@ ImageData ConvertImageToPhysicalDeviceSupportedFormat( Renderer * renderer, cons
 			return ret;
 
 		} else if( renderer->IsFormatSupported(
-			VK_IMAGE_TILING_OPTIMAL,
+			FORMAT_PROPERTIES_FEATURE::OPTIMAL_IMAGE,
 			VK_FORMAT_R8G8_UNORM,
 			VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT | VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR ) ) {
 			// add extra channel
@@ -700,7 +700,7 @@ ImageData ConvertImageToPhysicalDeviceSupportedFormat( Renderer * renderer, cons
 	case VK_FORMAT_R8G8B8_UNORM:
 	{
 		if( renderer->IsFormatSupported(
-			VK_IMAGE_TILING_OPTIMAL,
+			FORMAT_PROPERTIES_FEATURE::OPTIMAL_IMAGE,
 			VK_FORMAT_R8G8B8_UNORM,
 			VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT | VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR ) ) {
 			// use image data directly
@@ -710,7 +710,7 @@ ImageData ConvertImageToPhysicalDeviceSupportedFormat( Renderer * renderer, cons
 			return ret;
 
 		} else if( renderer->IsFormatSupported(
-			VK_IMAGE_TILING_OPTIMAL,
+			FORMAT_PROPERTIES_FEATURE::OPTIMAL_IMAGE,
 			VK_FORMAT_B8G8R8_UNORM,
 			VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT | VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR ) ) {
 			// flip components
@@ -728,7 +728,7 @@ ImageData ConvertImageToPhysicalDeviceSupportedFormat( Renderer * renderer, cons
 			return ret;
 
 		} else if( renderer->IsFormatSupported(
-			VK_IMAGE_TILING_OPTIMAL,
+			FORMAT_PROPERTIES_FEATURE::OPTIMAL_IMAGE,
 			VK_FORMAT_R8G8B8A8_UNORM,
 			VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT | VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR ) ) {
 			// add alpha
@@ -747,7 +747,7 @@ ImageData ConvertImageToPhysicalDeviceSupportedFormat( Renderer * renderer, cons
 			return ret;
 
 		} else if( renderer->IsFormatSupported(
-			VK_IMAGE_TILING_OPTIMAL,
+			FORMAT_PROPERTIES_FEATURE::OPTIMAL_IMAGE,
 			VK_FORMAT_B8G8R8A8_UNORM,
 			VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT | VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR ) ) {
 			// flip components and add alpha
@@ -771,7 +771,7 @@ ImageData ConvertImageToPhysicalDeviceSupportedFormat( Renderer * renderer, cons
 	case VK_FORMAT_R8G8_UNORM:
 	{
 		if( renderer->IsFormatSupported(
-			VK_IMAGE_TILING_OPTIMAL,
+			FORMAT_PROPERTIES_FEATURE::OPTIMAL_IMAGE,
 			VK_FORMAT_R8G8_UNORM,
 			VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT | VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR ) ) {
 			// use image data directly
@@ -785,7 +785,7 @@ ImageData ConvertImageToPhysicalDeviceSupportedFormat( Renderer * renderer, cons
 	case VK_FORMAT_R8G8B8A8_UNORM:
 	{
 		if( renderer->IsFormatSupported(
-			VK_IMAGE_TILING_OPTIMAL,
+			FORMAT_PROPERTIES_FEATURE::OPTIMAL_IMAGE,
 			VK_FORMAT_R8G8B8A8_UNORM,
 			VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT | VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR ) ) {
 			// use image data directly
@@ -795,7 +795,7 @@ ImageData ConvertImageToPhysicalDeviceSupportedFormat( Renderer * renderer, cons
 			return ret;
 
 		} else if( renderer->IsFormatSupported(
-			VK_IMAGE_TILING_OPTIMAL,
+			FORMAT_PROPERTIES_FEATURE::OPTIMAL_IMAGE,
 			VK_FORMAT_B8G8R8A8_UNORM,
 			VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT | VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR ) ) {
 			// flip color components but keep alpha
@@ -821,7 +821,7 @@ ImageData ConvertImageToPhysicalDeviceSupportedFormat( Renderer * renderer, cons
 	case VK_FORMAT_B8G8R8A8_UNORM:
 	{
 		if( renderer->IsFormatSupported(
-			VK_IMAGE_TILING_OPTIMAL,
+			FORMAT_PROPERTIES_FEATURE::OPTIMAL_IMAGE,
 			VK_FORMAT_B8G8R8A8_UNORM,
 			VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT | VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR ) ) {
 			// use image data directly
@@ -831,7 +831,7 @@ ImageData ConvertImageToPhysicalDeviceSupportedFormat( Renderer * renderer, cons
 			return ret;
 
 		} else if( renderer->IsFormatSupported(
-			VK_IMAGE_TILING_OPTIMAL,
+			FORMAT_PROPERTIES_FEATURE::OPTIMAL_IMAGE,
 			VK_FORMAT_R8G8B8A8_UNORM,
 			VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT | VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR ) ) {
 			// flip color components but keep alpha
